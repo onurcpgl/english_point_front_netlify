@@ -109,7 +109,6 @@ const CourseSessionCard = ({ data, status }) => {
       const response = await instructorPanelService.getMySessionUsers(
         sessionId
       );
-      console.log("API'den gelen katılımcılar:", response);
 
       if (Array.isArray(response)) {
         setSelectedSessionUsers(response);
@@ -210,19 +209,42 @@ const CourseSessionCard = ({ data, status }) => {
     </div>
   );
 
+  // Bu ayarları componentinizin içinde bir yerde tanımlamış olmalısınız.
   const sliderSettings = {
-    dots: false,
+    dots: true,
     infinite: false,
     speed: 500,
-    slidesToShow: 6,
-    slidesToScroll: 1,
-    arrows: true,
-    nextArrow: <NextArrow />,
-    prevArrow: <PrevArrow />,
+    slidesToShow: 4, // Masaüstünde varsayılan 4 tane göster
+    slidesToScroll: 4,
+    initialSlide: 0,
+    // İŞTE BURASI ÖNEMLİ KISIM:
     responsive: [
-      { breakpoint: 1024, settings: { slidesToShow: 3 } },
-      { breakpoint: 768, settings: { slidesToShow: 2 } },
-      { breakpoint: 480, settings: { slidesToShow: 1 } },
+      {
+        breakpoint: 1024, // Tablet yatay vb.
+        settings: {
+          slidesToShow: 3,
+          slidesToScroll: 3,
+          infinite: true,
+          dots: true,
+        },
+      },
+      {
+        breakpoint: 600, // Tablet dikey / Büyük telefonlar
+        settings: {
+          slidesToShow: 2, // Ekrana 2 tane sığdır
+          slidesToScroll: 2,
+          initialSlide: 2,
+        },
+      },
+      {
+        breakpoint: 480, // Küçük mobil ekranlar
+        settings: {
+          // MOBİLDE İÇ İÇE GEÇMEMESİ İÇİN GENELDE 1 veya 1.5 VERİLİR
+          slidesToShow: 1, // Ekranda sadece 1 tane göster
+          slidesToScroll: 1,
+          // Eğer bir sonrakinin ucu gözüksün isterseniz 1.2 gibi değerler deneyebilirsiniz.
+        },
+      },
     ],
   };
 

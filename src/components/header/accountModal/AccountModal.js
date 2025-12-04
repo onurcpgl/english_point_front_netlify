@@ -16,7 +16,7 @@ import Image from "next/image";
 const AccountModal = ({ user, setMenuOpen, menuOpen, signOut }) => {
   const sidebarRef = useRef(null);
   const router = useRouter();
-  console.log("teasdasdasd", user);
+
   // Kapanma animasyonunu yönetmek için yeni state
   const [isClosing, setIsClosing] = useState(false);
 

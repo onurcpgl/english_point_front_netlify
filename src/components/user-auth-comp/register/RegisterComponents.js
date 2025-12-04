@@ -39,25 +39,21 @@ export default function RegisterPage() {
 
   // E-posta formunun görünüp görünmeyeceğini kontrol eden state
   const [showEmailForm, setShowEmailForm] = useState(false);
+  const API_URL =
+    process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.englishpoint.com.tr";
 
-  // Sosyal Medya Login İşlemleri (Buraya kendi logic'inizi bağlayabilirsiniz)
+  // --- GOOGLE ---
   const handleGoogleLogin = () => {
-    console.log("Google ile kayıt olunuyor...");
-
-    // Kullanıcıyı Laravel'in Google'a yönlendiren rotasına gönderiyoruz.
-    // .env dosyasından gelen API URL'ini kullan.
-    // Örn: http://api.englishpoint.com.tr/api/auth/google/redirect
-    window.location.href = `https://api.englishpoint.com.tr/api/auth/google/redirect`;
+    window.location.href = `${API_URL}api/auth/google/redirect`;
   };
 
+  // --- FACEBOOK ---
   const handleFacebookLogin = () => {
-    console.log("Facebook ile kayıt olunuyor...");
-    // generalService.facebookLogin() vb.
+    window.location.href = `${API_URL}api/auth/facebook/redirect`;
   };
 
   const handleSubmit = async (values, { setSubmitting, resetForm }) => {
     try {
-      console.log("Register data:", values);
       const response = await generalService.register(values);
 
       if (response && response.status) {

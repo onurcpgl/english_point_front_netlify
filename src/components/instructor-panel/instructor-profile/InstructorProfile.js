@@ -25,7 +25,7 @@ function InstructorDashboard() {
     queryKey: ["instructorProfile"],
     queryFn: instructorPanelService.getInstructorProfile,
   });
-  console.log("iandadad", instructorProfile);
+
   function Loading() {
     return (
       <div className="flex justify-center items-center mt-10">

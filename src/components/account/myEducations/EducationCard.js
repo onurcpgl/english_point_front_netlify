@@ -14,7 +14,7 @@ const EducationCard = ({ data, status }) => {
   });
   const [openCourseInfo, setOpenCourseInfo] = useState(null);
   const openCourseRef = useRef(null);
-  console.log("data", data);
+
   useEffect(() => {
     function handleClickOutside(event) {
       if (
@@ -89,7 +89,7 @@ const EducationCard = ({ data, status }) => {
                         <span
                           onClick={() =>
                             window.open(
-                              `https://www.google.com/maps?q=${item.cafe.latitude},${item.cafe.longitude}`,
+                              `https://www.google.com/maps?q=${item?.course_session.cafe.latitude},${item?.course_session.cafe.longitude}`,
                               "_blank"
                             )
                           }

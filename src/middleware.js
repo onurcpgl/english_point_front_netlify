@@ -27,7 +27,7 @@ export default withAuth(
       // gönderirsek aşağıdaki kısıtlamaya takılıp tekrar profile dönebilir (double redirect).
       // Bu yüzden instructor ise direkt profiline, değilse course-sessions'a gönderiyoruz.
       if (token.role === "instructor") {
-        return NextResponse.redirect(new URL("/instructor/profile", req.url));
+        return NextResponse.redirect(new URL("/instructor/dashboard", req.url));
       }
 
       return NextResponse.redirect(new URL("/course-sessions", req.url));

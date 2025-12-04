@@ -7,6 +7,7 @@ import instructorPanelService from "../../../utils/axios/instructorPanelService"
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import DatePickerComp from "../../../components/ui/DatePicker/DatePickerComp";
+import CafeLocationComp from "../instructor-create-session/CafeLocationComp";
 import Image from "next/image";
 export default function InstructorCreateSession() {
   const queryClient = useQueryClient();
@@ -547,6 +548,7 @@ export default function InstructorCreateSession() {
             </div>
           )}
         </div>
+        {/* <CafeLocationComp /> */}
         <div className="px-4 border-t text-black py-2 border-gray-200">
           <p className="text-xl font-semibold">Starting Questions Answers</p>
           <p className="text-sm font-medium text-gray-700">
@@ -569,14 +571,15 @@ export default function InstructorCreateSession() {
         ) : (
           <div className="px-4 mt-6">
             {startQuestions?.map((q) => {
-              const opts = JSON.parse(q.options);
+              const opts = q.options["en"];
+
               const error = formik.errors.start_answers?.[q.id];
               const touched = formik.touched.start_answers?.[q.id];
 
               return (
                 <div key={q.id} className="mb-6 border-b pb-4">
                   <p className="text-md font-semibold text-black mb-2">
-                    {q.question}
+                    {q.question["en"]}
                   </p>
 
                   {/* SINGLE QUESTION */}

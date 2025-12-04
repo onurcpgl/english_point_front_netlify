@@ -83,7 +83,6 @@ const CreatePasswordPage = () => {
       );
 
       if (res.status === "success") {
-        console.log("testtt");
         setStatus({
           type: "success",
           message: "Password successfully created! Redirecting to login...",

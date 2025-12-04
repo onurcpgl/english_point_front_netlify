@@ -130,7 +130,6 @@ const Login = () => {
 
   // Facebook Login
   const handleFacebookLogin = () => {
-    console.log("Facebook ile giriş yapılıyor...");
     // Backend: /api/auth/facebook/redirect
     window.location.href = `${API_URL}api/auth/facebook/redirect`;
   };

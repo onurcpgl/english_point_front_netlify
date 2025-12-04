@@ -106,7 +106,6 @@ const SepetComp = () => {
 
       // Başarılı ise devam eden işlemler
       setTimeout(() => {
-        console.log("Ödeme başarılı, yönlendirme vs yapılabilir");
         setCurrentStep("basarili");
         clearCart();
       }, 500);

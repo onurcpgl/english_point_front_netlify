@@ -18,7 +18,6 @@ function InstructorDashboard() {
     queryKey: ["myCourses"],
     queryFn: instructorPanelService.getMySessions,
   });
-  console.log("myasdada", myCourses);
 
   const [completedSession, setCompletedSession] = useState([]);
   const [activeSession, setActiveSession] = useState([]);

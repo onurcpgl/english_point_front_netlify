@@ -94,13 +94,6 @@ export const authOptions = {
 
           // API'den gelen cevap
           const data = await res.json();
-
-          // DEBUG: API'den ne döndüğünü görmek için (Gerekirse açarsın)
-          // console.log("Profile API Response:", data);
-
-          // API yapına göre user verisi 'data'nın kendisi mi yoksa 'data.data' veya 'data.user' içinde mi?
-          // Genelde Laravel API kaynakları veriyi direkt veya data içinde döner.
-          // Aşağıdaki satırda 'user' değişkenini doğru kaynağa eşitlediğinden emin ol.
           const user = data.user || data.data || data;
 
           if (res.ok && user) {

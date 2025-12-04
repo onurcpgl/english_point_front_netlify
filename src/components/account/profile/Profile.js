@@ -60,7 +60,7 @@ function Profile() {
       try {
         setLoading(true);
         const result = await generalService.getUserInfo();
-        console.log("radasdasdasds", result);
+
         if (result?.success && result.user) {
           setFormData({
             name: result.user.name || "",

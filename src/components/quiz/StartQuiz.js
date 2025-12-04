@@ -137,14 +137,14 @@ export default function Quiz() {
                   {/* Soru Başlığı */}
                   {/* Responsive: Mobilde text-2xl, Masaüstünde text-3xl */}
                   <h2 className="text-2xl lg:text-3xl font-bold text-gray-800 mb-6 lg:mb-8 leading-tight text-center lg:text-left">
-                    {data?.[currentQuestion].question}
+                    {data?.[currentQuestion].question["tr"]}
                   </h2>
 
                   {/* Seçenekler */}
                   <div className="my-5">
                     {data?.[currentQuestion]?.question_type === "single" ? (
                       <div className="space-y-3">
-                        {JSON.parse(data[currentQuestion].options).map(
+                        {data[currentQuestion].options["tr"].map(
                           (option, index) => {
                             const isSelected = selectedOption === option;
                             return (
@@ -166,7 +166,7 @@ export default function Quiz() {
                     ) : (
                       // Multiple Choice
                       <div className="space-y-3 flex flex-wrap justify-center items-center gap-2 lg:gap-3 p-2 lg:p-4 rounded-xl">
-                        {JSON.parse(data[currentQuestion].options).map(
+                        {data[currentQuestion].options["tr"].map(
                           (option, index) => {
                             const selectedArray = selectedOption || [];
                             const isSelected = selectedArray.includes(option);
