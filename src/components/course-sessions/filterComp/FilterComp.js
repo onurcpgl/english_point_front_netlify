@@ -163,7 +163,7 @@ function FilterComp({
                 <button
                   key={addr.id}
                   onClick={() => handleAddressSelect(addr)}
-                  className={`w-full px-4 py-3 text-left text-md text-black hover:bg-black hover:text-white transition-colors flex flex-col items-start border-b border-gray-50 last:border-0 ${
+                  className={`w-full px-4 py-3 text-left text-md hover:bg-black hover:text-white transition-colors flex flex-col items-start border-b border-gray-50 last:border-0 ${
                     selectedAddressTitle === addr.title ? "bg-gray-100" : ""
                   }`}
                 >
@@ -304,7 +304,7 @@ function FilterComp({
 
   const renderFilterInputs = () => {
     return categories?.map((item) => {
-      const values = JSON.parse(item.options);
+      const values = item.options["tr"];
 
       // NOT: Burada 'activeFilters' kullanıyoruz (görsel state).
       // İleride gerçek state'e dönmek için 'activeFilters' tanımını değiştirmek yeterli.
@@ -313,7 +313,7 @@ function FilterComp({
         return (
           <DropdownButton
             key={item.id}
-            label={item.question}
+            label={item.question["tr"]}
             value={activeFilters[item.id] || ""}
             options={values}
             filterKey={item.id}
@@ -323,7 +323,7 @@ function FilterComp({
         return (
           <MultiSelectDropdown
             key={item.id}
-            label={item.question}
+            label={item.question["tr"]}
             value={activeFilters[item.id] || []}
             options={values}
             filterKey={item.id}
@@ -346,7 +346,7 @@ function FilterComp({
         return (
           <MultiSelectDropdown
             key={item.id}
-            label={item.question}
+            label={item.question["tr"]}
             value={activeFilters[item.id] || ""}
             options={values}
             filterKey={item.id}
@@ -357,7 +357,7 @@ function FilterComp({
           <input
             key={item.id}
             type="text"
-            placeholder={item.question}
+            placeholder={item.question["tr"]}
             value={activeFilters[item.id] || ""}
             onChange={(e) => handleFilterChange(item.id, e.target.value)}
             className="border border-gray-200 shadow-xl px-3 py-2 rounded-4xl w-full md:w-40 text-md"

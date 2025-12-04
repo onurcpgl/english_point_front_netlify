@@ -27,7 +27,7 @@ export const CartProvider = ({ children }) => {
         localStorage.setItem("cartSessions", JSON.stringify(res));
       } catch (e) {
         //const stored = localStorage.getItem("cartSessions");
-        //if (stored) setSessions(JSON.parse(stored));
+
         setSessions({ basket: null, success: true });
       } finally {
         setLoading(false); // <-- loading bitiyor

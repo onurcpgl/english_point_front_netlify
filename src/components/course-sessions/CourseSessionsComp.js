@@ -140,7 +140,7 @@ function CourseSessionsComp() {
         uniq_id
       );
       if (questionAnswerResult?.answers) {
-        const parsedAnswers = JSON.parse(questionAnswerResult.answers);
+        const parsedAnswers = questionAnswerResult.answers["tr"];
         const formatted = parsedAnswers.reduce((acc, item, idx) => {
           acc[idx + 1] = item.answers;
           return acc;
