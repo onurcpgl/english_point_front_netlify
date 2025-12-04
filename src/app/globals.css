@@ -1,0 +1,194 @@
+@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Just+Another+Hand&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+@import "tailwindcss";
+
+@plugin "flowbite-react/plugin/tailwindcss";
+@source "../../.flowbite-react/class-list.json";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+/* Webkit tabanlı tarayıcılar */
+::-webkit-scrollbar {
+  width: 8px; /* ince, overlay gibi */
+}
+html,
+body {
+  overscroll-behavior-y: none; /* sadece dikey scroll esnemesini engeller */
+  scrollbar-gutter: stable !important; /* Kaydırma çubuğu alanını her zaman ayırır */
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+}
+
+.nata-sans {
+  font-family: "Jost", sans-serif;
+  font-optical-sizing: auto;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+.react-calendar {
+  color: black; /* Yazı rengi */
+  background-color: #f5f5f5; /* İstersen arka plan */
+}
+
+/* Tarih kutucukları */
+.react-calendar__tile {
+  color: black;
+}
+
+/* Seçili tarih */
+.react-calendar__tile--active {
+  background-color: #ffd207;
+  color: black;
+}
+body {
+  color: var(--foreground);
+  font-family: "Jost", sans-serif;
+  font-optical-sizing: auto;
+}
+
+/* Basit fade-in animasyonu */
+.fade-in {
+  animation: fadeIn 1s ease-out forwards;
+  opacity: 0;
+}
+
+.fade-in.show {
+  opacity: 1;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
+/* Yazıların alt alta yavaşça geçişi için */
+.loading-text {
+  height: 1.5em;
+  overflow: hidden;
+  position: relative;
+}
+
+.loading-text > div {
+  position: absolute;
+  width: 100%;
+  opacity: 0;
+  animation: slideFade 8s linear infinite;
+}
+
+.loading-text > div:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.loading-text > div:nth-child(2) {
+  animation-delay: 2s;
+}
+
+.loading-text > div:nth-child(3) {
+  animation-delay: 4s;
+}
+
+.loading-text > div:nth-child(4) {
+  animation-delay: 6s;
+}
+
+@keyframes slideFade {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  25% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  35% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.calendar-container {
+  max-width: 100%;
+  margin: 20px auto;
+  font-family: "Inter", sans-serif;
+}
+
+.modern-calendar {
+  width: 100%;
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.react-calendar__tile {
+  padding: 15px 0;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.react-calendar__tile--active {
+  background: #4f46e5;
+  color: white;
+}
+
+.react-calendar__tile:hover {
+  background: #e0e7ff;
+}
+
+.font-bebas {
+  font-family: "Bebas Neue", sans-serif;
+}
+
+/* Just Another Hand fontunu kullanmak için sınıf */
+.font-just-another-hand {
+  font-family: "Just Another Hand", cursive;
+}
+
+/* Poppins fontunu kullanmak için sınıf */
+.font-poppins {
+  font-family: "Poppins", sans-serif;
+}
+
+/* Open Sans fontunu kullanmak için sınıf */
+.font-open-sans {
+  font-family: "Open Sans", sans-serif;
+}
+
+@keyframes wiggle {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+  30% {
+    transform: translateY(-3px) rotate(2deg);
+  }
+  60% {
+    transform: translateY(2px) rotate(-2deg);
+  }
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+}
+
+.logo:hover #drop {
+  animation: wiggle 0.4s ease-in-out;
+}
