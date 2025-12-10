@@ -30,7 +30,9 @@ function UserSettings() {
   return (
     <div className="flex flex-col w-full max-w-full overflow-hidden bg-[#F5F5F5] p-10 max-lg:p-2 h-auto rounded-3xl relative">
       <div className="w-full bg-white rounded-full p-3 mb-4">
-        <p className="text-black font-semibold text-xl ml-2">User Profile</p>
+        <p className="text-black font-semibold text-xl ml-2">
+          Kullanıcı Profili
+        </p>
       </div>
 
       <div className="w-full rounded-3xl bg-[#FAFAFA] py-5 px-3 flex flex-col gap-5">

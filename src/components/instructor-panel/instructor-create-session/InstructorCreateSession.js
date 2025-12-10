@@ -549,6 +549,7 @@ export default function InstructorCreateSession() {
           )}
         </div>
         {/* <CafeLocationComp /> */}
+        {/* <CafeLocationComp /> */}
         <div className="px-4 border-t text-black py-2 border-gray-200">
           <p className="text-xl font-semibold">Starting Questions Answers</p>
           <p className="text-sm font-medium text-gray-700">

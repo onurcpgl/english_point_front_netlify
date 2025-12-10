@@ -13,7 +13,7 @@ export default function CafeLocationComp({ onSelectCafe }) {
   const [options, setOptions] = useState([]); // Google'dan gelen tahminler
   const [selectedCafe, setSelectedCafe] = useState(null); // Seçilen kafe detayları
   const [isOpen, setIsOpen] = useState(false);
-
+  console.log("pladce", selectedCafe);
   // Google Script Yüklemesi
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY, // .env dosyana eklemelisin
@@ -72,6 +72,7 @@ export default function CafeLocationComp({ onSelectCafe }) {
     placesService.current.getDetails(request, (place, status) => {
       if (status === window.google.maps.places.PlacesServiceStatus.OK) {
         // Google fotoğrafını URL'e çevir
+
         const photoUrl =
           place.photos && place.photos.length > 0
             ? place.photos[0].getUrl({ maxWidth: 400 })
@@ -108,7 +109,6 @@ export default function CafeLocationComp({ onSelectCafe }) {
           Cafe Location (Google)
         </label>
 
-        {/* --- INPUT AREA --- */}
         <div className="relative">
           <input
             type="text"

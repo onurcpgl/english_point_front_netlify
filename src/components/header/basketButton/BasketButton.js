@@ -45,21 +45,21 @@ export default function BasketButton() {
             </button>
           </div>
 
-          {sessions.basket !== null ? (
+          {sessions?.basket !== null ? (
             <div
               onClick={() => (window.location.href = "/sepet")}
               className="flex justify-between items-center bg-gray-50 rounded-xl p-3 hover:bg-gray-200 cursor-pointer transition-all"
             >
               <div className="flex flex-col">
                 <p className="font-medium text-sm text-black">
-                  {sessions.basket.course_session.session_title || "Eğitim"}
+                  {sessions?.basket.course_session.session_title}
                 </p>
                 <span className="text-gray-500 text-xs">
-                  {sessions.basket.course_session.language_level}
+                  {sessions?.basket.course_session.language_level}
                 </span>
                 <span className="text-gray-500 text-xs">
-                  {getDate(sessions.basket.course_session.session_date)} -{" "}
-                  {getTime(sessions.basket.course_session.session_date)}
+                  {getDate(sessions?.basket.course_session.session_date)} -{" "}
+                  {getTime(sessions?.basket.course_session.session_date)}
                 </span>
                 <hr className="border w-full my-2" />
                 <span className="text-gray-500 text-xs">200₺</span>

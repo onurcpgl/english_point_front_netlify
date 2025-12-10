@@ -26,15 +26,6 @@ function getDistance(lat1, lon1, lat2, lon2) {
 
 function CourseSessionsComp() {
   const {
-    data: userAdresses,
-    error: errorUserAdresses,
-    isLoading: loadingUserAdresses,
-    refetch,
-  } = useQuery({
-    queryKey: ["myAddresses"],
-    queryFn: generalService.getMyAdresses,
-  });
-  const {
     data: courseSessions,
     error: courseSessionsError,
     isLoading: courseSessionsLoading,
@@ -254,37 +245,6 @@ function CourseSessionsComp() {
                   className="underline font-semibold ml-1"
                 >
                   Tekrar Dene
-                </button>
-              </div>
-            )}
-
-            {locationStatus === "success" && userLocation.lat && (
-              <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4 text-green-700 bg-green-50 border border-green-100 px-4 py-1.5 rounded-full shadow-sm">
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4" />
-                  <span className="font-medium">Konumunuz Tespit Edildi:</span>
-                  <span className="font-mono text-xs md:text-sm bg-white px-2 py-0.5 rounded border border-green-200">
-                    {userLocation.lat.toFixed(4)}, {userLocation.lon.toFixed(4)}
-                  </span>
-                </div>
-
-                {/* Google Maps Linki */}
-                <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${userLocation.lat},${userLocation.lon}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs md:text-sm underline hover:text-green-900 flex items-center gap-1"
-                >
-                  Haritada Gör ↗
-                </a>
-
-                {/* Yenileme Butonu */}
-                <button
-                  onClick={handleGetLocation}
-                  title="Konumu Güncelle"
-                  className="p-1 hover:bg-green-100 rounded-full transition-colors ml-2"
-                >
-                  <RefreshCw className="w-3 h-3 md:w-4 md:h-4" />
                 </button>
               </div>
             )}

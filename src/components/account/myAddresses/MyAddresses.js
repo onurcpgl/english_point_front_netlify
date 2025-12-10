@@ -27,26 +27,24 @@ function MyAddresses() {
   const [errorModalOpen, setErrorModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // Form datasına latitude ve longitude eklendi
   const [formData, setFormData] = useState({
     title: "",
     country: "",
-    address_line: "", // Google'dan gelen formatlı adres
+    address_line: "",
     district: "",
     city: "",
     postal_code: "",
-    latitude: null, // Yeni alan
-    longitude: null, // Yeni alan
+    latitude: null,
+    longitude: null,
     isDefault: false,
   });
 
-  // Google Autocomplete için ayrı bir state (Input değeri)
   const [addressInput, setAddressInput] = useState("");
 
   const resetForm = () => {
     setEditingAddress(null);
     setShowForm(false);
-    setAddressInput(""); // Arama inputunu temizle
+    setAddressInput("");
     setFormData({
       title: "",
       country: "",
@@ -84,7 +82,7 @@ function MyAddresses() {
       longitude: address.longitude || null,
       isDefault: address.isDefault || false,
     });
-    setAddressInput(address.address_line || ""); // Edit modunda inputu doldur
+    setAddressInput(address.address_line || "");
     setEditingAddress(address.id);
     setShowForm(true);
   };
@@ -95,8 +93,6 @@ function MyAddresses() {
     try {
       const results = await geocodeByAddress(address);
       const latLng = await getLatLng(results[0]);
-
-      // Adres bileşenlerini ayrıştır (Şehir, İlçe, Ülke, Posta Kodu)
       const addressComponents = results[0].address_components;
 
       let city = "";
@@ -107,13 +103,13 @@ function MyAddresses() {
       addressComponents.forEach((component) => {
         const types = component.types;
         if (types.includes("administrative_area_level_1")) {
-          city = component.long_name; // İl (Örn: İstanbul)
+          city = component.long_name;
         }
         if (
           types.includes("administrative_area_level_2") ||
           types.includes("sublocality_level_1")
         ) {
-          district = component.long_name; // İlçe (Örn: Kadıköy)
+          district = component.long_name;
         }
         if (types.includes("country")) {
           country = component.long_name;
@@ -123,10 +119,9 @@ function MyAddresses() {
         }
       });
 
-      // State'i güncelle
       setFormData((prev) => ({
         ...prev,
-        address_line: results[0].formatted_address, // Tam açık adres
+        address_line: results[0].formatted_address,
         city: city,
         district: district,
         country: country,
@@ -138,15 +133,11 @@ function MyAddresses() {
       console.error("Error", error);
     }
   };
-  // -----------------------------
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Backend'e gidecek veri
     const payload = {
       ...formData,
-      // Eğer manuel düzenlendiyse address_line'ı inputtan al, yoksa google'dan geleni kullan
       address_line: addressInput || formData.address_line,
     };
 
@@ -188,10 +179,10 @@ function MyAddresses() {
     if (result.status) {
       resetForm();
       setOpenModal(true);
-      setModalMessage(result.message || "Adres başarıyla eklendi.");
+      setModalMessage(result.message || "Adres silindi.");
       refetch();
     } else {
-      setErrorMessage(response.message || "Bir hata meydana geldi!");
+      setErrorMessage(result.message || "Bir hata meydana geldi!");
       setErrorModalOpen(true);
     }
   };
@@ -220,11 +211,57 @@ function MyAddresses() {
     });
   };
 
-  return isLoading ? (
-    <div className="flex justify-center items-center h-40">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-    </div>
-  ) : (
+  // --- SKELETON LOADER ALANI ---
+  if (isLoading) {
+    return (
+      <div className="flex flex-col w-full max-w-full overflow-hidden bg-[#F5F5F5] p-10 max-lg:p-4 h-auto rounded-3xl relative min-h-[500px]">
+        {/* Header Skeleton */}
+        <div className="flex justify-between items-center mb-6 animate-pulse">
+          <div className="space-y-3">
+            <div className="h-8 w-48 bg-gray-200 rounded-lg"></div>
+            <div className="h-4 w-64 bg-gray-200 rounded-lg"></div>
+          </div>
+          <div className="h-10 w-36 bg-gray-200 rounded-lg"></div>
+        </div>
+
+        {/* Adres Kartları Skeleton (3 adet örnek gösteriyoruz) */}
+        <div className="grid grid-cols-1 gap-5 mt-5">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm animate-pulse"
+            >
+              <div className="flex justify-between items-start">
+                <div className="flex gap-4 w-full">
+                  {/* Sol İkon Skeleton */}
+                  <div className="w-12 h-12 bg-gray-200 rounded-lg shrink-0"></div>
+
+                  {/* Text Skeleton */}
+                  <div className="space-y-3 w-full max-w-md">
+                    <div className="h-5 w-1/3 bg-gray-200 rounded"></div>{" "}
+                    {/* Başlık */}
+                    <div className="h-4 w-1/4 bg-gray-200 rounded"></div>{" "}
+                    {/* İl/İlçe */}
+                    <div className="h-3 w-3/4 bg-gray-200 rounded mt-1"></div>{" "}
+                    {/* Adres satırı */}
+                  </div>
+                </div>
+
+                {/* Sağ Butonlar Skeleton */}
+                <div className="flex gap-2">
+                  <div className="w-9 h-9 bg-gray-200 rounded-lg"></div>
+                  <div className="w-9 h-9 bg-gray-200 rounded-lg"></div>
+                  <div className="w-9 h-9 bg-gray-200 rounded-lg"></div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
     <div className="flex flex-col w-full max-w-full overflow-hidden bg-[#F5F5F5] p-10 max-lg:p-4 h-auto rounded-3xl relative">
       <SuccesMessageComp
         open={openModal}
@@ -296,7 +333,7 @@ function MyAddresses() {
                     onChange={setAddressInput}
                     onSelect={handleSelect}
                     searchOptions={{
-                      componentRestrictions: { country: ["tr"] }, // Sadece Türkiye
+                      componentRestrictions: { country: ["tr"] },
                     }}
                   >
                     {({
@@ -313,13 +350,11 @@ function MyAddresses() {
                             className:
                               "w-full px-4 py-3 border border-gray-200  focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all pl-10",
                             autoComplete: "chrome-off",
-
-                            name: "search_places_input_random_id", // Rastgele bir isim ver ki Chrome "adres" olduğunu anlamasın
+                            name: "search_places_input_random_id",
                           })}
                         />
                         <MapPin className="absolute left-3 top-3.5 text-gray-400 w-5 h-5" />
 
-                        {/* Öneriler Listesi */}
                         {(loading || suggestions.length > 0) && (
                           <div className="absolute z-50 w-full bg-white shadow-xl  mt-2 border border-gray-100 overflow-hidden">
                             {loading && (
@@ -362,7 +397,6 @@ function MyAddresses() {
                     )}
                   </PlacesAutocomplete>
                 </div>
-                {/* --------------------------- */}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -375,7 +409,7 @@ function MyAddresses() {
                       value={formData.city}
                       onChange={handleInputChange}
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200  text-gray-500 cursor-not-allowed"
-                      readOnly // Google'dan gelsin
+                      readOnly
                     />
                   </div>
                   <div>
@@ -388,7 +422,7 @@ function MyAddresses() {
                       value={formData.district}
                       onChange={handleInputChange}
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200  text-gray-500 cursor-not-allowed"
-                      readOnly // Google'dan gelsin
+                      readOnly
                     />
                   </div>
                 </div>
@@ -399,7 +433,7 @@ function MyAddresses() {
                   </label>
                   <textarea
                     name="address_line"
-                    value={formData.address_line} // Otomatik dolanı buraya basıyoruz
+                    value={formData.address_line}
                     onChange={(e) => {
                       setFormData({
                         ...formData,
@@ -411,7 +445,6 @@ function MyAddresses() {
                   />
                 </div>
 
-                {/* Koordinatlar Gizli (Debug için type="text" yapıp görebilirsin) */}
                 <input
                   type="hidden"
                   name="latitude"
@@ -461,14 +494,13 @@ function MyAddresses() {
         </div>
       )}
 
-      {/* Adres Kartları Listesi (Mevcut tasarımınız korundu) */}
+      {/* Adres Kartları Listesi */}
       <div className="grid grid-cols-1 gap-5 mt-5">
         {addresses?.map((address, i) => (
           <div
             key={i}
             className="relative bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all"
           >
-            {/* Kart İçeriği Buraya - Mevcut kodunuzdakiyle aynı */}
             <div className="flex justify-between items-start">
               <div className="flex gap-4">
                 <div
@@ -490,7 +522,6 @@ function MyAddresses() {
                   <p className="text-gray-400 text-xs mt-2 max-w-md">
                     {address.address_line}
                   </p>
-                  {/* Eğer 1 ise veya true ise göster */}
                   {(address.main_adress === 1 ||
                     address.main_adress === true) && (
                     <span className="inline-block mt-2 px-2 py-1 bg-red-100 text-red-600 text-xs font-bold rounded">
@@ -500,7 +531,6 @@ function MyAddresses() {
                 </div>
               </div>
               <div className="flex gap-2">
-                {/* Butonlar */}
                 <button
                   onClick={() => handleEditAddress(address)}
                   className="p-2 hover:bg-blue-50 text-gray-400 hover:text-blue-500 rounded-lg transition-colors"

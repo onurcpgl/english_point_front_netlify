@@ -6,9 +6,9 @@ import { FaSearchPlus } from "react-icons/fa";
 import { FaPlusCircle } from "react-icons/fa";
 import "react-calendar/dist/Calendar.css";
 import MiniWeeklyProgram from "../../ui/mini-weekly-program/MiniWeeklyProgram";
-
 import MiniCourseSessionCard from "../../../components/instructor-panel/course-session-card/MiniCourseSessionCard";
 import Link from "next/link";
+
 function InstructorDashboard() {
   const {
     data: myCourses,
@@ -166,7 +166,33 @@ function InstructorDashboard() {
             <Loading />
           )}
         </div>
-
+        <div className="rounded-3xl p-4 md:p-5 w-full bg-[#F5F5F5]">
+          <div className="p-3 md:p-4 flex justify-between items-center bg-white rounded-full w-full px-5 shadow-md">
+            <p className="text-black font-semibold text-lg md:text-2xl drop-shadow-md">
+              Awaiting Sessions
+            </p>
+            <FaSearchPlus className="text-black text-xl md:text-3xl cursor-pointer" />
+          </div>
+          {!myCoursesLoading ? (
+            <div className="flex flex-col gap-4 mt-2">
+              {completedSession?.length > 0 ? (
+                <div className="h-auto p-3 w-full">
+                  <div className="rounded-3xl  w-full bg-[#F5F5F5]">
+                    <div className="flex flex-col gap-4 mt-2">
+                      <MiniCourseSessionCard data={awaitingSession} />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-black text-center mt-10 mb-5 text-3xl font-semibold">
+                  No awaiting session information!
+                </p>
+              )}
+            </div>
+          ) : (
+            <Loading />
+          )}
+        </div>
         <div className="rounded-3xl p-4 md:p-5 w-full bg-[#F5F5F5]">
           <div className="p-3 md:p-4  mb-5 flex justify-between items-center bg-white rounded-full w-full px-5 shadow-md">
             <p className="text-black font-semibold text-lg md:text-2xl drop-shadow-md">

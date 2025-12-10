@@ -15,7 +15,7 @@ function SessionListComp({ mappedData, loading }) {
   const [displaySessions, setDisplaySessions] = useState([]);
   const [quotaData, setQuotaData] = useState([]);
   const [quotaLoading, setQuotaLoading] = useState(true);
-
+  console.log("mappedData", mappedData);
   const { addSession } = useCart();
   const router = useRouter();
 
@@ -131,7 +131,7 @@ function SessionListComp({ mappedData, loading }) {
         />
       )}
 
-      {displaySessions &&
+      {displaySessions.length > 0 ? (
         displaySessions.map((item, i) => (
           <div
             key={item.id || i}
@@ -279,7 +279,12 @@ function SessionListComp({ mappedData, loading }) {
               </button>
             </div>
           </div>
-        ))}
+        ))
+      ) : (
+        <div className="flex justify-center items-center text-black text-3xl">
+          Filtrelere uygun eğitim bulunamadı.
+        </div>
+      )}
     </div>
   );
 }

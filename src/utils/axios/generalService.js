@@ -38,7 +38,16 @@ const fetchQuestions = async () => {
   const response = await axiosInstance.get("/api/get-start-questions");
   return response.data;
 };
-
+const getMessage = async () => {
+  const response = await axiosInstance.get("/api/user/messages");
+  return response.data;
+};
+const getMessageAsMarker = async (id) => {
+  const response = await axiosInstance.get(
+    `/api/user/messages-markasread/${id}`
+  );
+  return response.data;
+};
 const saveAnswers = async (answers) => {
   const response = await axiosInstance.post("/api/save-question-answers", {
     answers,
@@ -247,5 +256,7 @@ const generalService = {
   userChangePassword,
   getCourseSessionQuotaInfo,
   getCourseSessionById,
+  getMessage,
+  getMessageAsMarker,
 };
 export default generalService;

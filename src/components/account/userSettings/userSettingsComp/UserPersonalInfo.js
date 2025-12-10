@@ -33,6 +33,8 @@ function UserPersonalInfo({ data, error, isLoading }) {
   useEffect(() => {
     if (data?.user?.profile_image) {
       setPhotoPreview(data.user.profile_image);
+    } else if (data?.user?.avatar) {
+      setPhotoPreview(data.user.avatar);
     }
   }, [data]);
 
@@ -164,7 +166,7 @@ function UserPersonalInfo({ data, error, isLoading }) {
                 />
               </div>
 
-              <div className="flex-1 space-y-3">
+              <div className="flex-1 space-y-3 max-md:w-full">
                 <div>
                   <p className="text-black font-semibold text-2xl">Hakkında</p>
                   <p className="text-[#686464]">
@@ -192,8 +194,9 @@ function UserPersonalInfo({ data, error, isLoading }) {
                       id="email"
                       type="text"
                       name="email"
+                      disabled
                       placeholder="Email adresiniz"
-                      className="w-full h-14 outline-0 px-4 bg-white shadow text-black"
+                      className="w-full h-14 outline-0 px-4 bg-white opacity-45 shadow text-black"
                     />
                   </div>
 

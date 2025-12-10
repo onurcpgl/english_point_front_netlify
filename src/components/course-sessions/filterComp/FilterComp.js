@@ -9,7 +9,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { MapPin, Home } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import generalService from "../../../utils/axios/generalService";
-
+import ErrorModal from "../../ui/ErrorModal/ErrorModal";
 function FilterComp({
   categories,
   filters, // <-- Gerçek filtre verisi (Şu an pasif)
@@ -25,7 +25,8 @@ function FilterComp({
   const [mounted, setMounted] = useState(false);
   const [selectedAddressTitle, setSelectedAddressTitle] = useState(null);
   const [visualFilters, setVisualFilters] = useState({});
-
+  const [errorModalOpen, setErrorModalOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const activeFilters = visualFilters;
   const { data: myAddresses } = useQuery({
     queryKey: ["myAddresses"],
@@ -119,7 +120,8 @@ function FilterComp({
       setSelectedAddressTitle(address.title);
       setOpenDropdown(null);
     } else {
-      alert("Bu adresin konum bilgisi eksik.");
+      setErrorMessage("Bu adresin konum bilgisi eksik.");
+      setErrorModalOpen(true);
     }
   };
   const clearAddressSelection = () => {
@@ -128,6 +130,12 @@ function FilterComp({
   };
   const AddressDropdown = () => (
     <div className="relative h-fit w-full md:w-auto">
+      <ErrorModal
+        open={errorModalOpen}
+        message={errorMessage}
+        onClose={() => setErrorModalOpen(false)}
+      />
+
       <button
         onClick={() => toggleDropdown("address-filter")}
         className={`flex items-center justify-between px-3 py-2 rounded-4xl shadow-xl cursor-pointer w-full md:min-w-40 border border-gray-100 bg-white ${
@@ -163,7 +171,7 @@ function FilterComp({
                 <button
                   key={addr.id}
                   onClick={() => handleAddressSelect(addr)}
-                  className={`w-full px-4 py-3 text-left text-md hover:bg-black hover:text-white transition-colors flex flex-col items-start border-b border-gray-50 last:border-0 ${
+                  className={`w-full px-4 py-3 text-left text-md hover:bg-black text-black hover:text-white transition-colors flex flex-col items-start border-b border-gray-50 last:border-0 ${
                     selectedAddressTitle === addr.title ? "bg-gray-100" : ""
                   }`}
                 >

@@ -44,7 +44,7 @@ export default withAuth(
       );
 
       if (!isAllowed) {
-        return NextResponse.redirect(new URL("/instructor/profile", req.url));
+        return NextResponse.redirect(new URL("/instructor/dashboard", req.url));
       }
     }
 

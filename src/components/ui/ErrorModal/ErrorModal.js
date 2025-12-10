@@ -6,7 +6,7 @@ const ErrorModal = ({ open, message, onClose }) => {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0  flex items-center justify-center z-50">
+    <div className="fixed inset-0  flex items-center justify-center z-[99999999]">
       <div className="w-full h-full absolute top-0 left-0 z-20 bg-black opacity-20" />
       <div className="bg-white p-6 rounded-xl shadow-lg w-96 z-50">
         <div className="flex justify-between items-center mb-4">

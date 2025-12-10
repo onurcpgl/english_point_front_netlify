@@ -2,69 +2,85 @@
 import { useEffect, useRef } from "react";
 import flatpickr from "flatpickr";
 import "flatpickr/dist/flatpickr.min.css";
-// import { Turkish } from "flatpickr/dist/l10n/tr.js";
 
 export default function ModernDatePicker({ formik }) {
-  // Doğrudan input elementine referans veriyoruz.
   const inputRef = useRef(null);
-  // Flatpickr örneğini saklamak için (temizlik ve dışarıdan müdahale için)
   const fpInstance = useRef(null);
 
   useEffect(() => {
-    // Referans yoksa veya zaten başlatılmışsa dur.
     if (!inputRef.current || fpInstance.current) return;
 
-    // Flatpickr'ı doğrudan INPUT elementi üzerinde başlatıyoruz.
+    // --- HESAPLAMA ---
+    // Şu anki zamanı al
+    const now = new Date();
+    // 2 saat ekle
+    const startHour = now.getHours() + 2;
+    // Dakikayı 00 yap (Kullanıcının isteği: 13:15 değil 13:00 görünsün)
+
+    // Başlangıç için kısıtlama objesi oluşturuyoruz (Bugün için geçerli)
+    const initialMinTime = new Date();
+    initialMinTime.setHours(startHour);
+    initialMinTime.setMinutes(0);
+
     fpInstance.current = flatpickr(inputRef.current, {
       enableTime: true,
       noCalendar: false,
       dateFormat: "Y-m-d H:i",
       minDate: "today",
       time_24hr: true,
-      closeOnSelect: false, // Tarih seçilince saat için açık kalsın
-      disableMobile: "true", // iOS'un kendi dandik tarih seçicisini engelle
-      // locale: Turkish,
+      closeOnSelect: false,
+      disableMobile: "true",
 
-      // ÖNEMLİ: Başlangıçta inputun içinde görünecek değeri buraya veriyoruz.
-      // Eğer formik'te kayıtlı bir değer varsa onu gösterir.
+      // GÖRSEL AYAR: Takvim açıldığında saat tekerleği nerede dursun?
+      // Eğer formik'te değer yoksa, hesapladığımız (Şu an + 2 saat) değerinde dursun.
+      defaultHour: startHour,
+      defaultMinute: 0,
+
+      // KISITLAMA: En erken seçilebilecek saat (Dakikayı 00'a yuvarladık)
+      minTime: initialMinTime,
+
       defaultDate: formik.values.session_date,
 
       onChange: function (selectedDates, dateStr, instance) {
-        // Dinamik saat kontrolü (Bugün ise geçmiş saatleri kapat)
         if (selectedDates.length > 0) {
           const selectedDate = selectedDates[0];
+          const currentDate = new Date();
+
+          // Seçilen gün bugün mü?
           const isToday =
-            selectedDate.toDateString() === new Date().toDateString();
-          instance.set("minTime", isToday ? new Date() : null);
+            selectedDate.toDateString() === currentDate.toDateString();
+
+          if (isToday) {
+            // BUGÜN seçildiyse: Hesaplamayı tekrar yap (Anlık saat değişmiş olabilir)
+            const dynamicNow = new Date();
+            dynamicNow.setHours(dynamicNow.getHours() + 2);
+            dynamicNow.setMinutes(0); // Dakikayı sıfırla
+
+            instance.set("minTime", dynamicNow);
+          } else {
+            // BAŞKA GÜN seçildiyse: Saat kısıtlamasını kaldır (00:00 serbest)
+            instance.set("minTime", null);
+          }
         }
 
-        // SEÇİM YAPILDIĞINDA:
-        // 1. Flatpickr otomatik olarak input'un görünen değerini günceller (Bizim bir şey yapmamıza gerek yok).
-        // 2. Biz sadece arka planda Formik'in durumunu güncelliyoruz.
         formik.setFieldValue("session_date", dateStr ? dateStr + ":00" : "");
       },
     });
 
-    // Temizlik: Bileşen ekrandan gidince Flatpickr'ı yok et.
     return () => {
       if (fpInstance.current) {
         fpInstance.current.destroy();
         fpInstance.current = null;
       }
     };
-
-    // Bağımlılık dizisi BOŞ. Sadece ilk renderda çalışır.
-    // Bu sayede seçim yapınca kapanma sorunu yaşanmaz.
   }, []);
 
-  // EKSTRA: Eğer başka bir yerden "Formu Temizle" butonuna basılırsa
-  // Flatpickr'ın görselini de temizlemek için bir senkronizasyon.
+  // Form temizleme senkronizasyonu
   useEffect(() => {
     if (fpInstance.current && !formik.values.session_date) {
       fpInstance.current.clear();
     }
   }, [formik.values.session_date]);
-
   return (
     <div className="space-y-2">
       <label className="flex items-center text-sm font-medium text-gray-700">

@@ -48,7 +48,7 @@ const ProfilePhotoCropper = ({ onCropDone }) => {
         </>
       ) : (
         // 🔹 Tam ekran modal (tüm ekranı kaplar)
-        <div className="fixed inset-0 z-[9999] bg-blacks/10 flex flex-col items-center justify-center w-full h-full">
+        <div className="fixed inset-0 bg-[#2e242499] z-[9999] bg-blacks/10 flex flex-col items-center justify-center w-full h-full">
           <div className="relative w-full h-full max-w-[600px] max-h-[600px] aspect-square bg-white rounded-xl overflow-hidden">
             <Cropper
               image={imageSrc}
@@ -69,13 +69,13 @@ const ProfilePhotoCropper = ({ onCropDone }) => {
               onClick={handleCancel}
               className="bg-gray-600 text-white px-4 py-2 rounded-full text-sm cursor-pointer hover:scale-105 duration-150 transition-all"
             >
-              İptal
+              Cancel
             </button>
             <div
               onClick={handleCrop}
               className="bg-[#ffd207] text-black cursor-pointer px-4 py-2 rounded-full text-sm hover:scale-105 duration-150 transition-all"
             >
-              Kırp ve Kaydet
+              Crop and Save
             </div>
           </div>
         </div>

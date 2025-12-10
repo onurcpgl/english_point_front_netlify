@@ -1,12 +1,11 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { MapPin, Mail, Search, BookOpen, Home } from "lucide-react"; // Home ikonunu ekledim
+import { MapPin, Mail, Search, BookOpen, Home } from "lucide-react";
 import generalService from "../../../utils/axios/generalService";
 import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import MiniCourseSessionCard from "../myEducations/MiniCourseSessionCard";
 
-// Kart Başlık Bileşeni
 const CardHeader = ({ title }) => (
   <div className="p-3 md:p-4 bg-white flex justify-between items-center rounded-full w-full px-5 shadow-md mb-4">
     <h2 className="text-xl font-extrabold text-gray-900">{title}</h2>
@@ -14,7 +13,6 @@ const CardHeader = ({ title }) => (
   </div>
 );
 
-// Bilgi Satırı Bileşeni
 const InfoRow = ({ label, value, icon }) => (
   <div className="mb-3 last:mb-0 border-b border-gray-100 pb-2 last:border-0">
     <dt className="font-bold text-gray-900 text-sm flex items-center gap-2 mb-1">
@@ -34,7 +32,6 @@ function Profile() {
     "https://dummyimage.com/150x150/000/fff.png"
   );
 
-  // 1. Eğitimleri çekiyoruz
   const {
     data: myCourses,
     error,
@@ -44,7 +41,6 @@ function Profile() {
     queryFn: generalService.getUserSession,
   });
 
-  // 2. Adresleri çekiyoruz (Bu veriyi kullanacağız)
   const {
     data: myAddresses,
     error: errorMyAddresses,
@@ -67,13 +63,12 @@ function Profile() {
             lastName: result.user.lastName || "",
             email: result.user.email || "",
             phone: result.user.phone || null,
-            // Adresi buradan almıyoruz, myAddresses'den alacağız.
           });
 
           setProfileImage(
-            result.user.profile_image || // Varsa ve boş değilse bunu al
-              result.user.avatar || // Yoksa, avatar varsa ve boş değilse bunu al
-              "https://dummyimage.com/150x150/000/fff.png" // İkisi de yoksa veya boşsa bunu al
+            result.user.profile_image ||
+              result.user.avatar ||
+              "https://dummyimage.com/150x150/000/fff.png"
           );
         }
       } catch (error) {
@@ -86,10 +81,71 @@ function Profile() {
     fetchUserInfo();
   }, []);
 
+  // --- SKELETON LOADER ALANI (Burayı değiştirdik) ---
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64 text-gray-500 font-medium">
-        Yükleniyor...
+      <div className="w-full min-h-screen font-sans bg-transparent">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* SOL KOLON SKELETON (Profil Kartı) */}
+          <div className="lg:col-span-5">
+            <div className="rounded-3xl p-4 md:p-6 w-full bg-[#F5F5F5] shadow-sm h-[500px] animate-pulse">
+              {/* Header Skeleton */}
+              <div className="h-14 bg-white rounded-full w-full mb-8 opacity-50"></div>
+
+              <div className="flex flex-col items-center mt-6">
+                {/* Profil Resmi Yuvarlağı */}
+                <div className="w-36 h-36 bg-gray-200 rounded-full mb-4 border-4 border-white"></div>
+
+                {/* İsim Satırları */}
+                <div className="h-6 w-1/2 bg-gray-200 rounded mb-2"></div>
+                <div className="h-6 w-1/3 bg-gray-200 rounded mb-8"></div>
+
+                {/* Bilgi Kutusu */}
+                <div className="bg-white rounded-3xl w-full p-6 h-32 opacity-50">
+                  <div className="h-4 w-full bg-gray-100 rounded mb-4"></div>
+                  <div className="h-4 w-2/3 bg-gray-100 rounded"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* SAĞ KOLON SKELETON */}
+          <div className="lg:col-span-7 grid grid-cols-1 gap-8 content-start">
+            {/* 1. Eğitimler Skeleton */}
+            <div className="rounded-3xl p-4 md:p-6 w-full bg-[#F5F5F5] shadow-sm animate-pulse">
+              {/* Header */}
+              <div className="h-14 bg-white rounded-full w-full mb-6 opacity-50"></div>
+
+              {/* Eğitim Kartları */}
+              <div className="space-y-4">
+                <div className="w-full h-24 bg-white rounded-2xl opacity-60"></div>
+                <div className="w-full h-24 bg-white rounded-2xl opacity-60"></div>
+              </div>
+            </div>
+
+            {/* 2. Adresler Skeleton */}
+            <div className="rounded-3xl p-4 md:p-6 w-full bg-[#F5F5F5] shadow-sm animate-pulse">
+              {/* Header */}
+              <div className="h-14 bg-white rounded-full w-full mb-6 opacity-50"></div>
+
+              {/* Adres Kartları */}
+              <div className="space-y-4">
+                <div className="w-full bg-white rounded-2xl p-5 border border-transparent opacity-60">
+                  <div className="h-6 w-1/3 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-4 w-3/4 bg-gray-200 rounded mb-3"></div>
+                  <div className="flex gap-2">
+                    <div className="h-6 w-16 bg-gray-200 rounded"></div>
+                    <div className="h-6 w-16 bg-gray-200 rounded"></div>
+                  </div>
+                </div>
+                <div className="w-full bg-white rounded-2xl p-5 border border-transparent opacity-60">
+                  <div className="h-6 w-1/3 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-4 w-3/4 bg-gray-200 rounded mb-3"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -101,6 +157,7 @@ function Profile() {
       </div>
     );
 
+  // --- GERÇEK İÇERİK ---
   return (
     <div className="w-full min-h-screen font-sans bg-transparent">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -110,7 +167,6 @@ function Profile() {
             <CardHeader title="Profile" />
 
             <div className="flex flex-col items-center text-center mt-6">
-              {/* Profil Resmi */}
               <div className="relative w-36 h-36 mb-4">
                 <Image
                   src={profileImage}
@@ -122,12 +178,10 @@ function Profile() {
                 />
               </div>
 
-              {/* İsim */}
               <h3 className="text-2xl font-extrabold text-gray-900 leading-tight mb-6">
                 {formData.name} <br /> {formData.lastName}
               </h3>
 
-              {/* İletişim Bilgileri */}
               <div className="bg-white rounded-3xl w-full p-6 shadow-sm text-left">
                 <dl className="space-y-4">
                   <InfoRow
@@ -151,7 +205,13 @@ function Profile() {
             <CardHeader title="Katıldığım Eğitimler" />
 
             <div className="min-h-[150px] flex items-center justify-center w-full">
-              {myCourses?.sessions && myCourses.sessions.length > 0 ? (
+              {isCoursesLoading ? (
+                // Küçük lokal skeleton (Eğer sadece eğitimler yükleniyorsa)
+                <div className="w-full space-y-4 animate-pulse">
+                  <div className="h-24 bg-white rounded-2xl"></div>
+                  <div className="h-24 bg-white rounded-2xl"></div>
+                </div>
+              ) : myCourses?.sessions && myCourses.sessions.length > 0 ? (
                 <div className="w-full bg-white rounded-2xl p-5 shadow-sm flex flex-col gap-4">
                   {myCourses.sessions.map((session, i) => (
                     <MiniCourseSessionCard
@@ -176,8 +236,13 @@ function Profile() {
             <CardHeader title="Adreslerim" />
 
             <div className="min-h-[150px] flex items-center justify-center w-full">
-              {/* formData.address yerine myAddresses kullanıyoruz */}
-              {myAddresses && myAddresses.length > 0 ? (
+              {isAddressesLoading ? (
+                // Küçük lokal skeleton (Eğer sadece adresler yükleniyorsa)
+                <div className="w-full space-y-4 animate-pulse">
+                  <div className="h-28 bg-white rounded-2xl"></div>
+                  <div className="h-28 bg-white rounded-2xl"></div>
+                </div>
+              ) : myAddresses && myAddresses.length > 0 ? (
                 <div className="w-full flex flex-col gap-4">
                   {myAddresses.map((addr) => (
                     <div

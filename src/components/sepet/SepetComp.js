@@ -100,7 +100,6 @@ const SepetComp = () => {
         setErrorMessage(result.message || "Ödeme işlemi başarısız!");
         setErrorModalOpen(true);
         setLoadingSendBtn(false);
-
         return;
       }
 
@@ -195,9 +194,11 @@ const SepetComp = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-4">
             <div className="space-y-4">
-              <div className="animate-pulse flex gap-6 bg-white rounded-2xl p-6">
-                <div className="w-48 h-32 bg-gray-200 rounded-xl"></div>
-                <div className="flex-1 space-y-4 py-1">
+              <div className="animate-pulse flex flex-col sm:flex-row gap-6 bg-white rounded-2xl p-6">
+                <div className="w-full h-48 sm:w-48 sm:h-32 bg-gray-200 rounded-xl shrink-0"></div>
+
+                {/* Yazı Alanı */}
+                <div className="flex-1 space-y-4 py-1 w-full">
                   <div className="h-6 bg-gray-200 rounded w-3/4"></div>
                   <div className="h-4 bg-gray-200 rounded w-1/2"></div>
                   <div className="h-4 bg-gray-200 rounded w-1/4"></div>
@@ -205,8 +206,10 @@ const SepetComp = () => {
               </div>
             </div>
           </div>
+
+          {/* Sağ Taraf (Sidebar) */}
           <div className="lg:col-span-1">
-            <div className="space-y-4 mb-6">
+            <div className="space-y-4 mb-6 p-4 border border-gray-100 rounded-2xl">
               <div className="h-6 bg-gray-200 rounded w-1/2 animate-pulse"></div>
               <div className="h-6 bg-gray-200 rounded w-1/3 animate-pulse"></div>
               <div className="h-10 bg-gray-200 rounded w-full animate-pulse mt-4"></div>
