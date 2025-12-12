@@ -164,8 +164,18 @@ const confirmCourseUser = async (data) => {
   const response = await axiosInstance.post("/api/confirm-course-user", data);
   return response.data;
 };
-
+//Payment
+const getPaymentsStats = async () => {
+  const response = await axiosInstance.get("/api/instructor/payments/stats");
+  return response.data;
+};
+const getPaymentHistory = async () => {
+  const response = await axiosInstance.get("/api/instructor/payments/history");
+  return response.data;
+};
 const instructorService = {
+  getPaymentsStats,
+  getPaymentHistory,
   confirmCourseUser,
   getLanguageUpdate,
   postLanguageInfo,

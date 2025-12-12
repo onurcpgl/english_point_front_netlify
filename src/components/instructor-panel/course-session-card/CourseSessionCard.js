@@ -275,8 +275,8 @@ const CourseSessionCard = ({ data, status }) => {
               >
                 <div className="w-64 h-50 relative flex-shrink-0 overflow-hidden mr-4 max-lg:w-full max-lg:h-56">
                   <Image
-                    src={item.cafe.image}
-                    alt={item.cafe.name}
+                    src={item.google_cafe.image}
+                    alt={item.google_cafe.name}
                     className="w-full h-full object-cover"
                     fill
                   />
@@ -288,15 +288,17 @@ const CourseSessionCard = ({ data, status }) => {
                         {item.session_title}
                       </h3>
                       <p className="text-base font-semibold text-gray-800 mt-1">
-                        {item.cafe.name}
+                        {item.google_cafe.name}
                       </p>
                     </div>
 
                     <div className="flex flex-col gap-1">
                       <p className="text-md text-gray-600 leading-snug">
-                        {item.cafe.address}
+                        {item.google_cafe.address}
                       </p>
-                      <p className="text-md text-gray-500">{item.cafe.phone}</p>
+                      <p className="text-md text-gray-500">
+                        {item.google_cafe.phone}
+                      </p>
                     </div>
 
                     <div className="pt-2 mt-1 border-t border-gray-100">
@@ -317,7 +319,7 @@ const CourseSessionCard = ({ data, status }) => {
                           onClick={(e) => {
                             e.stopPropagation();
                             window.open(
-                              `https://www.google.com/maps?q=${item.cafe.latitude},${item.cafe.longitude}`,
+                              `https://www.google.com/maps?q=${item.google_cafe.latitude},${item.google_cafe.longitude}`,
                               "_blank"
                             );
                           }}

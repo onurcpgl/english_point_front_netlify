@@ -180,7 +180,7 @@ const getCafes = async () => {
 
 const saveCourseSession = async (values) => {
   const response = await axiosInstance.post("/api/course-sessions", values);
-  return response;
+  return response.data;
 };
 //Sepet servisleri
 // Session Basket APIs
@@ -223,7 +223,19 @@ export const getUserSession = async () => {
   return response.data;
 };
 
+export const sendEmailCode = async () => {
+  const response = await axiosInstance.post("/api/email/send-current");
+  return response.data;
+};
+
+export const sendResendCode = async () => {
+  const response = await axiosInstance.post("/api/email/resend-new");
+  return response.data;
+};
+
 const generalService = {
+  sendEmailCode,
+  sendResendCode,
   updateUserProfile,
   getUserSession,
   addToBasket,

@@ -156,9 +156,11 @@ function InstructorMySessions() {
             </div>
           </div>
         ) : (
-          <p className="text-black text-center mt-10 mb-5 text-xl md:text-3xl font-semibold">
-            Oluşturduğunuz session yok!
-          </p>
+          <div>
+            <p className="text-black text-center mt-10 mb-5 text-xl md:text-3xl font-semibold">
+              The session you created does not exist!
+            </p>
+          </div>
         )
       ) : (
         <Loading />

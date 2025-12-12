@@ -14,7 +14,7 @@ const EducationCard = ({ data, status }) => {
   });
   const [openCourseInfo, setOpenCourseInfo] = useState(null);
   const openCourseRef = useRef(null);
-
+  console.log("data", data);
   useEffect(() => {
     function handleClickOutside(event) {
       if (
@@ -55,8 +55,8 @@ const EducationCard = ({ data, status }) => {
               >
                 <div className="md:w-50 w-full h-auto shrink-0 relative">
                   <Image
-                    src={item.course_session.cafe.image}
-                    alt={item.course_session.cafe.name}
+                    src={item?.course_session.google_cafe.image}
+                    alt={item.course_session.google_cafe.name}
                     className="w-full h-full"
                     fill
                   />
@@ -67,13 +67,13 @@ const EducationCard = ({ data, status }) => {
                       {item.course_session.session_title}
                     </h3>
                     <p className="text-xs font-semibold text-black">
-                      {item.course_session.cafe.name}
+                      {item.course_session.google_cafe.name}
                     </p>
                     <p className="text-xs text-gray-700 mt-1">
-                      {item.course_session.cafe.address}
+                      {item.course_session.google_cafe.address}
                     </p>
                     <p className="text-xs text-gray-700">
-                      {item.course_session.cafe.phone}
+                      {item.course_session.google_cafe.phone}
                     </p>
                     <p className="text-xs text-gray-800 mt-1">
                       <span className="font-semibold">Eğitmen:</span>{" "}
@@ -89,7 +89,7 @@ const EducationCard = ({ data, status }) => {
                         <span
                           onClick={() =>
                             window.open(
-                              `https://www.google.com/maps?q=${item?.course_session.cafe.latitude},${item?.course_session.cafe.longitude}`,
+                              `https://www.google.com/maps?q=${item?.course_session.google_cafe.latitude},${item?.course_session.google_cafe.longitude}`,
                               "_blank"
                             )
                           }

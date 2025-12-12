@@ -75,8 +75,9 @@ function ContactInfo() {
                 <Field
                   type="email"
                   name="email"
+                  disabled
                   placeholder="Enter your e-mail"
-                  className="w-full h-14 px-4 placeholder:text-[#8e8e8e] 
+                  className="w-full h-14 px-4 opacity-70 placeholder:text-[#8e8e8e] 
                            bg-white font-light text-black shadow outline-0"
                 />
               </div>

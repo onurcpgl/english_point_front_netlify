@@ -43,7 +43,9 @@ export default function InstructorCreateSession() {
   const router = useRouter();
   const [message, setMessage] = useState({ type: "", text: "" });
   const [selectedCafe, setSelectedCafe] = useState(null);
-  const [open, setOpen] = useState(false);
+  const [selectCafe, onSelectCafe] = useState();
+
+  console.log("open", selectedCafe);
   const [initialValues, setInitialValues] = useState({
     //session_title: "",
     //description: "",
@@ -51,7 +53,8 @@ export default function InstructorCreateSession() {
     //duration_minutes: "",
     language_level: "",
     //quota: "",
-    cafe_id: "",
+    cafe_id: null,
+    google_cafe: "",
     start_answers: {},
   });
 
@@ -108,21 +111,21 @@ export default function InstructorCreateSession() {
 
     onSubmit: async (values, { resetForm, setSubmitting }) => {
       // selectedCafe state'in varsa bunu values içine ekle
-      if (!selectedCafe || !selectedCafe.id) {
+      if (!selectedCafe) {
         setMessage({ type: "error", text: "Please select a cafe." });
         setSubmitting(false); // Yükleniyor durumunu kapat
         return; // İşlemi durdur
       }
       const payload = {
         ...values,
-        cafe_id: selectedCafe?.id,
+        google_cafe: selectedCafe,
       };
 
       const result = await generalService.saveCourseSession(payload);
 
       // Başarılı mesaj
       //
-
+      console.log("result", result);
       if (result?.status) {
         queryClient.invalidateQueries(["myCourses"]);
         setMessage({
@@ -372,13 +375,13 @@ export default function InstructorCreateSession() {
             )}
           </div>
         </div>
-        <div className="w-full space-y-6 px-4">
+        {/* <div className="w-full space-y-6 px-4">
           <div className="relative w-full">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Cafe Location
             </label>
 
-            {/* --- INPUT AREA --- */}
+          
             <div
               onClick={() => setOpen(!open)}
               className="relative cursor-pointer"
@@ -391,7 +394,7 @@ export default function InstructorCreateSession() {
                 placeholder="Select a cafe..."
                 className="w-full h-14 rotate-0 focus:rounded-0 outline-0 px-4 placeholder:text-[#8e8e8e] bg-white font-light text-black"
               />
-              {/* Arrow Icon */}
+   
               <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-500">
                 <svg
                   className="w-5 h-5"
@@ -409,7 +412,7 @@ export default function InstructorCreateSession() {
               </div>
             </div>
 
-            {/* --- DROPDOWN LIST --- */}
+    
             {open && (
               <div className="absolute top-full left-0 mt-2 w-full bg-white border border-gray-200 rounded-xl shadow-xl p-3 z-50 animate-in fade-in zoom-in-95 duration-200">
                 <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
@@ -426,7 +429,7 @@ export default function InstructorCreateSession() {
                         setOpen(false);
                       }}
                     >
-                      {/* Image in Dropdown */}
+           
                       <div className="relative h-28 w-full mb-3 overflow-hidden rounded-lg">
                         {cafe.image ? (
                           <Image
@@ -467,11 +470,11 @@ export default function InstructorCreateSession() {
             )}
           </div>
 
-          {/* --- DETAIL CARD (Appears below input upon selection) --- */}
+         
           {selectedCafe && (
             <div className="w-full animate-in fade-in slide-in-from-top-4 duration-500">
               <div className="bg-slate-50 border border-slate-200 rounded-xl overflow-hidden shadow-sm flex flex-col md:flex-row">
-                {/* Left: Large Image */}
+
                 <div className="w-full md:w-1/3 h-48 md:h-auto relative bg-gray-200">
                   {selectedCafe.image ? (
                     <Image
@@ -499,9 +502,9 @@ export default function InstructorCreateSession() {
                   )}
                 </div>
 
-                {/* Right: Details */}
+   
                 <div className="flex-1 p-6 flex flex-col justify-center space-y-4">
-                  {/* Title & Badge */}
+   
                   <div className="flex justify-between items-start">
                     <h3 className="text-xl font-bold text-gray-900">
                       {selectedCafe.name}
@@ -511,7 +514,7 @@ export default function InstructorCreateSession() {
                     </span>
                   </div>
 
-                  {/* Address Box */}
+
                   <div className="flex items-start gap-3 bg-white p-3 rounded-lg border border-gray-200">
                     <div className="mt-0.5 text-blue-500">
                       <svg
@@ -547,9 +550,10 @@ export default function InstructorCreateSession() {
               </div>
             </div>
           )}
-        </div>
-        {/* <CafeLocationComp /> */}
-        {/* <CafeLocationComp /> */}
+        </div> 
+        */}
+        <CafeLocationComp onSelectCafe={setSelectedCafe} />
+
         <div className="px-4 border-t text-black py-2 border-gray-200">
           <p className="text-xl font-semibold">Starting Questions Answers</p>
           <p className="text-sm font-medium text-gray-700">

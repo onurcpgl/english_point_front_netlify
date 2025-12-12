@@ -154,10 +154,10 @@ function CourseSessionsComp() {
     let tempData = courseSessions.map((s) => {
       if (userLocation.lat && userLocation.lon) {
         const cafeLat = parseFloat(
-          s.cafe.latitude.toString().replace(",", ".")
+          s.google_cafe.latitude.toString().replace(",", ".")
         );
         const cafeLon = parseFloat(
-          s.cafe.longitude.toString().replace(",", ".")
+          s.google_cafe.longitude.toString().replace(",", ".")
         );
         const distance = getDistance(
           userLocation.lat,

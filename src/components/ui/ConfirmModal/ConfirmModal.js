@@ -27,13 +27,13 @@ const ConfirmModal = ({ open, message, onConfirm, onCancel }) => {
         <div className="flex justify-end space-x-3">
           <button
             onClick={onCancel}
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all"
+            className="mt-4 w-full bg-black border text-white py-2  hover:scale-105 transition-all cursor-pointer"
           >
             Hayır
           </button>
           <button
             onClick={onConfirm}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all"
+            className="mt-4 w-full bg-[#ffd207] text-black py-2  hover:scale-105 transition-all cursor-pointer"
           >
             Evet
           </button>

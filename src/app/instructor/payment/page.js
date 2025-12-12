@@ -1,12 +1,7 @@
-import React from 'react'
-
+import React from "react";
+import InstructorPayment from "../../../components/instructor-panel/instructor-payment/InstructorPayment";
 function page() {
-    return (
-        <div>
-            <p className='text-black font-semibold'> payment</p>
-
-        </div>
-    )
+  return <InstructorPayment />;
 }
 
-export default page
+export default page;

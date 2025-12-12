@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebookF, FaApple } from "react-icons/fa";
@@ -7,6 +7,7 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import { signIn, getSession, useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import SuccesMessageComp from "../../ui/SuccesModal/SuccesMessageComp";
 import generalService from "../../../utils/axios/generalService";
 import * as Yup from "yup";
 import Image from "next/image";
@@ -27,11 +28,14 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [forgotPassword, setForgotPassword] = useState(false); // Şifre unuttum durumu
-
+  // Modal State'i
+  const [successOpen, setSuccessOpen] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
   const searchParams = useSearchParams();
   const { update } = useSession();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
   const router = useRouter();
+
   // Initial values
   const initialValues = {
     email: "",
@@ -44,6 +48,29 @@ const Login = () => {
       .required("Email is required"),
   });
 
+  useEffect(() => {
+    // 1. URL parametresini kontrol et
+    const isVerified = searchParams.get("verified");
+
+    // 2. Eğer verified=true ise
+    if (isVerified === "true") {
+      setModalMessage(
+        "Tebrikler! Hesabınız başarıyla doğrulandı. Şimdi giriş yapabilirsiniz."
+      );
+      setSuccessOpen(true);
+
+      // 3. (Opsiyonel) URL'i temizle ki çirkin durmasın
+      // Kullanıcıya mesajı gösterdikten sonra adresi tekrar /login yapıyoruz
+      router.replace("/login");
+    }
+
+    // Ayrıca backend'den hata gelirse (örn: ?error=invalid_link) onu da yakalayabilirsin
+    const error = searchParams.get("error");
+    if (error === "invalid_link") {
+      // Burada ErrorModal açabilirsin
+      console.log("Link geçersiz!");
+    }
+  }, [searchParams, router]);
   // Form submit handler
   const handleLoginSubmit = async (values, { setSubmitting, setStatus }) => {
     try {
@@ -158,7 +185,11 @@ const Login = () => {
       <div className="lg:w-1/2 flex items-center justify-center p-8 lg:p-12">
         <div className="w-full max-w-md">
           {/* Header */}
-
+          <SuccesMessageComp
+            open={successOpen}
+            message={modalMessage}
+            onClose={() => setSuccessOpen(false)}
+          />
           <AnimatePresence mode="wait">
             <motion.div
               key={forgotPassword ? "forgot" : "login"}

@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { MapPin, Edit2, Star, Trash2 } from "lucide-react";
 import SuccesMessageComp from "../../ui/SuccesModal/SuccesMessageComp";
 import ErrorModal from "../../ui/ErrorModal/ErrorModal";
-
+import ConfirmModal from "../../ui/ConfirmModal/ConfirmModal";
 // Google Places Autocomplete importları
 import PlacesAutocomplete, {
   geocodeByAddress,
@@ -26,7 +26,9 @@ function MyAddresses() {
   const [defLoading, setDefLoading] = useState(false);
   const [errorModalOpen, setErrorModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-
+  const [loadingBtn, setLoadingBtn] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
   const [formData, setFormData] = useState({
     title: "",
     country: "",
@@ -136,46 +138,66 @@ function MyAddresses() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoadingBtn(true);
+
+    // Yeni işlem başlarken hata modalını kapalı tutalım (temizlik)
+    setErrorModalOpen(false);
+
     const payload = {
       ...formData,
       address_line: addressInput || formData.address_line,
     };
 
-    if (editingAddress) {
-      try {
-        const updateResult = await generalService.updatedAdress({
+    try {
+      let result;
+
+      // 1. İşlem Tipi Belirleme (Güncelleme veya Ekleme)
+      if (editingAddress) {
+        result = await generalService.updatedAdress({
           ...payload,
           id: editingAddress,
         });
+      } else {
+        result = await generalService.storeAdresses(payload);
+      }
 
-        if (updateResult.status) {
-          setOpenModal(true);
-          setModalMessage(
-            updateResult.message || "Adresiniz başarıyla güncellendi."
-          );
-          resetForm();
-          refetch();
-        }
-      } catch (err) {
-        console.error("Hata:", err);
+      // 2. Başarı Kontrolü (Backend status: true dedi mi?)
+      if (result && result.status) {
+        // --- BAŞARI DURUMU (Success Modal) ---
+        setOpenModal(true); // Mevcut başarı modalını aç
+        setModalMessage(result.message || "İşlem başarıyla tamamlandı.");
+        resetForm();
+        refetch(); // Listeyi yenile
+      } else {
+        // Status false ise manuel hata fırlatıp catch'e düşürüyoruz
+        throw new Error(result?.message || "İşlem başarısız oldu.");
       }
-    } else {
-      try {
-        const result = await generalService.storeAdresses(payload);
-        if (result.status) {
-          resetForm();
-          setOpenModal(true);
-          setModalMessage(result.message || "Adres başarıyla eklendi.");
-          refetch();
-        }
-      } catch (err) {
-        console.error("Hata:", err);
-      }
+    } catch (err) {
+      console.error("API Hatası:", err);
+
+      // 3. Hata Mesajını Ayıklama (400, 500 vb.)
+      // Backend'den gelen mesaj varsa onu, yoksa genel hata mesajını alıyoruz.
+      const msg = "Bir hata oluştu, lütfen tekrar deneyin.";
+
+      // --- HATA DURUMU (Error Modal) ---
+      setErrorMessage(msg);
+      setErrorModalOpen(true);
+    } finally {
+      // 4. Loading'i Kapat (Her durumda çalışır)
+      setLoadingBtn(false);
     }
   };
+  const handleAskDelete = (id) => {
+    setDeleteId(id); // ID'yi hafızaya al
+    setConfirmOpen(true); // Modalı aç
+  };
+  const handleDeleteAddress = async () => {
+    setConfirmOpen(false); // Modalı kapat
 
-  const handleDeleteAddress = async (id) => {
-    const result = await generalService.deleteAdresses(id);
+    if (!deleteId) return;
+
+    const result = await generalService.deleteAdresses(deleteId); // Parametre yerine state'den alıyoruz
+
     if (result.status) {
       resetForm();
       setOpenModal(true);
@@ -272,6 +294,12 @@ function MyAddresses() {
         open={errorModalOpen}
         message={errorMessage}
         onClose={() => setErrorModalOpen(false)}
+      />
+      <ConfirmModal
+        open={confirmOpen}
+        message="Bu adresi silmek istediğinize emin misiniz?"
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={handleDeleteAddress}
       />
 
       <div className="flex justify-between items-center mb-6">
@@ -483,9 +511,42 @@ function MyAddresses() {
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-3  bg-black text-white font-bold hover:bg-gray-900 transition-colors shadow-lg shadow-gray-200"
+                    disabled={loadingBtn} // 1. Tıklamayı engeller
+                    className={`px-6 py-3 bg-black text-white font-bold transition-colors shadow-lg shadow-gray-200 flex items-center justify-center gap-2
+    ${loadingBtn ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-900"} 
+  `} // 2. Görsel olarak pasif olduğu belli olur
                   >
-                    {editingAddress ? "Güncelle" : "Adresi Kaydet"}
+                    {loadingBtn ? (
+                      <>
+                        {/* Basit bir yükleniyor ikonu (Spinner) */}
+                        <svg
+                          className="animate-spin h-5 w-5 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                        <span>İşleniyor...</span>
+                      </>
+                    ) : // Normal Durum
+                    editingAddress ? (
+                      "Güncelle"
+                    ) : (
+                      "Adresi Kaydet"
+                    )}
                   </button>
                 </div>
               </form>
@@ -546,7 +607,7 @@ function MyAddresses() {
                   </button>
                 )}
                 <button
-                  onClick={() => handleDeleteAddress(address.id)}
+                  onClick={() => handleAskDelete(address.id)}
                   className="p-2 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-lg transition-colors"
                 >
                   <Trash2 className="w-5 h-5" />

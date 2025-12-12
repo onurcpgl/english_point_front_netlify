@@ -8,10 +8,12 @@ function MiniCourseSessionCard({ item }) {
               {item?.session_title}
             </h3>
             <p className="text-sm font-semibold text-black">
-              {item?.cafe.name}
+              {item?.google_cafe.name}
             </p>
-            <p className="text-xs text-gray-700 mt-1">{item?.cafe.address}</p>
-            <p className="text-xs text-gray-700">{item?.cafe.phone}</p>
+            <p className="text-xs text-gray-700 mt-1">
+              {item?.google_cafe.address}
+            </p>
+            <p className="text-xs text-gray-700">{item?.google_cafe.phone}</p>
           </div>
 
           {/* <div className="flex items-center justify-between mt-3 flex-wrap gap-2">

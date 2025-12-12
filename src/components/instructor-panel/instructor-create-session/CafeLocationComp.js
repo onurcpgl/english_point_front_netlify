@@ -13,7 +13,7 @@ export default function CafeLocationComp({ onSelectCafe }) {
   const [options, setOptions] = useState([]); // Google'dan gelen tahminler
   const [selectedCafe, setSelectedCafe] = useState(null); // Seçilen kafe detayları
   const [isOpen, setIsOpen] = useState(false);
-  console.log("pladce", selectedCafe);
+
   // Google Script Yüklemesi
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY, // .env dosyana eklemelisin
@@ -103,7 +103,7 @@ export default function CafeLocationComp({ onSelectCafe }) {
     return <div className="h-14 bg-gray-100 rounded animate-pulse" />;
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-6 px-4">
       <div className="relative w-full">
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Cafe Location (Google)
@@ -115,7 +115,7 @@ export default function CafeLocationComp({ onSelectCafe }) {
             value={inputValue}
             onChange={handleInputChange}
             placeholder="Search for a cafe via Google..."
-            className="w-full h-14 rounded-xl border border-gray-200 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 px-4 placeholder:text-[#8e8e8e] bg-white font-light text-black transition-all"
+            className="w-full h-14 border border-gray-200 outline-none focus:border-blue-500 bg-white focus:ring-1 focus:ring-blue-500 px-4 placeholder:text-[#8e8e8e]  font-light text-black transition-all"
             onFocus={() => setIsOpen(true)}
           />
           {/* Search Icon */}
@@ -179,13 +179,15 @@ export default function CafeLocationComp({ onSelectCafe }) {
           <div className="bg-slate-50 border border-slate-200 rounded-xl overflow-hidden shadow-sm flex flex-col md:flex-row">
             {/* Left: Large Image (Google Photo) */}
             <div className="w-full md:w-1/3 h-48 md:h-auto relative bg-gray-200">
-              {selectedCafe.image ? (
+              {selectedCafe ? (
                 // next/image kullandığımız için remote image config gerekebilir
                 // Şimdilik standart img etiketi kullanıyorum ki config ile uğraşma
-                <img
-                  src={selectedCafe.image}
+                <Image
+                  src="https://api.englishpoint.com.tr/public/google_cafe/google_cafe_image.jpg"
                   alt={selectedCafe.name}
                   className="w-full h-full object-cover"
+                  width={400}
+                  height={400}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100">

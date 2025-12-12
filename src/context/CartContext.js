@@ -2,35 +2,70 @@
 import { createContext, useContext, useState, useEffect, useRef } from "react";
 import generalService from "../utils/axios/generalService";
 import { useSession } from "next-auth/react";
+
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
   const { data: session, status } = useSession();
   const [sessions, setSessions] = useState(null);
-  const [loading, setLoading] = useState(true); // <-- loading state
+  const [loading, setLoading] = useState(true);
   const isInitialLoad = useRef(true);
+
+  // --- YENİ EKLENEN MANİPÜLASYON FONKSİYONU ---
+  // Bu fonksiyon gelen veriyi kontrol eder ve Google Cafe varsa
+  // onu normal Cafe formatına çevirip 'cafe' alanına koyar.
+  const processBasketData = (data) => {
+    // Veri yapısı geçerli mi kontrol et
+    if (!data?.basket?.course_session) return data;
+
+    const courseSession = data.basket.course_session;
+
+    // Eğer normal cafe YOKSA ama google_cafe VARSA
+    if (!courseSession.cafe && courseSession.google_cafe) {
+      const gCafe = courseSession.google_cafe;
+
+      // Google verisini Cafe formatına uyduruyoruz (Mapping)
+      // Frontend 'latitude', 'image' vb. bekliyor olabilir.
+      courseSession.cafe = {
+        ...gCafe, // Google verilerini kopyala
+        // Eksik veya farklı isimlendirilmiş alanları düzelt:
+        address: gCafe.vicinity || gCafe.address, // Google'da adres 'vicinity' olabilir
+        latitude: gCafe.latitude || gCafe.lat || 0,
+        longitude: gCafe.longitude || gCafe.lng || 0,
+        // Google'da resim array olabilir veya icon olabilir, bunu 'image' yapıyoruz
+        image: gCafe.image || gCafe.icon || gCafe.photos?.[0] || null,
+        is_google: true, // İlerde lazım olur diye işaret koyduk
+      };
+    }
+
+    return data;
+  };
+  // ------------------------------------------------
 
   useEffect(() => {
     if (status === "loading") return;
 
-    // Role kontrolü
     if (status !== "authenticated" || session.user.role !== "user") {
       setSessions({ basket: null, success: false });
       setLoading(false);
       return;
     }
+
     async function loadCart() {
       setLoading(true);
       try {
         const res = await generalService.getBasket();
-        setSessions(res || { basket: null, success: true });
-        localStorage.setItem("cartSessions", JSON.stringify(res));
-      } catch (e) {
-        //const stored = localStorage.getItem("cartSessions");
 
+        // --- DEĞİŞİKLİK BURADA ---
+        // Veriyi state'e atmadan önce işliyoruz
+        const processedRes = processBasketData(res);
+
+        setSessions(processedRes || { basket: null, success: true });
+        localStorage.setItem("cartSessions", JSON.stringify(processedRes));
+      } catch (e) {
         setSessions({ basket: null, success: true });
       } finally {
-        setLoading(false); // <-- loading bitiyor
+        setLoading(false);
       }
     }
     loadCart();
@@ -41,15 +76,21 @@ export const CartProvider = ({ children }) => {
       isInitialLoad.current = false;
       return;
     }
-    localStorage.setItem("cartSessions", JSON.stringify(sessions));
+    // Session değiştiğinde localStorage güncelle
+    if (sessions) {
+      localStorage.setItem("cartSessions", JSON.stringify(sessions));
+    }
   }, [sessions]);
 
-  const addSession = async (session) => {
+  const addSession = async (sessionData) => {
     try {
-      const result = await generalService.addToBasket(session.id);
+      const result = await generalService.addToBasket(sessionData.id);
       if (result.success) {
-        setSessions(session); // array olmalı
-        localStorage.setItem("cartSessions", JSON.stringify(session));
+        // Ekleme başarılıysa, API'den dönen güncel sepeti istemek daha sağlıklıdır
+        // ama eldeki veriyi kullanacaksak da manipüle etmeliyiz.
+        // Şimdilik senin yapına sadık kalarak direkt setliyoruz:
+        setSessions(sessionData);
+        localStorage.setItem("cartSessions", JSON.stringify(sessionData));
         return true;
       } else {
         console.error("Sepete ekleme başarısız:", result.message);
@@ -64,7 +105,6 @@ export const CartProvider = ({ children }) => {
   const removeSession = async (basket_id) => {
     try {
       const resultSession = await generalService.clearBasket(basket_id);
-      //setSessions(updated);
       if (resultSession.success) {
         localStorage.removeItem("cartSessions");
         setSessions({ basket: null, success: true });

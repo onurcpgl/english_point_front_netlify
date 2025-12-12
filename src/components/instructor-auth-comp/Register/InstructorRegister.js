@@ -5,12 +5,12 @@ import { FaCheck } from "react-icons/fa6";
 import generalService from "../../../utils/axios/generalService";
 import instructorPanelService from "../../../utils/axios/instructorPanelService";
 import FınalImage from "../../../assets/final/finalimage.png";
-import ProfilePhotoCropperRegister from "../../profilePhotoCropper/ProfilePhotoCropper";
+import ProfilePhotoCropperRegister from "../another-comp/ProfilePhotoCropperRegister";
 import RegisterLastIcon from "../../../assets/final/register-last-icon.png";
 import Logo from "../../../assets/logo/logo.png";
 import { formatPhone } from "../../../utils/helpers/formatters";
 import Image from "next/image";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, AlertTriangle, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
@@ -32,6 +32,7 @@ export default function InstructorRegister() {
 
   const wrapperRefCountryBirth = useRef(null);
   const wrapperRefCurrentLocation = useRef(null);
+  const [loadingBtn, setLoadingBtn] = useState(false);
   const [search, setSearch] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [searchCountry, setSearchCountry] = useState("");
@@ -153,6 +154,7 @@ export default function InstructorRegister() {
     description: { bio: "" },
     availability: [{ day: "sunday", timeFrom: "", timeTo: "" }],
   });
+  console.log("formdata", formData);
   const days = [
     "monday",
     "tuesday",
@@ -440,6 +442,7 @@ export default function InstructorRegister() {
   };
 
   const handleFinalSubmit = async () => {
+    setLoadingBtn(true);
     if (!validateCurrent()) return;
 
     const fd = new FormData();
@@ -505,6 +508,7 @@ export default function InstructorRegister() {
       if (res.status === "success") {
         //setSelectedStepSection(selectedStepSection + 1);
         setFinalStep(true);
+        setLoadingBtn(false);
       } else {
         if (res.status === "error") {
           setErrors((prev) => ({
@@ -513,11 +517,15 @@ export default function InstructorRegister() {
           }));
         }
         throw new Error("Kayıt başarısız");
+        setLoadingBtn(false);
       }
       // alert("Eğitmen kaydı başarıyla gönderildi!");
     } catch (e) {
       //console.error(e);
       //alert("Gönderimde bir hata oluştu. Konsolu kontrol edin.");
+      setLoadingBtn(false);
+    } finally {
+      setLoadingBtn(false);
     }
   };
   const handleCropDone = (blob, setFormData) => {
@@ -1293,6 +1301,39 @@ export default function InstructorRegister() {
                       I don’t have a higher education degree
                     </p>
                   </div>
+                  {!educationToggle &&
+                    formData?.about?.level === "English Teacher (Turkish)" && (
+                      <div className="mt-4 bg-orange-50 border-l-4 border-orange-500 p-4 shadow-sm animate-in fade-in slide-in-from-top-2">
+                        <div className="flex items-start">
+                          <div className="flex-shrink-0">
+                            <AlertTriangle className="h-5 w-5 text-orange-500" />
+                          </div>
+                          <div className="ml-3">
+                            <h3 className="text-sm font-bold text-orange-800">
+                              Bachelor`s Degree Required
+                            </h3>
+                            <div className="mt-2 text-sm text-orange-700">
+                              <p>
+                                To qualify as an{" "}
+                                <strong>`English Teache,r</strong>, holding a
+                                Bachelor`s Degree in English Teaching (or a
+                                related field) is mandatory. Please add your
+                                education details to proceed.
+                              </p>
+                            </div>
+                            <div className="mt-3">
+                              <button
+                                type="button"
+                                onClick={() => setEducationToggle(true)}
+                                className="text-sm font-medium text-orange-800 hover:text-orange-900 underline transition-colors"
+                              >
+                                Add Education Details &rarr;
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   {educationToggle &&
                     formData.educations.map((edu, idx) => (
                       <div key={idx}>
@@ -1815,9 +1856,21 @@ export default function InstructorRegister() {
                         <button
                           type="button"
                           onClick={handleFinalSubmit}
-                          className="px-5 py-2 rounded-2xl bg-black text-white"
+                          disabled={loadingBtn} // Yüklenirken tıklamayı engelle
+                          className={`px-5 py-2 rounded-2xl bg-black text-white font-bold text-sm flex items-center justify-center gap-2 transition-all ${
+                            loadingBtn
+                              ? "opacity-70 cursor-not-allowed"
+                              : "hover:bg-gray-800"
+                          }`}
                         >
-                          Complete registration
+                          {loadingBtn ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Processing...
+                            </>
+                          ) : (
+                            "Complete registration"
+                          )}
                         </button>
                       )}
                     </div>

@@ -144,7 +144,7 @@ function SessionListComp({ mappedData, loading }) {
               <div className="relative w-full md:w-auto flex justify-center md:block">
                 <Image
                   alt="Cafe Image"
-                  src={item.cafe.image}
+                  src={item.google_cafe.image}
                   width={300}
                   height={200}
                   priority
@@ -156,9 +156,11 @@ function SessionListComp({ mappedData, loading }) {
               <div className="flex flex-col justify-between gap-2 text-black py-1 md:py-3 w-full">
                 <div className="flex flex-col gap-2">
                   <p className="font-bold text-lg">{item.session_title}</p>
-                  <p className="font-bold text-md">{item.cafe.name}</p>
-                  <p className="font-light text-md">{item.cafe.address}</p>
-                  <p className="font-light text-md">{item.cafe.phone}</p>
+                  <p className="font-bold text-md">{item.google_cafe.name}</p>
+                  <p className="font-light text-md">
+                    {item.google_cafe.address}
+                  </p>
+                  <p className="font-light text-md">{item.google_cafe.phone}</p>
                 </div>
 
                 {/* Konum ve Kota Satırı */}
@@ -169,7 +171,7 @@ function SessionListComp({ mappedData, loading }) {
                     <span
                       onClick={() =>
                         window.open(
-                          `https://www.google.com/maps?q=${item.cafe.latitude},${item.cafe.longitude}`,
+                          `https://www.google.com/maps?q=${item.google_cafe.latitude},${item.google_cafe.longitude}`,
                           "_blank"
                         )
                       }

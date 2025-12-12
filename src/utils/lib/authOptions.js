@@ -99,11 +99,11 @@ export const authOptions = {
           if (res.ok && user) {
             return {
               id: user.id,
-              name: user.name, // Veritabanındaki gerçek isim
+              name: user.name,
               email: user.email,
-              profile_image: user.avatar || user.profile_image, // Veritabanındaki gerçek resim yolu
+              profile_image: user.avatar || user.profile_image,
               role: user.role || "user",
-              token: token, // Token'ı session'da kullanmak için saklıyoruz
+              token: token,
             };
           } else {
             console.error("Profile fetch failed:", data);
@@ -142,6 +142,7 @@ export const authOptions = {
         token.email = user.email;
         token.profile_image = user.profile_image;
         token.role = user.role;
+
         // DİKKAT: Normal girişte user.token, social girişte yine user.token olarak ayarladık
         token.accessToken = user.token || user.accessToken;
       }
