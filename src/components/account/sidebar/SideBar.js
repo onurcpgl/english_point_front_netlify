@@ -1,184 +1,233 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { IoMenu, IoClose } from "react-icons/io5";
-import { IoMdExit } from "react-icons/io";
 import { signOut } from "next-auth/react";
 import generalService from "../../../utils/axios/generalService";
 
+// İkon Setleri (React Icons)
+import {
+  IoMenu,
+  IoClose,
+  IoPersonOutline,
+  IoMapOutline,
+  IoSchoolOutline,
+  IoMailOutline,
+  IoSettingsOutline,
+  IoLogOutOutline,
+} from "react-icons/io5";
+
 export default function AccountSidebar() {
-  const { data, error, isLoading } = useQuery({
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const pathname = usePathname();
+
+  // --- DATA FETCHING ---
+  const { data, isLoading } = useQuery({
     queryKey: ["userProfile"],
     queryFn: generalService.getUserInfo,
   });
 
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const pathname = usePathname();
+  const { data: userMessage } = useQuery({
+    queryKey: ["myMessage"],
+    queryFn: generalService.getMessage,
+  });
 
-  // --- RESİM MANTIĞI BURADA TEK SEFERDE HESAPLANIYOR ---
-  // 1. profile_image var mı? Varsa onu al.
-  // 2. Yoksa avatar var mı? Varsa onu al.
-  // 3. İkisi de yoksa dummy resmi al.
+  // --- LOGIC ---
+  const unreadCount = useMemo(() => {
+    if (!userMessage?.data) return 0;
+    return userMessage.data.filter((n) => n.read_at === null).length;
+  }, [userMessage]);
+
   const userProfileImage =
     data?.user?.profile_image ||
     data?.user?.avatar ||
     "https://dummyimage.com/150x150/000/fff.png";
 
+  // Menü Elemanlarına İkon Eklendi
   const navigationItems = [
-    { name: "Profil", slug: "profile" },
-    { name: "Adreslerim", slug: "my-addresses" },
-    { name: "Eğitimlerim", slug: "my-educations" },
-    { name: "Mesajlar", slug: "message", badge: 3 },
-    { name: "Ayarlar", slug: "settings" },
+    { name: "Profil", slug: "profile", icon: IoPersonOutline },
+    { name: "Adreslerim", slug: "my-addresses", icon: IoMapOutline },
+    { name: "Eğitimlerim", slug: "my-educations", icon: IoSchoolOutline },
+    { name: "Mesajlar", slug: "message", icon: IoMailOutline },
+    { name: "Ayarlar", slug: "settings", icon: IoSettingsOutline },
   ];
 
-  // Mobilde scroll kilitleme
+  // --- EFFECTS ---
   useEffect(() => {
     document.body.style.overflow = isSidebarOpen ? "hidden" : "unset";
   }, [isSidebarOpen]);
 
-  // Route değişince sidebar kapat
   useEffect(() => {
     setIsSidebarOpen(false);
   }, [pathname]);
 
-  const isActive = (slug) => {
-    return pathname.includes(slug);
-  };
+  const isActive = (slug) => pathname.includes(slug);
 
-  // --- ORTAK MENÜ İÇERİĞİ ---
-  const MenuContent = ({ isMobile = false }) => (
-    <div
-      className={`flex flex-col ${
-        isMobile ? "items-center text-center gap-6" : "gap-3 mt-6 "
-      }`}
-    >
-      {/* Profil Resmi - Mobilde menü içine ekledim */}
-      {isMobile && (
-        <div className="flex flex-col items-center mb-4">
-          <div className="w-24 h-24 mb-2">
-            {isLoading ? (
-              <div className="w-24 h-24 rounded-full bg-gray-200 animate-pulse"></div>
-            ) : (
-              <Image
-                src={userProfileImage} // Değişkeni burada kullandık
-                alt="User"
-                className="rounded-full object-cover w-full h-full border-4 border-white"
-                width={96}
-                height={96}
-                unoptimized={true}
-                referrerPolicy="no-referrer"
-              />
-            )}
-          </div>
-          <p className="font-bold text-xl text-black">{data?.user?.name}</p>
-        </div>
-      )}
-
-      {navigationItems.map((item, i) => (
-        <Link
-          href={item.slug}
-          key={i}
-          className={`
-            inline-block w-full text-black transition-all hover:scale-105
-            ${isMobile ? "text-2xl font-bold py-2" : "text-md text-left"}
-            ${
-              isActive(item.slug)
-                ? "font-bold underline decoration-2 underline-offset-4"
-                : "font-normal"
-            }
-          `}
-        >
-          {item.name}
-        </Link>
-      ))}
-
-      {/* Çıkış Yap */}
-      <div
-        onClick={() => signOut({ callbackUrl: "/" })}
-        className="cursor-pointer hover:scale-105 transition-all mt-4"
-      >
-        <div
-          className={`flex items-center gap-2 ${
-            isMobile
-              ? "justify-center text-2xl font-bold text-red-600 bg-white/50 px-6 py-2 rounded-full"
-              : ""
-          }`}
-        >
-          <p className={`${!isMobile && "font-semibold text-black"}`}>
-            Çıkış Yap
-          </p>
-          <IoMdExit
-            className={`${isMobile ? "text-red-600" : "text-black"} text-2xl`}
-          />
-        </div>
-      </div>
-    </div>
-  );
+  // --- UI COMPONENTS ---
 
   return (
     <>
-      {/* 1. MOBİL TETİKLEYİCİ */}
+      {/* 1. MOBİL TETİKLEYİCİ BUTON (Sol üstte sabit asılı kalır) */}
       {!isSidebarOpen && (
         <button
           onClick={() => setIsSidebarOpen(true)}
-          className="lg:hidden fixed left-0 top-20 z-40 bg-[#FFD207] p-3 rounded-r-xl shadow-lg transition-transform hover:translate-x-1 flex items-center justify-center"
+          className="lg:hidden fixed left-0 top-24 z-30 bg-[#FFD207] text-black p-3 rounded-r-xl shadow-md hover:pl-4 transition-all duration-300"
           aria-label="Menüyü Aç"
         >
-          <IoMenu className="text-3xl text-black" />
+          <IoMenu size={24} />
         </button>
       )}
 
-      {/* 2. MOBİL FULL EKRAN MENÜ */}
+      {/* 2. MOBİL OVERLAY (TAM EKRAN MENÜ) */}
       <div
         className={`
-            lg:hidden fixed inset-0 z-50 bg-[#FFD207]
-            flex flex-col items-center justify-center
-            transition-all duration-500 ease-in-out
-            ${
-              isSidebarOpen
-                ? "opacity-100 visible translate-x-0"
-                : "opacity-0 invisible -translate-x-full"
-            }
+          fixed inset-0 z-50 bg-[#FFD207] flex flex-col items-center justify-center gap-8
+          transition-all duration-500 ease-in-out lg:hidden
+          ${
+            isSidebarOpen
+              ? "opacity-100 visible translate-x-0"
+              : "opacity-0 invisible -translate-x-full"
+          }
         `}
       >
         <button
           onClick={() => setIsSidebarOpen(false)}
-          className="absolute top-6 right-6 p-2 bg-white rounded-full shadow-sm"
+          className="absolute top-6 right-6 p-3 bg-white/20 rounded-full hover:bg-white/40 transition-colors"
         >
-          <IoClose className="text-3xl text-black" />
+          <IoClose size={32} className="text-black" />
         </button>
 
-        <MenuContent isMobile={true} />
+        {/* Mobil Profil Kartı */}
+        <div className="flex flex-col items-center animate-fadeIn">
+          <div className="w-24 h-24 mb-4 rounded-full border-4 border-white overflow-hidden shadow-lg relative bg-gray-100">
+            {isLoading ? (
+              <div className="w-full h-full animate-pulse bg-gray-300" />
+            ) : (
+              <Image
+                src={userProfileImage}
+                alt="User"
+                fill
+                className="object-cover"
+                unoptimized
+              />
+            )}
+          </div>
+          <h3 className="text-2xl font-bold text-black">{data?.user?.name}</h3>
+          <p className="text-black/60 text-sm">Hoşgeldiniz</p>
+        </div>
+
+        {/* Mobil Linkler */}
+        <nav className="flex flex-col w-full px-10 gap-3">
+          {navigationItems.map((item, i) => {
+            const active = isActive(item.slug);
+            const Icon = item.icon;
+            return (
+              <Link
+                key={i}
+                href={item.slug}
+                className={`
+                  flex items-center justify-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
+                  ${
+                    active
+                      ? "bg-white text-black font-bold shadow-md scale-105"
+                      : "text-black hover:bg-white/20"
+                  }
+                `}
+              >
+                <Icon size={22} />
+                <span className="text-lg">{item.name}</span>
+                {item.slug === "message" && unreadCount > 0 && (
+                  <span className="ml-2 bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-sm">
+                    {unreadCount}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
+
+          <button
+            onClick={() => signOut({ callbackUrl: "/" })}
+            className="flex items-center justify-center gap-2 mt-4 text-red-700 font-semibold hover:scale-105 transition-transform"
+          >
+            <IoLogOutOutline size={24} />
+            <span>Çıkış Yap</span>
+          </button>
+        </nav>
       </div>
 
-      {/* DESKTOP SIDEBAR */}
-      <aside className="hidden lg:block w-[300px] shrink-0">
-        <div className="bg-[#FFD207] px-10 py-10 rounded-3xl sticky top-4">
-          <div className="flex flex-col justify-center items-center">
-            {/* Desktop Profil Resmi */}
-            <div className="w-28 h-28">
+      {/* 3. DESKTOP SIDEBAR (Sabit Sol Menü) */}
+      <aside className="hidden lg:block w-[280px] shrink-0">
+        <div className="sticky top-24 bg-[#FFD207] rounded-[30px] p-6 shadow-xl flex flex-col min-h-[500px]">
+          {/* Desktop Profil */}
+          <div className="flex flex-col items-center mb-8">
+            <div className="w-24 h-24 mb-3 rounded-full border-[3px] border-white shadow-md overflow-hidden relative bg-white">
               {isLoading ? (
-                <div className="w-28 h-28 rounded-full bg-gray-200 animate-pulse"></div>
+                <div className="w-full h-full animate-pulse bg-gray-200" />
               ) : (
                 <Image
-                  src={userProfileImage} // Değişkeni burada kullandık
-                  alt={data?.user.name || "User"}
-                  className="rounded-full object-cover w-full h-full"
-                  width={112}
-                  height={112}
+                  src={userProfileImage}
+                  alt={data?.user?.name || "User"}
+                  fill
+                  className="object-cover"
+                  unoptimized
                 />
               )}
             </div>
-
-            <p className="font-semibold text-black mt-2 text-center max-w-[175px]">
+            <h2 className="text-lg font-bold text-black text-center leading-tight">
               {data?.user?.name}
-            </p>
+            </h2>
+          </div>
 
-            <MenuContent isMobile={false} />
+          {/* Desktop Navigasyon */}
+          <nav className="flex-1 flex flex-col gap-2">
+            {navigationItems.map((item, i) => {
+              const active = isActive(item.slug);
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={i}
+                  href={item.slug}
+                  className={`
+                    group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 relative
+                    ${
+                      active
+                        ? "bg-white text-black font-bold shadow-sm translate-x-1"
+                        : "text-black/80 hover:bg-white/30 hover:text-black hover:translate-x-1"
+                    }
+                  `}
+                >
+                  <Icon
+                    size={20}
+                    className={`${
+                      active
+                        ? "text-black"
+                        : "text-black/70 group-hover:text-black"
+                    }`}
+                  />
+                  <span className="text-sm tracking-wide">{item.name}</span>
+
+                  {/* Bildirim Badge - Sağa yaslı */}
+                  {item.slug === "message" && unreadCount > 0 && (
+                    <span className="ml-auto flex items-center justify-center min-w-[20px] h-5 px-1 text-[10px] font-bold text-white bg-red-600 rounded-full shadow-sm">
+                      {unreadCount}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Desktop Footer (Çıkış) */}
+          <div className="mt-6 pt-4 border-t border-black/10">
+            <button
+              onClick={() => signOut({ callbackUrl: "/" })}
+              className="flex items-center gap-3 px-4 py-2 w-full text-black/70 hover:text-red-700 hover:bg-white/30 rounded-xl transition-all duration-200"
+            >
+              <IoLogOutOutline size={20} />
+              <span className="text-sm font-semibold">Çıkış Yap</span>
+            </button>
           </div>
         </div>
       </aside>

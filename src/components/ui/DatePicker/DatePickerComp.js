@@ -75,7 +75,7 @@ export default function ModernDatePicker({ formik }) {
     };
   }, []);
 
-  // Form temizleme senkronizasyonu
+  //Form temizleme senkronizasyonu
   useEffect(() => {
     if (fpInstance.current && !formik.values.session_date) {
       fpInstance.current.clear();
@@ -83,7 +83,7 @@ export default function ModernDatePicker({ formik }) {
   }, [formik.values.session_date]);
   return (
     <div className="space-y-2">
-      <label className="flex items-center text-sm font-medium text-gray-700">
+      <label className="text-sm font-semibold text-gray-700">
         Session Date
       </label>
       <input

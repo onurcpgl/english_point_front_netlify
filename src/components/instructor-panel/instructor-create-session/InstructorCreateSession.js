@@ -2,16 +2,46 @@
 import { useState, useEffect, useMemo } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import generalService from "../../../utils/axios/generalService";
+import { FiRefreshCw } from "react-icons/fi";
 import instructorPanelService from "../../../utils/axios/instructorPanelService";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import DatePickerComp from "../../../components/ui/DatePicker/DatePickerComp";
 import CafeLocationComp from "../instructor-create-session/CafeLocationComp";
-import Image from "next/image";
 export default function InstructorCreateSession() {
   const queryClient = useQueryClient();
   const currentLang = "en";
+  const {
+    data: categoriesResponse, // Değişken adını categoriesResponse yaptık
+    error: errorCategories,
+    isLoading: loadingCategories,
+  } = useQuery({
+    queryKey: ["program-categories", currentLang],
+    queryFn: () => instructorPanelService.getProgramCategories(currentLang), // Yeni fonksiyonun
+  });
+
+  const categories = categoriesResponse?.data || [];
+
+  const [selectedCategoryId, setSelectedCategoryId] = useState("");
+
+  // 2. Seçilen kategoriye göre programları filtrele (Hesaplanan Değer)
+  const activePrograms = useMemo(() => {
+    if (!selectedCategoryId) return [];
+
+    // Kategoriler içinden seçilen ID'yi bul
+    const selectedCategory = categories.find(
+      (cat) => cat.id === Number(selectedCategoryId)
+    );
+
+    // O kategorinin içindeki 'programs' arrayini döndür
+    return selectedCategory ? selectedCategory.programs : [];
+  }, [selectedCategoryId, categories]);
+
+  // 3. Formik resetleme (İsteğe bağlı ama önerilir)
+  // Kategori değişirse, seçili program boşa düşmeli çünkü o program yeni kategoride yok.
+  useEffect(() => {
+    formik.setFieldValue("program_id", "");
+  }, [selectedCategoryId]);
   const {
     data: programs,
     error: errorPrograms,
@@ -23,29 +53,19 @@ export default function InstructorCreateSession() {
     // DİKKAT 2: Fonksiyonu çağırırken dili gönder
     queryFn: () => instructorPanelService.getPrograms(currentLang),
   });
-
-  const {
-    data: cafes,
-    error,
-    isLoading,
-  } = useQuery({
-    queryKey: ["cafes"],
-    queryFn: generalService.getCafes,
-  });
-  const {
-    data: startQuestions,
-    error: errorStartQuestions,
-    isLoading: loadingStartQuestions,
-  } = useQuery({
-    queryKey: ["startQuestions"],
-    queryFn: generalService.fetchQuestions,
-  });
+  // const {
+  //   data: startQuestions,
+  //   error: errorStartQuestions,
+  //   isLoading: loadingStartQuestions,
+  // } = useQuery({
+  //   queryKey: ["startQuestions"],
+  //   queryFn: generalService.fetchQuestions,
+  // });
   const router = useRouter();
   const [message, setMessage] = useState({ type: "", text: "" });
   const [selectedCafe, setSelectedCafe] = useState(null);
   const [selectCafe, onSelectCafe] = useState();
 
-  console.log("open", selectedCafe);
   const [initialValues, setInitialValues] = useState({
     //session_title: "",
     //description: "",
@@ -64,26 +84,26 @@ export default function InstructorCreateSession() {
     { value: "Advanced", label: "Advanced" },
   ];
 
-  useEffect(() => {
-    if (startQuestions && startQuestions.length > 0) {
-      const init = {
-        program_id: "",
-        //session_title: "",
-        //description: "",
-        session_date: "",
-        //duration_minutes: "",
-        language_level: "",
-        //quota: "",
-        cafe_id: "",
-        start_answers: startQuestions.reduce((acc, q) => {
-          acc[q.id] = q.question_type === "multiple" ? [] : "";
-          return acc;
-        }, {}),
-      };
+  // useEffect(() => {
+  //   if (startQuestions && startQuestions.length > 0) {
+  //     const init = {
+  //       program_id: "",
+  //       //session_title: "",
+  //       //description: "",
+  //       session_date: "",
+  //       //duration_minutes: "",
+  //       language_level: "",
+  //       //quota: "",
+  //       cafe_id: "",
+  //       start_answers: startQuestions.reduce((acc, q) => {
+  //         acc[q.id] = q.question_type === "multiple" ? [] : "";
+  //         return acc;
+  //       }, {}),
+  //     };
 
-      setInitialValues(init);
-    }
-  }, [startQuestions]);
+  //     setInitialValues(init);
+  //   }
+  // }, [startQuestions]);
 
   const formik = useFormik({
     initialValues,
@@ -95,18 +115,18 @@ export default function InstructorCreateSession() {
       //description: Yup.string().required("Description is required"),
       session_date: Yup.string().required("Date is required"),
       language_level: Yup.string().required("Language level is required"),
-      start_answers: Yup.object(
-        startQuestions?.reduce((acc, q) => {
-          if (q.question_type === "single") {
-            acc[q.id] = Yup.string().required("Please answer this question");
-          } else if (q.question_type === "multiple") {
-            acc[q.id] = Yup.array()
-              .min(1, "Please select at least one option")
-              .required("Please answer this question");
-          }
-          return acc;
-        }, {})
-      ),
+      // start_answers: Yup.object(
+      //   startQuestions?.reduce((acc, q) => {
+      //     if (q.question_type === "single") {
+      //       acc[q.id] = Yup.string().required("Please answer this question");
+      //     } else if (q.question_type === "multiple") {
+      //       acc[q.id] = Yup.array()
+      //         .min(1, "Please select at least one option")
+      //         .required("Please answer this question");
+      //     }
+      //     return acc;
+      //   }, {})
+      // ),
     }),
 
     onSubmit: async (values, { resetForm, setSubmitting }) => {
@@ -121,11 +141,10 @@ export default function InstructorCreateSession() {
         google_cafe: selectedCafe,
       };
 
-      const result = await generalService.saveCourseSession(payload);
+      const result = await instructorPanelService.saveCourseSession(payload);
 
       // Başarılı mesaj
       //
-      console.log("result", result);
       if (result?.status) {
         queryClient.invalidateQueries(["myCourses"]);
         setMessage({
@@ -135,11 +154,13 @@ export default function InstructorCreateSession() {
         resetForm();
         setSelectedCafe("");
         resetForm();
+        setSubmitting(false);
       } else {
         setMessage({
           type: "error",
           text: result.message || "Session could not be created.",
         });
+        setSubmitting(false);
       }
       // Formu sıfırla
       //resetForm();
@@ -178,51 +199,86 @@ export default function InstructorCreateSession() {
       </div>
       <form onSubmit={formik.handleSubmit} className="space-y-6 p-3">
         <div className="w-full space-y-6 px-4">
-          {" "}
-          {/* Kapsayıcıya w-full ve boşluk verdik */}
-          {/* --- 1. SEÇİM ALANI (SELECT INPUT) --- */}
-          <div className="space-y-2">
-            <label className="flex items-center text-sm font-medium text-gray-700">
-              Session Program
-            </label>
-            <div className="relative">
-              <select
-                name="program_id"
-                {...formik.getFieldProps("program_id")}
-                disabled={loadingPrograms}
-                className="w-full h-14 rotate-0 focus:rounded-0 outline-0 px-4 placeholder:text-[#8e8e8e] bg-white font-light text-black"
-              >
-                <option value="">
-                  {loadingPrograms ? "Loading..." : "Select a program"}
-                </option>
-                {!loadingPrograms &&
-                  programs?.data?.map((program) => (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="flex items-center text-sm font-medium text-gray-700">
+                Session Subject
+              </label>
+              <div className="relative">
+                <select
+                  name="category_id"
+                  // Formik kullanmıyoruz burada, çünkü bu sadece bir filtre aracı
+                  value={selectedCategoryId}
+                  onChange={(e) => setSelectedCategoryId(e.target.value)}
+                  disabled={loadingCategories}
+                  className="w-full h-14 rotate-0 focus:rounded-0 outline-0 px-4 placeholder:text-[#8e8e8e] bg-white font-light text-black border border-gray-300"
+                >
+                  <option value="">
+                    {loadingCategories ? "Loading..." : "Select a Category"}
+                  </option>
+                  {!loadingCategories &&
+                    categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            </div>
+            {/* --- 2. PROGRAM SEÇİMİ (ESKİ KODUN REVİZE HALİ) --- */}
+            <div className="space-y-2">
+              <label className="flex items-center text-sm font-medium text-gray-700">
+                Session Program
+              </label>
+              <div className="relative">
+                <select
+                  name="program_id"
+                  {...formik.getFieldProps("program_id")}
+                  // Eğer kategori seçilmediyse program seçimi pasif olsun
+                  disabled={!selectedCategoryId || activePrograms.length === 0}
+                  className="w-full h-14 rotate-0 focus:rounded-0 outline-0 px-4 placeholder:text-[#8e8e8e] bg-white font-light text-black border border-gray-300  disabled:bg-gray-100 disabled:text-gray-400"
+                >
+                  <option value="">
+                    {/* Duruma göre mesaj gösterelim */}
+                    {!selectedCategoryId
+                      ? "First select a session subject"
+                      : activePrograms.length === 0
+                      ? "No programs in this category"
+                      : "Select a program"}
+                  </option>
+
+                  {/* activePrograms listesini dönüyoruz */}
+                  {activePrograms.map((program) => (
                     <option key={program.id} value={program.id}>
-                      {program.title}
+                      {/* API'den gelen title obje ise dile göre yazdır, string ise direkt yazdır */}
+                      {typeof program.title === "object"
+                        ? program.title[currentLang] || program.title["en"]
+                        : program.title}
                     </option>
                   ))}
-              </select>
-            </div>
-
-            {/* Hata Mesajı */}
-            {formik.touched.program_id && formik.errors.program_id && (
-              <div className="text-red-500 text-sm mt-1 font-medium">
-                {formik.errors.program_id}
+                </select>
               </div>
-            )}
+
+              {/* Hata Mesajı */}
+              {formik.touched.program_id && formik.errors.program_id && (
+                <div className="text-red-500 text-sm mt-1 font-medium">
+                  {formik.errors.program_id}
+                </div>
+              )}
+            </div>
           </div>
           {/* --- 2. DETAY KARTI (Tam Genişlik ve Inputun Altında) --- */}
           {selectedProgram && (
             <div className="w-full animate-in fade-in slide-in-from-top-4 duration-500">
               {/* Kartın Kendisi */}
-              <div className="bg-slate-50 border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+              <div className="bg-slate-50 border border-slate-200  overflow-hidden shadow-sm">
                 {/* Kart Başlığı */}
                 <div className="bg-white border-b border-slate-200 px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                   <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                    <span className="w-2 h-2  bg-green-500"></span>
                     {selectedProgram.title}
                   </h3>
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 border border-blue-200">
+                  <span className="inline-flex items-center gap-1 px-3 py-1  text-xs font-semibold bg-blue-100 text-blue-700 border border-blue-200">
                     <svg
                       className="w-3.5 h-3.5"
                       fill="none"
@@ -414,12 +470,12 @@ export default function InstructorCreateSession() {
 
     
             {open && (
-              <div className="absolute top-full left-0 mt-2 w-full bg-white border border-gray-200 rounded-xl shadow-xl p-3 z-50 animate-in fade-in zoom-in-95 duration-200">
+              <div className="absolute top-full left-0 mt-2 w-full bg-white border border-gray-200  shadow-xl p-3 z-50 animate-in fade-in zoom-in-95 duration-200">
                 <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
                   {cafes?.map((cafe) => (
                     <div
                       key={cafe.id}
-                      className={`min-w-[220px] max-w-[220px] flex-shrink-0 border rounded-xl cursor-pointer transition-all duration-200 p-3 group ${
+                      className={`min-w-[220px] max-w-[220px] flex-shrink-0 border  cursor-pointer transition-all duration-200 p-3 group ${
                         selectedCafe?.id === cafe.id
                           ? "border-blue-500 bg-blue-50 ring-1 ring-blue-500"
                           : "border-gray-200 hover:border-blue-300 hover:shadow-md bg-white"
@@ -473,7 +529,7 @@ export default function InstructorCreateSession() {
          
           {selectedCafe && (
             <div className="w-full animate-in fade-in slide-in-from-top-4 duration-500">
-              <div className="bg-slate-50 border border-slate-200 rounded-xl overflow-hidden shadow-sm flex flex-col md:flex-row">
+              <div className="bg-slate-50 border border-slate-200  overflow-hidden shadow-sm flex flex-col md:flex-row">
 
                 <div className="w-full md:w-1/3 h-48 md:h-auto relative bg-gray-200">
                   {selectedCafe.image ? (
@@ -554,7 +610,7 @@ export default function InstructorCreateSession() {
         */}
         <CafeLocationComp onSelectCafe={setSelectedCafe} />
 
-        <div className="px-4 border-t text-black py-2 border-gray-200">
+        {/* <div className="px-4 border-t text-black py-2 border-gray-200">
           <p className="text-xl font-semibold">Starting Questions Answers</p>
           <p className="text-sm font-medium text-gray-700">
             As an instructor, answer the key questions related to the course.
@@ -587,7 +643,7 @@ export default function InstructorCreateSession() {
                     {q.question["en"]}
                   </p>
 
-                  {/* SINGLE QUESTION */}
+        
                   {q.question_type === "single" && (
                     <div className="space-y-2">
                       <select
@@ -611,9 +667,9 @@ export default function InstructorCreateSession() {
                     </div>
                   )}
 
-                  {/* MULTIPLE QUESTION */}
+ 
                   {q.question_type === "multiple" && (
-                    <div className="flex flex-wrap justify-center items-center gap-3 p-4 rounded-xl">
+                    <div className="flex flex-wrap justify-center items-center gap-3 p-4 ">
                       {opts.map((opt, index) => {
                         const selected =
                           formik.values.start_answers[q.id] ?? [];
@@ -657,8 +713,8 @@ export default function InstructorCreateSession() {
                         );
                       })}
 
-                      {/* Hata Mesajı */}
-                      {/* touched true yapıldığı için artık error varsa görünecektir */}
+          
+
                       {touched && error && (
                         <div className="w-full text-center text-red-500 text-sm mt-1">
                           {error}
@@ -671,6 +727,7 @@ export default function InstructorCreateSession() {
             })}
           </div>
         )}
+         */}
         {/* Submit Button */}
         <div className="flex justify-end pt-6 border-t border-gray-200">
           <button
@@ -685,16 +742,26 @@ export default function InstructorCreateSession() {
           <div className="relative group flex items-center">
             <button
               type="submit"
-              disabled={isButtonDisabled} // Hata varsa tıklanmaz
-              className={`w-md py-4 px-6 font-semibold max-lg:w-fit flex justify-center items-center transition-all duration-200
-        ${
-          isButtonDisabled
-            ? "bg-gray-300 text-gray-500 cursor-not-allowed" // Pasif Görünüm
-            : "bg-black text-white hover:bg-white hover:text-black border border-black cursor-pointer" // Aktif Görünüm
-        }
-      `}
+              // Hem senin özel kontrolün, hem formun hatalı olması, hem de loading durumu kilitler
+              disabled={
+                isButtonDisabled || !formik.isValid || formik.isSubmitting
+              }
+              className={`w-md py-4 px-6 font-semibold max-lg:w-fit flex justify-center items-center gap-3 transition-all duration-200
+    ${
+      isButtonDisabled || !formik.isValid || formik.isSubmitting
+        ? "bg-gray-300 text-gray-500 cursor-not-allowed border-gray-300" // Pasif Görünüm
+        : "bg-black text-white hover:bg-white hover:text-black border border-black cursor-pointer" // Aktif Görünüm
+    }
+  `}
             >
-              Create Session
+              {formik.isSubmitting ? (
+                <>
+                  <FiRefreshCw className="animate-spin" size={20} />
+                  <span>Creating...</span>
+                </>
+              ) : (
+                "Create Session"
+              )}
             </button>
 
             {/* Hata Mesajı Tooltip'i (Sadece buton disabled ise ve hover olunca görünür) */}

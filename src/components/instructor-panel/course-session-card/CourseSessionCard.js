@@ -1,7 +1,13 @@
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { IoLocationSharp, IoPerson, IoPersonOutline } from "react-icons/io5";
-import { FiCalendar, FiClock, FiRefreshCw } from "react-icons/fi";
+import {
+  FiCalendar,
+  FiClock,
+  FiRefreshCw,
+  FiEdit,
+  FiTrash2,
+} from "react-icons/fi";
 import "react-calendar/dist/Calendar.css";
 import userimage from "../../../assets/instructor_sidebar/dummy_user.png";
 import Slider from "react-slick";
@@ -14,6 +20,11 @@ import { echo } from "../../../utils/lib/echo";
 import UserConfirmComp from "../userConfirmComp/UserConfirmComp";
 import { toast } from "react-toastify";
 import { enFormatDate, enFormatTime } from "../../../utils/helpers/formatters";
+import ConfirmModal from "../../ui/ConfirmModal/ConfirmModal";
+import SuccesMessageComp from "../../ui/SuccesModal/SuccesMessageComp";
+import ErrorModal from "../../ui/ErrorModal/ErrorModal";
+import SessionCompleteComp from "../another-comp/SessionCompleteComp";
+import InstructorUpdateSessionModal from "../instructor-update-session/InstructorUpdateSession";
 // Basit bir Loading Spinner (Veri çekilirken dönecek)
 const LoadingSpinner = () => (
   <div className="flex flex-col items-center justify-center py-8 text-yellow-500">
@@ -22,13 +33,26 @@ const LoadingSpinner = () => (
   </div>
 );
 
-const CourseSessionCard = ({ data, status }) => {
+const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
+  const [confirmConfig, setConfirmConfig] = useState({
+    isOpen: false,
+    message: "",
+    onConfirm: () => {},
+  });
+  const [successModal, setSuccessModal] = useState({
+    open: false,
+    message: "",
+  });
+  const [errorModal, setErrorModal] = useState({ open: false, message: "" });
   const [openCourseInfo, setOpenCourseInfo] = useState(null);
-
+  const [sessionToReview, setSessionToReview] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   // 🔥 API'den gelen kullanıcıları burada tutacağız
   const [selectedSessionUsers, setSelectedSessionUsers] = useState([]);
   // 🔥 Kullanıcılar yükleniyor mu?
   const [usersLoading, setUsersLoading] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedSessionForEdit, setSelectedSessionForEdit] = useState(null);
 
   // 🔥 SPAM KORUMASI: Buton basılabilir mi? (Başlangıçta true)
   const [canRefresh, setCanRefresh] = useState(true);
@@ -36,7 +60,7 @@ const CourseSessionCard = ({ data, status }) => {
   const [userConfirmModal, setUserConfirmModal] = useState(false);
   const [userConfirmSelectedUser, setUserConfirmSelectedUser] = useState(null);
   const [selectedParticipant, setSelectedParticipant] = useState(null);
-
+  const [dismissedSessionIds, setDismissedSessionIds] = useState([]);
   const openCourseRef = useRef(null);
   const [sessionList, setSessionList] = useState([]);
   const [quotaLoading, setQuotaLoading] = useState(true);
@@ -160,7 +184,10 @@ const CourseSessionCard = ({ data, status }) => {
       getSessionUsers(item.id);
     }
   };
-
+  const handleDismissOverlay = (sessionId, e) => {
+    e.stopPropagation(); // Tıklamanın kartın diğer eventlerini tetiklemesini engeller
+    setDismissedSessionIds((prev) => [...prev, sessionId]);
+  };
   const renderQuotaIcons = (usersCount, quota) => {
     const filledCount = usersCount || 0;
     const totalQuota = quota || 0;
@@ -192,23 +219,56 @@ const CourseSessionCard = ({ data, status }) => {
     };
   }, [openCourseInfo, userConfirmModal]);
 
-  const NextArrow = ({ onClick }) => (
-    <div
-      className="absolute top-1/2 -translate-y-1/2 right-0 z-10 cursor-pointer"
-      onClick={onClick}
-    >
-      <FaChevronRight size={24} color="black" />
-    </div>
-  );
-  const PrevArrow = ({ onClick }) => (
-    <div
-      className="absolute top-1/2 -translate-y-1/2 left-[-20px] z-10 cursor-pointer"
-      onClick={onClick}
-    >
-      <FaChevronRight size={24} color="black" className="rotate-180" />
-    </div>
-  );
+  const handleConfirmFinish = async (result) => {
+    // result: { success: true, message: "...", data: ... }
+    console.log("result", result);
+    if (result && result.success) {
+      // 1. Başarılı mesajını göster (Senin kodunda zaten successModal var)
+      setSuccessModal({
+        open: true,
+        message: result.message || "Session marked as completed successfully.",
+      });
 
+      // 2. Modalı kapat
+      setIsModalOpen(false);
+      setSessionToReview(null);
+
+      // 3. Listeyi yenile (Status değiştiği için kart ekrandan gitmeli veya güncellenmeli)
+      if (refetch) {
+        refetch();
+      }
+    } else {
+      // Hata varsa
+      setErrorModal({
+        open: true,
+        message:
+          result?.message || "An error occurred while updating the session.",
+      });
+    }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    // İstersen burada localStorage kullanarak bu ders için tekrar sormamayı sağlayabilirsin.
+  };
+
+  const isSessionCompleted = (session) => {
+    // Veri yoksa false dön
+    if (!session || !session.session_date) return false;
+
+    // 1. Tarih formatını (Safari/Mobil uyumu için) düzelt: " " -> "T"
+    const dateStr = session.session_date.replace(" ", "T");
+    const startTime = new Date(dateStr);
+
+    // 2. Başlangıç saatine 1 saat (60 dakika) ekle
+    // (1000 ms * 60 sn * 60 dk)
+    const endTime = new Date(startTime.getTime() + 70 * 60 * 1000);
+
+    const now = new Date();
+
+    // 3. Şu anki zaman bitişi geçtiyse VE statü "active" ise TRUE döner
+    return now > endTime && session.status === "active";
+  };
   // Bu ayarları componentinizin içinde bir yerde tanımlamış olmalısınız.
   const sliderSettings = {
     dots: true,
@@ -254,9 +314,74 @@ const CourseSessionCard = ({ data, status }) => {
       setUserConfirmSelectedUser(user);
     }
   };
+  const handleEdit = (item) => {
+    setSelectedSessionForEdit(item);
+    setIsEditModalOpen(true);
+  };
+  const handleDeleteRequest = (id) => {
+    setConfirmConfig({
+      isOpen: true,
+      message:
+        "Are you sure you want to delete this session? This action cannot be undone.",
+      onConfirm: () => handleActualDelete(id), // Onaylanırsa çalışacak asıl silme fonksiyonu
+    });
+  };
 
+  // Asıl silme işlemini yapan fonksiyon
+  const handleActualDelete = async (id) => {
+    // Onay modalını hemen kapat
+    setConfirmConfig((prev) => ({ ...prev, isOpen: false }));
+
+    try {
+      const response = await instructorPanelService.deleteMySessions(id);
+
+      if (response.status === true) {
+        setSuccessModal({
+          open: true,
+          message:
+            response.message || "The session has been deleted successfully.",
+        });
+
+        setSessionList((prev) => prev.filter((item) => item.id !== id));
+        if (setSessionCounts) {
+          setSessionCounts((prev) => ({
+            ...prev,
+            all: prev.all - 1, // Toplam sayıdan düş
+            awaiting: prev.awaiting - 1, // Awaiting sayısından düş
+          }));
+        }
+      } else {
+        setErrorModal({
+          open: true,
+          message: response.message || "You cannot delete this session.",
+        });
+      }
+    } catch (error) {
+      // Sunucu hatası durumunda Error modalını aç
+      setErrorModal({
+        open: true,
+        message: "An unexpected server error occurred. Please try again later.",
+      });
+    }
+  };
+
+  const handleRestoreOverlay = (id, e) => {
+    e.stopPropagation(); // Kartın tıklanma olayını engelle
+    // ID'yi dismissed listesinden çıkarıyoruz, böylece overlay geri geliyor
+    setDismissedSessionIds((prev) =>
+      prev.filter((sessionId) => sessionId !== id)
+    );
+  };
   return (
     <div>
+      {isModalOpen && sessionToReview && (
+        <SessionCompleteComp
+          data={sessionToReview}
+          message={`The scheduled time for the session titled "${sessionToReview.session_title}" has passed. Was it completed successfully?`}
+          onConfirm={handleConfirmFinish}
+          onCancel={handleCloseModal}
+        />
+      )}
       {userConfirmModal && (
         <UserConfirmComp
           userConfirmSelectedUser={userConfirmSelectedUser}
@@ -265,14 +390,145 @@ const CourseSessionCard = ({ data, status }) => {
           openCourseInfo={openCourseInfo?.id}
         />
       )}
+      {/* 2. Başarılı İşlem Modalı */}
+      <SuccesMessageComp
+        open={successModal.open}
+        lang="en"
+        message={successModal.message}
+        onClose={() => setSuccessModal({ open: false, message: "" })}
+      />
+      <InstructorUpdateSessionModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        sessionData={selectedSessionForEdit}
+        refetch={refetch} // Veriyi yenilemek için
+      />
+      {/* 3. Hata Mesajı Modalı */}
+      <ErrorModal
+        open={errorModal.open}
+        lang="en"
+        message={errorModal.message}
+        onClose={() => setErrorModal({ open: false, message: "" })}
+      />
+      <ConfirmModal
+        open={confirmConfig.isOpen}
+        message={confirmConfig.message}
+        lang="en"
+        onConfirm={confirmConfig.onConfirm}
+        onCancel={() =>
+          setConfirmConfig((prev) => ({ ...prev, isOpen: false }))
+        }
+      />
+      {status === "awaiting" && (
+        <p className="text-gray-700 px-2">
+          You can delete or edit your sessions that are in awaiting status.
+        </p>
+      )}
+
       {sessionList.map(
         (item, i) =>
           item.status === status && (
             <div key={item.id || i} className="space-y-4 relative my-2">
-              <article
-                className="session-card-trigger relative bg-white shadow-md overflow-hidden flex flex-col md:flex-row cursor-pointer p-5"
-                onClick={() => handleToggleCard(item)}
-              >
+              <article className="session-card-trigger relative bg-white shadow-md overflow-hidden flex flex-col md:flex-row  p-5">
+                {isSessionCompleted(item) &&
+                  !dismissedSessionIds.includes(item.id) && (
+                    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/60 backdrop-blur-[3px] rounded-2xl transition-all duration-500 animate-in fade-in group-hover:bg-white/70">
+                      {/* Kapatma Butonu (X) */}
+                      <button
+                        onClick={(e) => handleDismissOverlay(item.id, e)}
+                        className="absolute top-3 right-3 p-2 bg-white border border-gray-200 text-gray-400 hover:text-red-500 hover:bg-gray-50 rounded-full transition-all duration-200 shadow-sm hover:shadow-md z-30 cursor-pointer"
+                        title="Dismiss notification"
+                      >
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2.5"
+                            d="M6 18L18 6M6 6l12 12"
+                          ></path>
+                        </svg>
+                      </button>
+
+                      <div className="mb-4 text-center">
+                        <span className="inline-flex items-center justify-center w-10 h-10 mb-2 bg-[#FFD207] text-black rounded-full shadow-sm">
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                            ></path>
+                          </svg>
+                        </span>
+                        <h3 className="text-gray-900 font-bold text-lg leading-tight">
+                          {"Time's Up!"}
+                        </h3>
+                        <p className="text-gray-600 text-xs font-medium">
+                          Waiting for confirmation
+                        </p>
+                      </div>
+
+                      {/* Mark Completed Butonu */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsModalOpen(true);
+                          setSessionToReview(item);
+                        }}
+                        className="group relative inline-flex items-center justify-center px-8 py-3 font-bold text-white transition-all duration-200 bg-black rounded-xl hover:bg-gray-800 hover:scale-105 shadow-xl hover:shadow-2xl cursor-pointer"
+                      >
+                        <span>Mark Completed</span>
+                        <svg
+                          className="w-4 h-4 ml-2 text-[#FFD207] transition-transform duration-200 group-hover:translate-x-1"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M5 13l4 4L19 7"
+                          ></path>
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+
+                {/* --- DURUM 2: YENİ EKLENEN ZIPLAYAN ÇAN (Overlay Kapatıldıysa Görünür) --- */}
+                {isSessionCompleted(item) &&
+                  dismissedSessionIds.includes(item.id) && (
+                    <button
+                      onClick={(e) => handleRestoreOverlay(item.id, e)}
+                      className="absolute top-3 right-3 z-20 flex items-center justify-center w-10 h-10 bg-[#FFD207] text-black rounded-full shadow-lg cursor-pointer animate-bounce hover:scale-110 transition-transform duration-200 hover:bg-[#ffdb4d]"
+                      title="Show completion status"
+                    >
+                      {/* Çan İkonu */}
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                        />
+                      </svg>
+                    </button>
+                  )}
                 <div className="w-64 h-50 relative flex-shrink-0 overflow-hidden mr-4 max-lg:w-full max-lg:h-56">
                   <Image
                     src={item.google_cafe.image}
@@ -351,21 +607,48 @@ const CourseSessionCard = ({ data, status }) => {
                           </div>
                         )}
                       </div>
+
+                      <button
+                        onClick={() => handleToggleCard(item)}
+                        className={`group flex items-center justify-center max-lg:w-full cursor-pointer gap-2 px-4 py-2.5 rounded-full text-xs font-bold transition-all duration-300 shadow-sm border
+      ${
+        openCourseInfo?.id === item.id
+          ? "bg-black text-white border-black" // AÇIK HALİ: Siyah
+          : "bg-[#FFD207] text-black border-[#FFD207] hover:bg-white hover:text-black hover:border-gray-200" // İLK HALİ: Sarı | HOVER: Beyaz
+      }`}
+                      >
+                        <span>
+                          {openCourseInfo?.id === item.id
+                            ? "Hide Participants"
+                            : "Participants"}
+                        </span>
+                        <FaChevronRight
+                          className={`transition-transform duration-500 ease-in-out 
+        ${
+          openCourseInfo?.id === item.id
+            ? "rotate-90"
+            : "group-hover:translate-x-1"
+        }`}
+                        />
+                      </button>
                     </div>
                   </div>
                 </div>
 
                 <div className="flex flex-col items-center justify-center p-3 gap-2 min-w-[80px] mt-2 md:mt-0">
+                  {/* Süre İkonu */}
                   <div className="bg-[#FFD207] w-12 h-12 rounded-md flex flex-col items-center justify-center shadow-md">
                     <span className="font-semibold text-black text-md">1</span>
                     <span className="text-[10px] text-black leading-none">
                       hours
                     </span>
                   </div>
+
                   <div>
                     <p className="text-black font-semibold">Session Duration</p>
                   </div>
 
+                  {/* Tarih ve Saat Bilgisi */}
                   <div className="flex flex-col items-center text-sm text-gray-700">
                     <div className="flex items-center gap-1">
                       <FiCalendar />
@@ -376,6 +659,29 @@ const CourseSessionCard = ({ data, status }) => {
                       <span>{enFormatTime(item.session_date)}</span>
                     </div>
                   </div>
+
+                  {/* --- Yeni Eklenen Düzenle ve Sil Butonları --- */}
+                  {item.status === "awaiting" && (
+                    <div className="flex items-center gap-4 mt-2 border-t pt-2 w-full justify-center">
+                      <button
+                        onClick={() => handleEdit(item)}
+                        className="text-blue-600 hover:text-blue-800 transition-colors"
+                        title="Düzenle"
+                      >
+                        <FiEdit size={18} />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteRequest(item.id);
+                        }}
+                        className="text-red-600 hover:text-red-800 transition-colors"
+                        title="Sil"
+                      >
+                        <FiTrash2 size={18} />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </article>
 

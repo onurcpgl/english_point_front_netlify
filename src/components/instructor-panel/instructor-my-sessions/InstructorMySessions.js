@@ -6,8 +6,10 @@ import { useQuery } from "@tanstack/react-query";
 import instructorPanelService from "../../../utils/axios/instructorPanelService";
 import { usePathname } from "next/navigation";
 import CourseSessionCard from "../../../components/instructor-panel/course-session-card/CourseSessionCard";
-
+import SessionCompleteComp from "../another-comp/SessionCompleteComp";
 function InstructorMySessions() {
+  const [sessionToReview, setSessionToReview] = useState(null);
+
   const pathname = usePathname();
   const {
     data: myCourses,
@@ -74,6 +76,7 @@ function InstructorMySessions() {
     <div className="w-full h-auto bg-[#F5F5F5] rounded-3xl p-4 md:p-6 relative">
       {/* DÜZELTME 2: Flex yerine Grid yapısı kullanıldı. 
           Mobilde 1 sütun, tablete 2 sütun, geniş ekranda 4 sütun olur. */}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full mb-6">
         <button
           className={`group px-4 py-3 relative rounded-3xl w-full shadow-md cursor-pointer font-semibold text-sm md:text-base transition-all duration-200 hover:shadow-lg ${
@@ -151,6 +154,8 @@ function InstructorMySessions() {
                 <CourseSessionCard
                   data={myCourses.data}
                   status={selectedSessionStatus}
+                  setSessionCounts={setSessionCounts}
+                  refetch={refetch}
                 />
               </div>
             </div>

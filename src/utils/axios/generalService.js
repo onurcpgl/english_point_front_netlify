@@ -178,10 +178,6 @@ const getCafes = async () => {
   return response.data;
 };
 
-const saveCourseSession = async (values) => {
-  const response = await axiosInstance.post("/api/course-sessions", values);
-  return response.data;
-};
 //Sepet servisleri
 // Session Basket APIs
 export const getBasket = async () => {
@@ -232,8 +228,15 @@ export const sendResendCode = async () => {
   const response = await axiosInstance.post("/api/email/resend-new");
   return response.data;
 };
-
+export const canceledCourseByUser = async (courseSessionId, value) => {
+  const response = await axiosInstance.post(
+    `/api/course-sessions/${courseSessionId}/cancel`,
+    value
+  );
+  return response.data;
+};
 const generalService = {
+  canceledCourseByUser,
   sendEmailCode,
   sendResendCode,
   updateUserProfile,
@@ -244,7 +247,6 @@ const generalService = {
   updatedBasket,
   clearBasket,
   removeFromBasket,
-  saveCourseSession,
   getCafes,
   storeAdresses,
   getMyAdresses,

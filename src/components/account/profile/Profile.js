@@ -40,7 +40,6 @@ function Profile() {
     queryKey: ["myCourses"],
     queryFn: generalService.getUserSession,
   });
-  console.log("askljfagsfhj", myCourses);
   const {
     data: myAddresses,
     error: errorMyAddresses,

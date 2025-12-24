@@ -57,8 +57,23 @@ const getInstructorProfileUpdate = async (data) => {
   });
   return response.data;
 };
+const saveCourseSession = async (values) => {
+  const response = await axiosInstance.post("/api/course-sessions", values);
+  return response.data;
+};
 const getMySessions = async () => {
   const response = await axiosInstance.get("/api/get-my-sessions");
+  return response.data;
+};
+const updateCourseSession = async (values) => {
+  const response = await axiosInstance.post(
+    "/api/course-sessions-update",
+    values
+  );
+  return response.data;
+};
+const deleteMySessions = async (id) => {
+  const response = await axiosInstance.delete(`/api/course-sessions/${id}`);
   return response.data;
 };
 const getMySessionsActive = async () => {
@@ -165,6 +180,13 @@ const confirmCourseUser = async (data) => {
   return response.data;
 };
 //Payment
+const courseSessionCompletedHandler = async (id) => {
+  const response = await axiosInstance.post(
+    `/api/course-sessions/${id}/complete`,
+    {}
+  );
+  return response.data;
+};
 const getPaymentsStats = async () => {
   const response = await axiosInstance.get("/api/instructor/payments/stats");
   return response.data;
@@ -173,10 +195,17 @@ const getPaymentHistory = async () => {
   const response = await axiosInstance.get("/api/instructor/payments/history");
   return response.data;
 };
+const getProgramCategories = async () => {
+  const response = await axiosInstance.get("/api/program-categories");
+  return response.data;
+};
+
 const instructorService = {
   getPaymentsStats,
+  getProgramCategories,
   getPaymentHistory,
   confirmCourseUser,
+  saveCourseSession,
   getLanguageUpdate,
   postLanguageInfo,
   getLanguageInfo,
@@ -190,6 +219,8 @@ const instructorService = {
   getContactInfo,
   getInstructorProfile,
   getMySessions,
+  deleteMySessions,
+  updateCourseSession,
   getMySessionUsers,
   getInstructorProfileUpdate,
   resetInstructorPassword,
@@ -198,5 +229,6 @@ const instructorService = {
   registerEmailExist,
   getPrograms,
   getMySessionsActive,
+  courseSessionCompletedHandler,
 };
 export default instructorService;

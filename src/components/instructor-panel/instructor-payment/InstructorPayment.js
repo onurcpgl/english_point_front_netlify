@@ -114,7 +114,7 @@ function InstructorPayment() {
       {/* --- HEADER --- */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">My Wallet</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Payout</h1>
           <p className="text-gray-500 text-sm">
             Manage your financial status and payment history.
           </p>

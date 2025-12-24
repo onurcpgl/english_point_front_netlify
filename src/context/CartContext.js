@@ -85,20 +85,24 @@ export const CartProvider = ({ children }) => {
   const addSession = async (sessionData) => {
     try {
       const result = await generalService.addToBasket(sessionData.id);
+
       if (result.success) {
-        // Ekleme başarılıysa, API'den dönen güncel sepeti istemek daha sağlıklıdır
-        // ama eldeki veriyi kullanacaksak da manipüle etmeliyiz.
-        // Şimdilik senin yapına sadık kalarak direkt setliyoruz:
         setSessions(sessionData);
         localStorage.setItem("cartSessions", JSON.stringify(sessionData));
-        return true;
+        return result;
       } else {
-        console.error("Sepete ekleme başarısız:", result.message);
-        return false;
+        // Backend 200 döndü ama success:false ise
+        return result;
       }
     } catch (e) {
       console.error("Sepete ekleme hatası:", e);
-      return false;
+
+      if (e.response && e.response.data) {
+        return e.response.data; // { success: false, message: "Bu eğitimi zaten aldınız." } döner.
+      }
+
+      // Eğer sunucuya hiç ulaşılamadıysa hatayı fırlatmaya devam et
+      throw e;
     }
   };
 

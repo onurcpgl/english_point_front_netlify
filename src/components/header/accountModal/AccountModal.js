@@ -13,7 +13,13 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 
-const AccountModal = ({ user, setMenuOpen, menuOpen, signOut }) => {
+const AccountModal = ({
+  user,
+  unreadCount,
+  setMenuOpen,
+  menuOpen,
+  signOut,
+}) => {
   const sidebarRef = useRef(null);
   const router = useRouter();
 
@@ -23,7 +29,7 @@ const AccountModal = ({ user, setMenuOpen, menuOpen, signOut }) => {
   const menuItems = [
     { icon: User, label: "Profilim", href: "/account/profile" },
     { icon: Settings, label: "Ayarlar", href: "/account/settings" },
-    { icon: Bell, label: "Bildirimler", href: "/account/notifications" },
+    { icon: Bell, label: "Bildirimler", href: "/account/message" },
     { icon: Shield, label: "Gizlilik", href: "/account/privacy" },
   ];
 
@@ -169,6 +175,7 @@ const AccountModal = ({ user, setMenuOpen, menuOpen, signOut }) => {
           <div className="flex flex-col gap-1">
             {menuItems.map((item, index) => (
               <SidebarItem
+                unreadCount={unreadCount}
                 key={index}
                 item={item}
                 onClick={() => handleMenuClick(item.href)}
@@ -184,6 +191,7 @@ const AccountModal = ({ user, setMenuOpen, menuOpen, signOut }) => {
             </span>
             {supportItems.map((item, index) => (
               <SidebarItem
+                unreadCount={unreadCount}
                 key={index}
                 item={item}
                 onClick={() => handleMenuClick(item.href)}
@@ -213,8 +221,9 @@ const AccountModal = ({ user, setMenuOpen, menuOpen, signOut }) => {
 };
 
 // Alt Bileşen
-const SidebarItem = ({ item, onClick }) => {
+const SidebarItem = ({ item, onClick, unreadCount }) => {
   const Icon = item.icon;
+
   return (
     <button
       onClick={onClick}
@@ -227,7 +236,15 @@ const SidebarItem = ({ item, onClick }) => {
           className="text-gray-500 group-hover:text-amber-500 transition-colors"
         />
       </div>
+
       <span className="font-medium text-sm">{item.label}</span>
+
+      {/* --- BİLDİRİM ROZETİ MANTIĞI --- */}
+      {item.label === "Bildirimler" && unreadCount > 0 && (
+        <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-100 px-1.5 text-xs font-bold text-red-600">
+          {unreadCount}
+        </span>
+      )}
     </button>
   );
 };

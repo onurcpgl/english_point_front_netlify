@@ -4,43 +4,41 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useLoadScript } from "@react-google-maps/api";
 
-// Google Maps kütüphanelerini tanımlıyoruz
 const libraries = ["places"];
 
-export default function CafeLocationComp({ onSelectCafe }) {
-  // --- STATE YÖNETİMİ ---
+export default function CafeLocationComp({ onSelectCafe, initialValue }) {
   const [inputValue, setInputValue] = useState("");
-  const [options, setOptions] = useState([]); // Google'dan gelen tahminler
-  const [selectedCafe, setSelectedCafe] = useState(null); // Seçilen kafe detayları
+  const [options, setOptions] = useState([]);
+  const [selectedCafe, setSelectedCafe] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
 
-  // Google Script Yüklemesi
+  useEffect(() => {
+    if (initialValue) {
+      setSelectedCafe(initialValue);
+      setInputValue(initialValue.name || "");
+    }
+  }, [initialValue]);
+
   const { isLoaded } = useLoadScript({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY, // .env dosyana eklemelisin
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY,
     libraries: libraries,
   });
 
   const autocompleteService = useRef(null);
   const placesService = useRef(null);
 
-  // Servisleri başlat
   useEffect(() => {
     if (isLoaded && !autocompleteService.current) {
       autocompleteService.current =
         new window.google.maps.places.AutocompleteService();
-      // PlacesService için sanal bir div oluşturuyoruz (görünür harita olmadığı için)
       placesService.current = new window.google.maps.places.PlacesService(
         document.createElement("div")
       );
     }
   }, [isLoaded]);
 
-  // --- GOOGLE API İŞLEMLERİ ---
-
-  // 1. Kullanıcı yazdıkça tahminleri getir
   const handleInputChange = (e) => {
     const value = e.target.value;
-
     setInputValue(value);
     setIsOpen(true);
 
@@ -51,8 +49,7 @@ export default function CafeLocationComp({ onSelectCafe }) {
 
     const request = {
       input: value,
-      types: ["cafe"], // Sadece bu tipleri ara
-      // componentRestrictions: { country: "tr" }, // Sadece Türkiye içi aramak istersen aç
+      types: ["cafe", "restaurant"],
     };
 
     autocompleteService.current.getPlacePredictions(request, (results) => {
@@ -60,23 +57,55 @@ export default function CafeLocationComp({ onSelectCafe }) {
     });
   };
 
-  // 2. Listeden seçim yapıldığında detayları çek (Fotoğraf, Koordinat vb.)
+  // --- GÜNCELLENEN FONKSİYON BURASI ---
   const handleSelect = (placeId) => {
     if (!placesService.current) return;
 
     const request = {
       placeId: placeId,
-      fields: ["name", "formatted_address", "geometry", "photos"], // Bize lazım olan alanlar
+      fields: [
+        "name",
+        "formatted_address",
+        "geometry",
+        "photos",
+        "address_components", // Bu alanın istendiğinden emin olun
+      ],
     };
 
     placesService.current.getDetails(request, (place, status) => {
       if (status === window.google.maps.places.PlacesServiceStatus.OK) {
-        // Google fotoğrafını URL'e çevir
+        let district = "";
+        let city = ""; // 1. ŞEHİR DEĞİŞKENİNİ TANIMLADIK
+
+        if (place.address_components) {
+          // --- İLÇE (DISTRICT) BULMA ---
+          const districtComponent = place.address_components.find((component) =>
+            component.types.includes("administrative_area_level_2")
+          );
+
+          const subLocalityComponent = place.address_components.find(
+            (component) => component.types.includes("sublocality_level_1")
+          );
+
+          if (districtComponent) {
+            district = districtComponent.long_name;
+          } else if (subLocalityComponent) {
+            district = subLocalityComponent.long_name;
+          }
+
+          // --- 2. ŞEHİR (CITY) BULMA MANTIĞI ---
+          // administrative_area_level_1 genellikle İL (Province) bilgisidir.
+          const cityComponent = place.address_components.find((component) =>
+            component.types.includes("administrative_area_level_1")
+          );
+
+          if (cityComponent) {
+            city = cityComponent.long_name;
+          }
+        }
 
         const photoUrl =
-          place.photos && place.photos.length > 0
-            ? place.photos[0].getUrl({ maxWidth: 400 })
-            : null;
+          "https://api.englishpoint.com.tr/public/google_cafe/google_cafe_image.jpg";
 
         const cafeData = {
           name: place.name,
@@ -85,13 +114,14 @@ export default function CafeLocationComp({ onSelectCafe }) {
           lng: place.geometry.location.lng(),
           image: photoUrl,
           googlePlaceId: placeId,
+          district: district,
+          city: city, // 3. ŞEHRİ VERİYE EKLEDİK
         };
 
         setSelectedCafe(cafeData);
         setInputValue(place.name);
         setIsOpen(false);
 
-        // Üst bileşene veriyi gönder
         if (onSelectCafe) {
           onSelectCafe(cafeData);
         }
@@ -104,6 +134,7 @@ export default function CafeLocationComp({ onSelectCafe }) {
 
   return (
     <div className="w-full space-y-6 px-4">
+      {/* INPUT ALANI AYNI KALDI */}
       <div className="relative w-full">
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Cafe Location (Google)
@@ -115,10 +146,9 @@ export default function CafeLocationComp({ onSelectCafe }) {
             value={inputValue}
             onChange={handleInputChange}
             placeholder="Search for a cafe via Google..."
-            className="w-full h-14 border border-gray-200 outline-none focus:border-blue-500 bg-white focus:ring-1 focus:ring-blue-500 px-4 placeholder:text-[#8e8e8e]  font-light text-black transition-all"
+            className="w-full h-14 outline-none px-4 bg-white text-black placeholder:text-gray-400 border border-gray-300 focus:ring-2 focus:ring-blue-500 transition-all"
             onFocus={() => setIsOpen(true)}
           />
-          {/* Search Icon */}
           <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-400">
             <svg
               className="w-5 h-5"
@@ -136,7 +166,6 @@ export default function CafeLocationComp({ onSelectCafe }) {
           </div>
         </div>
 
-        {/* --- GOOGLE PREDICTIONS DROPDOWN (Vertical List) --- */}
         {isOpen && options.length > 0 && (
           <div className="absolute top-full left-0 mt-2 w-full bg-white border border-gray-200 rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-60 overflow-y-auto">
             {options.map((option) => (
@@ -145,7 +174,6 @@ export default function CafeLocationComp({ onSelectCafe }) {
                 onClick={() => handleSelect(option.place_id)}
                 className="p-3 hover:bg-blue-50 cursor-pointer border-b border-gray-50 last:border-none transition-colors flex items-center gap-3"
               >
-                {/* Google Map Icon */}
                 <div className="flex-shrink-0 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500">
                   <svg
                     className="w-4 h-4"
@@ -173,44 +201,26 @@ export default function CafeLocationComp({ onSelectCafe }) {
         )}
       </div>
 
-      {/* --- DETAIL CARD (Senin Orijinal Tasarımın) --- */}
+      {/* DETAIL CARD */}
       {selectedCafe && (
         <div className="w-full animate-in fade-in slide-in-from-top-4 duration-500">
           <div className="bg-slate-50 border border-slate-200 rounded-xl overflow-hidden shadow-sm flex flex-col md:flex-row">
-            {/* Left: Large Image (Google Photo) */}
             <div className="w-full md:w-1/3 h-48 md:h-auto relative bg-gray-200">
-              {selectedCafe ? (
-                // next/image kullandığımız için remote image config gerekebilir
-                // Şimdilik standart img etiketi kullanıyorum ki config ile uğraşma
-                <Image
-                  src="https://api.englishpoint.com.tr/public/google_cafe/google_cafe_image.jpg"
-                  alt={selectedCafe.name}
-                  className="w-full h-full object-cover"
-                  width={400}
-                  height={400}
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100">
-                  <svg
-                    className="w-12 h-12"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    ></path>
-                  </svg>
-                </div>
-              )}
+              {/* Resim kısmını da düzelttim: artık dinamik gelen resmi kullanıyor */}
+              <Image
+                src={
+                  selectedCafe.image ||
+                  "https://api.englishpoint.com.tr/public/google_cafe/google_cafe_image.jpg"
+                }
+                alt={selectedCafe.name}
+                loading="eager"
+                className="w-full h-full object-cover"
+                width={400}
+                height={400}
+              />
             </div>
 
-            {/* Right: Details */}
             <div className="flex-1 p-6 flex flex-col justify-center space-y-4">
-              {/* Title & Badge */}
               <div className="flex justify-between items-start">
                 <h3 className="text-xl font-bold text-gray-900">
                   {selectedCafe.name}
@@ -220,7 +230,6 @@ export default function CafeLocationComp({ onSelectCafe }) {
                 </span>
               </div>
 
-              {/* Address Box */}
               <div className="flex items-start gap-3 bg-white p-3 rounded-lg border border-gray-200">
                 <div className="mt-0.5 text-blue-500">
                   <svg
@@ -250,6 +259,15 @@ export default function CafeLocationComp({ onSelectCafe }) {
                   <p className="text-sm text-gray-700 leading-snug">
                     {selectedCafe.address}
                   </p>
+                  {/* District ve City bilgisini göstermek isterseniz burayı kullanabilirsiniz */}
+                  {(selectedCafe.district || selectedCafe.city) && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      {selectedCafe.district
+                        ? selectedCafe.district + " / "
+                        : ""}{" "}
+                      {selectedCafe.city}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

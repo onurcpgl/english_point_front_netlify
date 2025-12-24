@@ -6,8 +6,6 @@ import FilterComp from "./filterComp/FilterComp";
 import SessionListComp from "./sessionListComp/SessionListComp";
 import { motion } from "framer-motion";
 import Loading from "../../components/loading/Loading";
-// İkonlar için (lucide-react veya react-feather kullanıyorsan import et, yoksa svg kullanabilirsin)
-import { MapPin, RefreshCw, AlertCircle } from "lucide-react";
 
 function getDistance(lat1, lon1, lat2, lon2) {
   const R = 6371; // Dünya yarıçapı (km)
@@ -41,6 +39,13 @@ function CourseSessionsComp() {
     queryKey: ["sessionCategories"],
     queryFn: generalService.getCourseCategories,
   });
+  // --- İL / İLÇE STATE'LERİ ---
+  const [locationSelection, setLocationSelection] = useState({
+    cityId: "",
+    cityName: "",
+    district: "",
+  });
+  // --- İL / İLÇE STATE'LERİ ---
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({});
   const [userLocation, setUserLocation] = useState({ lat: null, lon: null });
@@ -126,16 +131,23 @@ function CourseSessionsComp() {
   // Local Storage Filtreleri
   const getLocalFilter = async () => {
     const uniq_id = localStorage.getItem("uniq_id");
+
     if (uniq_id !== null) {
       const questionAnswerResult = await generalService.getByAnswerQuestion(
         uniq_id
       );
       if (questionAnswerResult?.answers) {
-        const parsedAnswers = questionAnswerResult.answers["tr"];
-        const formatted = parsedAnswers.reduce((acc, item, idx) => {
+        const rawAnswers = JSON.parse(questionAnswerResult.answers);
+
+        // Şimdi array olduğu için reduce çalışır
+        const formatted = rawAnswers.reduce((acc, item, idx) => {
+          // Soruların ID'leri 1'den başlıyorsa ve sıralıysa 'idx + 1' doğrudur.
+          // Eğer soruların gerçek ID'leri farklıysa backend'den ID bilgisini de çekmen gerekebilir.
           acc[idx + 1] = item.answers;
           return acc;
         }, {});
+
+        // Hem state'e atıyoruz hem return ediyoruz
         setFilters(formatted);
         return formatted;
       }
@@ -151,50 +163,63 @@ function CourseSessionsComp() {
   useEffect(() => {
     if (!courseSessions) return;
 
+    // 1. ADIM: Her halükarda mesafe hesaplayıp objeye ekleyelim (Mapping)
     let tempData = courseSessions.map((s) => {
-      if (userLocation.lat && userLocation.lon) {
+      let distance = 0;
+
+      if (
+        userLocation.lat &&
+        userLocation.lon &&
+        s.google_cafe?.latitude &&
+        s.google_cafe?.longitude
+      ) {
         const cafeLat = parseFloat(
           s.google_cafe.latitude.toString().replace(",", ".")
         );
         const cafeLon = parseFloat(
           s.google_cafe.longitude.toString().replace(",", ".")
         );
-        const distance = getDistance(
+        distance = getDistance(
           userLocation.lat,
           userLocation.lon,
           cafeLat,
           cafeLon
         );
-        return { ...s, distance };
       }
-      return s;
+      return { ...s, distance };
     });
 
-    if (userLocation.lat && userLocation.lon && range) {
+    // 2. ADIM: FİLTRELEME MANTIĞI
+
+    // A) MANUEL SEÇİM (İl seçilmişse girer, ilçe zorunlu değil)
+    if (locationSelection?.cityName) {
+      tempData = courseSessions.filter((s) => {
+        const cafeCity = s.google_cafe?.city || "";
+        const cafeDistrict = s.google_cafe?.district || "";
+
+        // 1. İL KONTROLÜ (Zorunlu)
+        const isCityMatch =
+          cafeCity.toLocaleLowerCase("tr") ===
+          locationSelection.cityName.toLocaleLowerCase("tr");
+
+        // 2. İLÇE KONTROLÜ (Opsiyonel - Sadece seçildiyse kontrol et)
+        let isDistrictMatch = true; // Varsayılan true (seçilmediyse elemeyeceğiz)
+
+        if (locationSelection.district) {
+          isDistrictMatch = cafeDistrict
+            .toLocaleLowerCase("tr")
+            .includes(locationSelection.district.toLocaleLowerCase("tr"));
+        }
+
+        // İl tutuyorsa VE (İlçe seçilmediyse VEYA İlçe de tutuyorsa)
+        return isCityMatch && isDistrictMatch;
+      });
+    }
+    // B) OTOMATİK KONUM (Sadece manuel seçim yoksa çalışır)
+    else if (userLocation.lat && userLocation.lon && range) {
       tempData = tempData
         .filter((s) => s.distance <= range)
         .sort((a, b) => a.distance - b.distance);
-    }
-
-    if (filters && Object.keys(filters).length > 0) {
-      tempData = tempData.filter((session) => {
-        return Object.entries(filters).every(([questionId, filterValue]) => {
-          if (
-            !filterValue ||
-            (Array.isArray(filterValue) && filterValue.length === 0)
-          )
-            return true;
-          const answerObj = session.answers.find(
-            (a) => a.start_question_id == questionId
-          );
-          if (!answerObj) return false;
-          if (Array.isArray(filterValue)) {
-            return filterValue.some((val) => answerObj.answer.includes(val));
-          } else {
-            return answerObj.answer.includes(filterValue);
-          }
-        });
-      });
     }
 
     setTimeout(() => {
@@ -202,8 +227,7 @@ function CourseSessionsComp() {
     }, 1000);
 
     setMappedData(tempData);
-  }, [courseSessions, userLocation, range, filters]);
-
+  }, [courseSessions, userLocation, range, filters, locationSelection]);
   return (
     <div className="flex flex-col gap-5 text-black pt-36 max-lg:pt-20 pb-5 relative min-h-screen">
       {/* Sticky Header Alanı */}
@@ -222,35 +246,13 @@ function CourseSessionsComp() {
           // setUserLocation prop'unu artık kullanmasan da FilterComp içinde manuel buton varsa diye bırakıyoruz
           setUserLocation={setUserLocation}
           userLocation={userLocation}
+          handleGetLocation={handleGetLocation}
           range={range}
           setRange={setRange}
+          // --- 2. YENİ PROP'LARI BURADAN GÖNDER ---
+          setLocationSelection={setLocationSelection}
+          locationSelection={locationSelection}
         />
-
-        {/* --- 📍 KONUM BİLGİSİ GÖSTERİM ALANI --- */}
-        <div className="w-full bg-gray-50 border-t border-gray-100 py-2 px-4 flex items-center justify-center text-sm md:text-base transition-all">
-          <div className="container mx-auto flex flex-wrap items-center justify-center gap-3">
-            {locationStatus === "loading" && (
-              <span className="flex items-center gap-2 text-gray-500 animate-pulse">
-                <RefreshCw className="animate-spin w-4 h-4" /> Konumunuz
-                alınıyor...
-              </span>
-            )}
-
-            {locationStatus === "error" && (
-              <div className="flex items-center gap-2 text-red-500 bg-red-50 px-3 py-1 rounded-full">
-                <AlertCircle className="w-4 h-4" />
-                <span>{locationErrorMsg || "Konum alınamadı."}</span>
-                <button
-                  onClick={handleGetLocation}
-                  className="underline font-semibold ml-1"
-                >
-                  Tekrar Dene
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-        {/* --- KONUM ALANI BİTİŞ --- */}
       </motion.div>
 
       <div className="w-full h-auto container mx-auto">

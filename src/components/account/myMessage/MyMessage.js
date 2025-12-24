@@ -138,86 +138,71 @@ export default function MyMessage() {
             return (
               <div
                 key={item.id}
-                className={`relative rounded-2xl p-6 border transition-all duration-300 ${
-                  isUnread
-                    ? "bg-white border-gray-100 shadow-sm hover:shadow-md"
-                    : "bg-[#EAEAEA] border-transparent opacity-80 hover:opacity-100"
+                className={`group relative p-5 border-b last:border-b-0 transition-all duration-200 hover:bg-gray-50 ${
+                  isUnread ? "bg-blue-50/40" : "bg-white"
                 }`}
               >
-                <div className="flex flex-col md:flex-row items-start gap-4">
-                  {/* İKON ALANI */}
-                  <div
-                    className={`p-3 h-fit rounded-xl shrink-0 ${
-                      isUnread
-                        ? "bg-blue-50 text-blue-600"
-                        : "bg-gray-200 text-gray-500"
-                    }`}
-                  >
-                    {isUnread ? (
-                      <Bell className="w-6 h-6" />
-                    ) : (
-                      <CheckCircle className="w-6 h-6" />
+                <div className="flex gap-4">
+                  {/* SOL İKON & DURUM */}
+                  <div className="relative shrink-0 mt-1">
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                        isUnread
+                          ? "bg-blue-100 text-blue-600"
+                          : "bg-gray-100 text-gray-400"
+                      }`}
+                    >
+                      {isUnread ? (
+                        <Bell size={18} />
+                      ) : (
+                        <CheckCircle size={18} />
+                      )}
+                    </div>
+                    {/* Okunmamışsa Kırmızı Nokta */}
+                    {isUnread && (
+                      <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 border-2 border-white rounded-full"></span>
                     )}
                   </div>
 
-                  {/* İÇERİK ALANI */}
-                  <div className="flex-1 w-full">
-                    <div className="flex justify-between items-start flex-wrap gap-2">
+                  {/* İÇERİK */}
+                  <div className="flex-1 space-y-1">
+                    <div className="flex justify-between items-start gap-2">
                       <h3
-                        className={`text-lg font-bold ${
-                          isUnread ? "text-gray-900" : "text-gray-700"
+                        className={`text-base ${
+                          isUnread
+                            ? "font-bold text-gray-900"
+                            : "font-medium text-gray-600"
                         }`}
                       >
                         {item.data.title}
                       </h3>
-                      <span className="text-xs font-semibold text-gray-500 flex items-center gap-1 bg-gray-100/50 px-2 py-1 rounded-md">
-                        <Clock className="w-3 h-3" />
+                      <span className="shrink-0 text-xs text-gray-400 whitespace-nowrap">
                         {formatDate(item.created_at)}
                       </span>
                     </div>
 
-                    <p
-                      className={`text-sm mt-2 leading-relaxed ${
-                        isUnread ? "text-gray-600" : "text-gray-500"
-                      }`}
-                    >
+                    <p className="text-sm text-gray-600 leading-relaxed pr-8">
                       {item.data.message}
                     </p>
 
-                    {/* BUTONLAR */}
-                    <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-gray-100/50">
-                      {/* Detaya Git Butonu */}
-                      {/* {item.data.action_url && (
-                        <a
-                          href={item.data.action_url}
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 text-sm font-semibold rounded-lg transition-colors border border-gray-200"
-                        >
-                          <BookOpen className="w-4 h-4" />
-                          Detaya Git
-                        </a>
-                      )} */}
-
-                      {/* Okundu İşaretle Butonu */}
-                      {isUnread && (
+                    {/* AKSİYONLAR (Sadece Unread ise gösterir) */}
+                    {isUnread && (
+                      <div className="pt-2">
                         <button
                           onClick={() => handleMarkAsRead(item.id)}
                           disabled={markingId === item.id}
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-transparent hover:bg-blue-50 text-blue-600 text-sm font-semibold rounded-lg transition-colors border border-blue-100 ml-auto"
+                          className="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1 transition-colors"
                         >
                           {markingId === item.id ? (
-                            <>
-                              <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
-                              İşleniyor
-                            </>
+                            "İşleniyor..."
                           ) : (
                             <>
-                              <CheckCircle className="w-4 h-4" />
-                              Okundu İşaretle
+                              <CheckCircle size={12} /> Okundu olarak işaretle
                             </>
                           )}
                         </button>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

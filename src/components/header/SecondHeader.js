@@ -1,23 +1,47 @@
 "use client";
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react"; // useMemo eklendi
 import { signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import EnglishPointLogo from "../../assets/logo/logovector.svg";
 import AccountModal from "./accountModal/AccountModal";
 import BasketButton from "./basketButton/BasketButton";
+import { useQuery } from "@tanstack/react-query";
+
 import { ChevronDown, Menu } from "lucide-react";
 import { LogIn, UserPlus } from "react-feather";
 import Link from "next/link";
 import AuthLinks from "./headerLink/AuthLinks";
-
+import generalService from "../../utils/axios/generalService";
 import GuestLinks from "./headerLink/GuestLink";
 import GuestModal from "./accountModal/GuestModal";
+
 export default function SecondHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuOpenGuest, setMenuOpenGuest] = useState(false);
 
+  // 1. ADIM: useSession'ı en tepeye aldık.
+  // Böylece 'status' değişkenini aşağıda kullanabiliriz.
   const { data: session, status } = useSession();
+
+  // 2. ADIM: useQuery'ye 'enabled' ayarı ekledik.
+  const { data, error, isLoading, refetch } = useQuery({
+    queryKey: ["myMessage"],
+    queryFn: generalService.getMessage,
+    // Sadece kullanıcı giriş yapmışsa (authenticated) istek at:
+    enabled: status === "authenticated",
+  });
+
+  // --- OKUNMAMIŞ MESAJ SAYISINI HESAPLAMA ---
+  const unreadCount = useMemo(() => {
+    // Veri yoksa veya kullanıcı giriş yapmamışsa 0 döndür
+    if (!data?.data || status !== "authenticated") return 0;
+
+    return data.data.filter((notification) => notification.read_at === null)
+      .length;
+  }, [data, status]);
+
+  console.log("unreadCount", unreadCount);
 
   const pathname = usePathname();
   const isActive = pathname === "/course-sessions";
@@ -32,14 +56,9 @@ export default function SecondHeader() {
           <Link href="/" className="p-1.5">
             <span className="sr-only">English Point</span>
             <svg
-              // 1. Sabit width ve height değerlerini kaldırdık (viewBox oranları korur)
               viewBox="0 0 90 111"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
-              // 2. Responsive class'lar ekledik:
-              // w-14 (3.5rem / 56px) -> Mobildeki boyut
-              // h-auto -> Oranı korumak için yükseklik otomatik
-              // md:w-[90px] -> Masaüstünde (medium ve üstü) orijinal boyutuna dön
               className="logo w-14 h-auto md:w-[90px]"
             >
               <g clipPath="url(#clip0_151_475)">
@@ -72,7 +91,6 @@ export default function SecondHeader() {
         )}
 
         {status === "loading" ? (
-          /* LOADING: BLUR EFEKTLİ YAZI */
           <div className="hidden lg:flex lg:gap-x-12 items-center">
             <span className="text-lg text-gray-900/40 blur-[3px] animate-pulse select-none">
               En yakın kafeyi/noktayı bul!
@@ -93,9 +111,8 @@ export default function SecondHeader() {
                 <p className="pt-1">Giriş Yap</p> <LogIn />
               </Link>
 
-              {/* HAMBURGER BUTONU */}
               <button
-                onClick={() => setMenuOpenGuest(true)} // Tıklayınca true yap
+                onClick={() => setMenuOpenGuest(true)}
                 className="text-black text-sm font-bold flex justify-center items-center cursor-pointer gap-1 lg:hidden"
               >
                 <Menu className="text-xl transition-transform duration-300" />
@@ -112,7 +129,7 @@ export default function SecondHeader() {
               <div className="relative">
                 <button
                   onClick={() => setMenuOpen(!menuOpen)}
-                  className="text-black text-sm font-bold flex justify-center items-center cursor-pointer gap-1"
+                  className="text-black text-sm font-bold flex justify-center items-center cursor-pointer gap-1 relative" // relative eklendi ki badge düzgün konumlanabilsin
                 >
                   <ChevronDown
                     className={`hidden lg:block text-sm transition-transform duration-300 ${
@@ -123,10 +140,18 @@ export default function SecondHeader() {
                     className={`block lg:hidden text-xl transition-transform duration-300`}
                   />
                   <p className="hidden lg:block">Hesabım</p>
+
+                  {/* --- 2. KIRMIZI BİLDİRİM ROZETİ (BADGE) --- */}
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-3 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 ring-2 ring-white text-[12px] font-bold text-white">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
                 </button>
 
                 {menuOpen && (
                   <AccountModal
+                    unreadCount={unreadCount}
                     user={session?.user}
                     menuOpen={menuOpen}
                     setMenuOpen={setMenuOpen}

@@ -1,20 +1,16 @@
 "use client";
 import { useUserSession } from "../../providers/UserSessionProvider";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { signOut } from "next-auth/react";
 import EnglishPointLogoDisi from "../../assets/logo/logo.png";
 import { LogIn, ChevronDown } from "lucide-react";
 import AccountModal from "./accountModal/AccountModal";
-import {
-  Dialog,
-  DialogPanel,
-  Disclosure,
-  DisclosureButton,
-} from "@headlessui/react";
+import { Dialog, DialogPanel } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
-import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
 import Image from "next/image";
+import { useQuery } from "@tanstack/react-query";
+import generalService from "../../utils/axios/generalService";
 
 export default function UserHeader() {
   // Yan menü (Sadece çıkış yapılmışsa veya linkler için gerekirse)
@@ -23,6 +19,16 @@ export default function UserHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const { userSession, status } = useUserSession();
+
+  const { data, error, isLoading, refetch } = useQuery({
+    queryKey: ["myMessage"],
+    queryFn: generalService.getMessage,
+  });
+  const unreadCount = useMemo(() => {
+    if (!data?.data) return 0;
+    return data.data.filter((notification) => notification.read_at === null)
+      .length;
+  }, [data]);
 
   // Hamburger butonuna tıklanınca çalışacak fonksiyon
   const handleMobileMenuClick = () => {
@@ -105,10 +111,16 @@ export default function UserHeader() {
                   }`}
                 />
                 <p>Hesabım</p>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-3 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 ring-2 ring-white text-[12px] font-bold text-white">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
               </button>
 
               {menuOpen && (
                 <AccountModal
+                  unreadCount={unreadCount}
                   user={userSession?.user}
                   menuOpen={menuOpen}
                   setMenuOpen={setMenuOpen}

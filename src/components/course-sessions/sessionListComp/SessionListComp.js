@@ -1,6 +1,6 @@
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
-import { Calendar, Clock } from "lucide-react";
+import { Calendar, Clock, Loader2 } from "lucide-react"; // Loader2 eklendi
 import { IoPerson, IoPersonOutline } from "react-icons/io5";
 import { FaLocationDot } from "react-icons/fa6";
 import generalService from "../../../utils/axios/generalService";
@@ -8,6 +8,8 @@ import { useCart } from "../../../context/CartContext";
 import InstructorProfileCard from "../instructor-profile-card/InstructorProfileCard";
 import { useRouter } from "next/navigation";
 import SessionListSkeleton from "../../../components/ui/LoadingSkeleton/SessionListSkeleton";
+import ErrorModal from "../../ui/ErrorModal/ErrorModal";
+import SuccesMessageComp from "../../ui/SuccesModal/SuccesMessageComp";
 import { echo } from "../../../utils/lib/echo";
 
 function SessionListComp({ mappedData, loading }) {
@@ -15,11 +17,24 @@ function SessionListComp({ mappedData, loading }) {
   const [displaySessions, setDisplaySessions] = useState([]);
   const [quotaData, setQuotaData] = useState([]);
   const [quotaLoading, setQuotaLoading] = useState(true);
-  console.log("mappedData", mappedData);
+
+  // Butonlarda loading göstermek için tıklanan session'ın ID'sini tutar
+  const [processingSessionId, setProcessingSessionId] = useState(null);
+
+  // MODAL STATE'LERİ
+  const [errorModal, setErrorModal] = useState({
+    isOpen: false,
+    message: "",
+  });
+  const [successModal, setSuccessModal] = useState({
+    isOpen: false,
+    message: "",
+  });
+
   const { addSession } = useCart();
   const router = useRouter();
 
-  // 1. ADIM: API İSTEĞİ (Sadece Sayfa Açılışında 1 Kere)
+  // 1. ADIM: API İSTEĞİ
   useEffect(() => {
     const fetchQuotaInfo = async () => {
       setQuotaLoading(true);
@@ -76,6 +91,7 @@ function SessionListComp({ mappedData, loading }) {
     setDisplaySessions(mergedData);
   }, [mappedData, quotaData]);
 
+  // Yardımcı Render Fonksiyonları
   const renderQuotaIcons = (usersCount, quota) => {
     const filledCount = usersCount || 0;
     const totalQuota = quota || 0;
@@ -103,14 +119,51 @@ function SessionListComp({ mappedData, loading }) {
     });
   }
 
+  // --- SEPETE EKLEME İŞLEMİ ---
   const addedSessionBasket = async (sessionCourse) => {
-    const success = await addSession(sessionCourse);
-    if (success) {
-      router.push("/sepet");
-    } else {
-      alert("Sepete ekleme başarısız oldu!");
+    // 1. Loading başlat (Tıklanan ID'yi set et)
+    setProcessingSessionId(sessionCourse.id);
+
+    try {
+      const response = await addSession(sessionCourse);
+      console.log("asdadasd", response);
+      // Başarılı durumu
+      if (response?.status) {
+        setSuccessModal({
+          isOpen: true,
+          message: "Eğitim başarıyla sepete eklendi, yönlendiriliyorsunuz...",
+        });
+
+        setTimeout(() => {
+          setSuccessModal((prev) => ({ ...prev, isOpen: false }));
+          // Yönlendirme sırasında butonun loading'i durmasın ki kullanıcı tekrar tıklamasın
+          router.push("/sepet");
+          setProcessingSessionId(null);
+        }, 2000);
+      } else {
+        throw new Error(response?.message);
+      }
+    } catch (error) {
+      // Hata durumu
+      const errorMsg =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Beklenmedik bir hata oluştu.";
+
+      setErrorModal({
+        isOpen: true,
+        message: errorMsg,
+      });
+
+      // Hata aldıysak loading'i durdur ki kullanıcı tekrar deneyebilsin
+      setProcessingSessionId(null);
     }
   };
+
+  const closeErrorModal = () =>
+    setErrorModal((prev) => ({ ...prev, isOpen: false }));
+  const closeSuccessModal = () =>
+    setSuccessModal((prev) => ({ ...prev, isOpen: false }));
 
   if (loading) {
     return (
@@ -124,6 +177,20 @@ function SessionListComp({ mappedData, loading }) {
 
   return (
     <div className="flex flex-col gap-4 z-20 max-lg:px-4">
+      {/* MODALLAR */}
+      {/* Sizin componentleriniz 'open' prop'u bekliyor, state'imiz 'isOpen' */}
+      <ErrorModal
+        open={errorModal.isOpen}
+        onClose={closeErrorModal}
+        message={errorModal.message}
+      />
+
+      <SuccesMessageComp
+        open={successModal.isOpen}
+        onClose={closeSuccessModal}
+        message={successModal.message}
+      />
+
       {selectedInstructor !== null && (
         <InstructorProfileCard
           selectedInstructor={selectedInstructor}
@@ -132,156 +199,164 @@ function SessionListComp({ mappedData, loading }) {
       )}
 
       {displaySessions.length > 0 ? (
-        displaySessions.map((item, i) => (
-          <div
-            key={item.id || i}
-            // Değişiklik 1: Flex yönü mobilde column, lg'de row yapıldı. Pading mobilde biraz azaltıldı.
-            className="w-full bg-white border border-gray-300 shadow-2xl p-4 lg:p-5 flex flex-col lg:flex-row justify-between items-center lg:items-start gap-6 lg:gap-2"
-          >
-            {/* SOL KISIM (Resim + Bilgiler) */}
-            {/* Değişiklik 2: Genişlik mobilde full, lg'de 4/6 yapıldı. Flex yönü mobilde column, md'de row. */}
-            <div className="flex flex-col md:flex-row gap-6 lg:gap-10 w-full lg:w-4/6">
-              <div className="relative w-full md:w-auto flex justify-center md:block">
-                <Image
-                  alt="Cafe Image"
-                  src={item.google_cafe.image}
-                  width={300}
-                  height={200}
-                  priority
-                  // Resim mobilde responsive davranması için style eklendi
-                  className="object-cover w-full h-auto md:w-[300px] md:h-[200px]"
-                />
-              </div>
+        displaySessions.map((item, i) => {
+          // Kontenjan dolu mu kontrolü
+          const isQuotaFull = (item.users_count || 0) >= item.quota;
+          // Şu an bu butona mı basıldı kontrolü
+          const isProcessing = processingSessionId === item.id;
 
-              <div className="flex flex-col justify-between gap-2 text-black py-1 md:py-3 w-full">
-                <div className="flex flex-col gap-2">
-                  <p className="font-bold text-lg">{item.session_title}</p>
-                  <p className="font-bold text-md">{item.google_cafe.name}</p>
-                  <p className="font-light text-md">
-                    {item.google_cafe.address}
-                  </p>
-                  <p className="font-light text-md">{item.google_cafe.phone}</p>
+          return (
+            <div
+              key={item.id || i}
+              className="w-full bg-white border border-gray-300 shadow-2xl p-4 lg:p-5 flex flex-col lg:flex-row justify-between items-center lg:items-start gap-6 lg:gap-2"
+            >
+              {/* SOL KISIM */}
+              <div className="flex flex-col md:flex-row gap-6 lg:gap-10 w-full lg:w-4/6">
+                <div className="relative w-full md:w-auto flex justify-center md:block">
+                  <Image
+                    alt="Cafe Image"
+                    src={item.google_cafe.image}
+                    width={300}
+                    height={200}
+                    priority
+                    className="object-cover w-full h-auto md:w-[300px] md:h-[200px]"
+                  />
                 </div>
 
-                {/* Konum ve Kota Satırı */}
-                {/* Mobilde alt alta, md üstü yan yana */}
-                <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mt-2 sm:mt-0">
-                  <div className="flex justify-start items-center">
-                    <FaLocationDot className="inline-block mr-2" />
-                    <span
-                      onClick={() =>
-                        window.open(
-                          `https://www.google.com/maps?q=${item.google_cafe.latitude},${item.google_cafe.longitude}`,
-                          "_blank"
-                        )
-                      }
-                      className="font-light cursor-pointer hover:underline underline-offset-4"
-                    >
-                      Konumu Gör
-                    </span>
+                <div className="flex flex-col justify-between gap-2 text-black py-1 md:py-3 w-full">
+                  <div className="flex flex-col gap-2">
+                    <p className="font-bold text-lg">{item.session_title}</p>
+                    <p className="font-bold text-md">{item.google_cafe.name}</p>
+                    <p className="font-light text-md">
+                      {item.google_cafe.address}
+                    </p>
+                    <p className="font-light text-md">
+                      {item.google_cafe.phone}
+                    </p>
                   </div>
 
-                  {/* KOTA ALANI */}
-                  <div className="flex justify-start items-center gap-1 h-8">
-                    <span className="font-bold pr-2">Kontenjan:</span>
-                    {quotaLoading ? (
-                      <div className="flex items-center gap-2 animate-pulse">
-                        <div className="h-4 w-12 bg-gray-200 rounded"></div>
-                        <div className="flex gap-1">
-                          {[1, 2, 3, 4, 5].map((k) => (
-                            <div
-                              key={k}
-                              className="h-5 w-5 bg-gray-200 rounded-full"
-                            ></div>
-                          ))}
+                  <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mt-2 sm:mt-0">
+                    <div className="flex justify-start items-center">
+                      <FaLocationDot className="inline-block mr-2" />
+                      <span
+                        onClick={() =>
+                          window.open(
+                            `https://www.google.com/maps?q=${item.google_cafe.latitude},${item.google_cafe.longitude}`,
+                            "_blank"
+                          )
+                        }
+                        className="font-light cursor-pointer hover:underline underline-offset-4"
+                      >
+                        Konumu Gör
+                      </span>
+                    </div>
+
+                    <div className="flex justify-start items-center gap-1 h-8">
+                      <span className="font-bold pr-2">Kontenjan:</span>
+                      {quotaLoading ? (
+                        <div className="flex items-center gap-2 animate-pulse">
+                          <div className="h-4 w-12 bg-gray-200 rounded"></div>
+                          <div className="flex gap-1">
+                            {[1, 2, 3, 4, 5].map((k) => (
+                              <div
+                                key={k}
+                                className="h-5 w-5 bg-gray-200 rounded-full"
+                              ></div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    ) : (
-                      <>
-                        <span className="text-sm mr-1 text-gray-500 font-mono">
-                          ({item.users_count || 0}/{item.quota})
-                        </span>
-                        {/* Mobilde ikonların aşağı taşmaması için flex-wrap */}
-                        <div className="flex flex-wrap">
-                          {renderQuotaIcons(item.users_count, item.quota)}
-                        </div>
-                      </>
-                    )}
+                      ) : (
+                        <>
+                          <span className="text-sm mr-1 text-gray-500 font-mono">
+                            ({item.users_count || 0}/{item.quota})
+                          </span>
+                          <div className="flex flex-wrap">
+                            {renderQuotaIcons(item.users_count, item.quota)}
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* ORTA KISIM (Süre Sarı Etiket) */}
-            <div className="relative flex justify-center items-center w-full lg:w-auto my-4 lg:my-0">
-              {/* Değişiklik 3: Mobilde 'static' (akışta), Masaüstünde 'absolute' (yukarı taşmış) */}
-              <div className="bg-[#FFD207] relative lg:absolute lg:-top-[1.3rem] p-4 flex justify-center items-center flex-col font-bold leading-[1] rounded-lg lg:rounded-none w-full lg:w-auto">
-                <p>1</p>
-                <span>Saat</span>
-              </div>
-              {/* Mobilde yazıyı gizleyebilir veya margin ile gösterebiliriz, burada masaüstü yapısı korundu */}
-              <p className="mt-2 lg:mt-12 font-bold text-sm lg:text-base max-lg:hidden">
-                Eğitim süresi
-              </p>
-            </div>
-
-            {/* SAĞ KISIM (Tarih, Eğitmen, Buton) */}
-            {/* Değişiklik 4: Genişlik mobilde full, lg'de 1/6. Hizalama mobilde center/stretch */}
-            <div className="w-full lg:w-1/6 flex flex-col justify-between gap-4 lg:gap-1 lg:h-[-webkit-fill-available]">
-              <div className="flex flex-col gap-2 text-black items-start lg:items-end w-full">
-                {/* Tarih Saat */}
-                <div className="flex gap-3 font-medium w-full lg:w-auto justify-between lg:justify-end">
-                  <div className="flex justify-center items-end">
-                    <Calendar
-                      strokeWidth={2}
-                      className="inline-block text-lg font-bold mr-2 text-[#FFD207]"
-                    />
-                    <span className="text-sm">
-                      {getDate(item.session_date)}
-                    </span>
-                  </div>
-                  <div className="flex justify-center items-end">
-                    <Clock
-                      strokeWidth={2}
-                      className="inline-block text-[#FFD207] mr-2"
-                    />
-                    <span className="text-sm">
-                      {getTime(item.session_date)}
-                    </span>
-                  </div>
+              {/* ORTA KISIM */}
+              <div className="relative flex justify-center items-center w-full lg:w-auto my-4 lg:my-0">
+                <div className="bg-[#FFD207] relative lg:absolute lg:-top-[1.3rem] p-4 flex justify-center items-center flex-col font-bold leading-[1] rounded-lg lg:rounded-none w-full lg:w-auto">
+                  <p>1</p>
+                  <span>Saat</span>
                 </div>
-
-                <div className="bg-[#FFD207] px-4 py-1 shadow-sm rounded-4xl text-black font-bold text-sm w-fit">
-                  <p>
-                    Eğitmen: {item.instructor.first_name}{" "}
-                    {item.instructor.last_name}
-                  </p>
-                </div>
-                <div
-                  onClick={() => setSelectedInstructor(item)}
-                  className="bg-black px-4 py-1 hover:bg-[#FFD207] hover:text-black text-white cursor-pointer shadow-sm rounded-4xl transition-colors font-bold text-sm w-fit"
-                >
-                  <p>Eğitmen Bilgisi</p>
-                </div>
+                <p className="mt-2 lg:mt-12 font-bold text-sm lg:text-base max-lg:hidden">
+                  Eğitim süresi
+                </p>
               </div>
 
-              <button
-                onClick={() => addedSessionBasket(item)}
-                disabled={(item.users_count || 0) >= item.quota}
-                className={`w-full lg:w-auto px-4 py-2 rounded-4xl font-bold transition-colors duration-200 cursor-pointer 
+              {/* SAĞ KISIM */}
+              <div className="w-full lg:w-1/6 flex flex-col justify-between gap-4 lg:gap-1 lg:h-[-webkit-fill-available]">
+                <div className="flex flex-col gap-2 text-black items-start lg:items-end w-full">
+                  <div className="flex gap-3 font-medium w-full lg:w-auto justify-between lg:justify-end">
+                    <div className="flex justify-center items-end">
+                      <Calendar
+                        strokeWidth={2}
+                        className="inline-block text-lg font-bold mr-2 text-[#FFD207]"
+                      />
+                      <span className="text-sm">
+                        {getDate(item.session_date)}
+                      </span>
+                    </div>
+                    <div className="flex justify-center items-end">
+                      <Clock
+                        strokeWidth={2}
+                        className="inline-block text-[#FFD207] mr-2"
+                      />
+                      <span className="text-sm">
+                        {getTime(item.session_date)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="bg-[#FFD207] px-4 py-1 shadow-sm rounded-4xl text-black font-bold text-sm w-fit">
+                    <p>
+                      Eğitmen: {item.instructor.first_name}{" "}
+                      {item.instructor.last_name}
+                    </p>
+                  </div>
+                  <div
+                    onClick={() => setSelectedInstructor(item)}
+                    className="bg-black px-4 py-1 hover:bg-[#FFD207] hover:text-black text-white cursor-pointer shadow-sm rounded-4xl transition-colors font-bold text-sm w-fit"
+                  >
+                    <p>Eğitmen Bilgisi</p>
+                  </div>
+                </div>
+
+                {/* ACTION BUTTON - Loading Logic Here */}
+                <button
+                  onClick={() => addedSessionBasket(item)}
+                  disabled={isQuotaFull || isProcessing}
+                  className={`w-full lg:w-auto px-4 py-2 rounded-4xl font-bold transition-colors duration-200 cursor-pointer flex items-center justify-center gap-2
                     ${
-                      (item.users_count || 0) >= item.quota
+                      isQuotaFull
                         ? "bg-gray-400 text-white cursor-not-allowed"
                         : "bg-[#FFD207] text-black hover:bg-gray-900 hover:text-white"
-                    }`}
-              >
-                {(item.users_count || 0) >= item.quota
-                  ? "Kontenjan Dolu"
-                  : "Eğitime Katıl"}
-              </button>
+                    }
+                    ${isProcessing ? "opacity-75 cursor-wait" : ""}
+                `}
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="animate-spin h-5 w-5" />
+                      <span>İşleniyor...</span>
+                    </>
+                  ) : isQuotaFull ? (
+                    "Kontenjan Dolu"
+                  ) : (
+                    "Eğitime Katıl"
+                  )}
+                </button>
+              </div>
             </div>
-          </div>
-        ))
+          );
+        })
       ) : (
         <div className="flex justify-center items-center text-black text-3xl">
           Filtrelere uygun eğitim bulunamadı.

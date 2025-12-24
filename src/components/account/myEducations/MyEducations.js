@@ -50,22 +50,41 @@ function MyEducations() {
   };
 
   // 🔹 Sayaçları hesapla
+  // 1. Sayaçları Hesaplayan useEffect
   useEffect(() => {
     if (myCourses?.sessions) {
-      const all = myCourses.sessions.length;
-      const active = filterSessions(myCourses.sessions, "active").length;
-      const completed = filterSessions(myCourses.sessions, "completed").length;
-      const cancelled = filterSessions(myCourses.sessions, "cancelled").length;
+      console.log("myCourses.sessions", myCourses.sessions);
+
+      const sessions = myCourses.sessions;
+
+      // Hepsi
+      const all = sessions.length;
+
+      // item.course_session.status değerine göre filtrele
+      const active = sessions.filter(
+        (item) => item.course_session?.status === "active"
+      ).length;
+
+      const completed = sessions.filter(
+        (item) => item.course_session?.status === "completed"
+      ).length;
+
+      const cancelled = sessions.filter(
+        (item) => item.course_session?.status === "cancelled"
+      ).length;
 
       setSessionCounts({ all, active, completed, cancelled });
     }
   }, [myCourses]);
 
-  // 🔹 Filtrelenmiş liste
-  const filteredSessions = filterSessions(
-    myCourses?.sessions,
-    selectedSessionStatus
-  );
+  // 2. Ekrana Basılacak Filtrelenmiş Liste
+  const filteredSessions = myCourses?.sessions?.filter((item) => {
+    // Eğer "all" (Tümü) seçiliyse hepsini göster
+    if (selectedSessionStatus === "all") return true;
+
+    // Aksi takdirde course_session.status ile eşleşeni göster
+    return item.course_session?.status === selectedSessionStatus;
+  });
 
   function Loading() {
     return (

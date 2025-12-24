@@ -10,37 +10,122 @@ import { MapPin, Home } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import generalService from "../../../utils/axios/generalService";
 import ErrorModal from "../../ui/ErrorModal/ErrorModal";
+import ilData from "../../../utils/helpers/il";
+import ilceData from "../../../utils/helpers/ilce";
+
 function FilterComp({
   categories,
-  filters, // <-- Gerçek filtre verisi (Şu an pasif)
-  setFilters, // <-- Gerçek filtreleme fonksiyonu (Şu an pasif)
+  filters, // Parent'tan gelen (veya local'den set edilen) filtreler
+  setFilters, // Gerçek filtreleme fonksiyonu
   setUserLocation,
+  handleGetLocation,
   userLocation,
   range,
   setRange,
+  locationSelection,
+  setLocationSelection,
 }) {
   const [openDropdown, setOpenDropdown] = useState(null);
   const [startDate, setStartDate] = useState(new Date());
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [selectedAddressTitle, setSelectedAddressTitle] = useState(null);
+  const [isLocationOpen, setIsLocationOpen] = useState(false);
+  const [filteredDistricts, setFilteredDistricts] = useState([]);
+  // Görsel state
   const [visualFilters, setVisualFilters] = useState({});
+
   const [errorModalOpen, setErrorModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+
+  // Ekranda gösterilecek filtreler visualFilters'dır
   const activeFilters = visualFilters;
+
   const { data: myAddresses } = useQuery({
     queryKey: ["myAddresses"],
     queryFn: generalService.getMyAdresses,
   });
 
+  // --- İL SEÇİMİ ---
+  const handleCityChange = (e) => {
+    const cityId = e.target.value;
+    const index = e.target.selectedIndex;
+    const cityName = index > 0 ? e.target.options[index].text : "";
+
+    // Kayıtlı adresi temizle
+    clearAddressSelection();
+
+    // 1. State'i güncelle
+    setLocationSelection({
+      cityId: cityId,
+      cityName: cityName,
+      district: "", // İl değişince ilçe sıfırlanır
+    });
+
+    // 2. ESKİ USUL FİLTRELEME (useMemo yok)
+    if (cityId) {
+      // ilceData[0].data içinden o ile ait ilçeleri bul
+      const dists = ilceData[0].data.filter(
+        (d) => String(d.il_id) === String(cityId)
+      );
+      setFilteredDistricts(dists);
+    } else {
+      setFilteredDistricts([]);
+    }
+  };
+  // --- İLÇE SEÇİMİ VE FİLTRELEME ---
+  const handleDistrictChange = (e) => {
+    const districtName = e.target.value;
+
+    // Local state'i güncelle
+    setLocationSelection((prev) => ({
+      ...prev,
+      district: districtName,
+    }));
+
+    // Filtreleme mantığı
+    const locationLabel = `${locationSelection.cityName} / ${districtName}`;
+    setVisualFilters((prev) => ({ ...prev, location: locationLabel }));
+
+    setFilters((prev) => ({
+      ...prev,
+      city: locationSelection.cityName,
+      district: districtName,
+    }));
+
+    setOpenDropdown(null);
+  };
+
+  // --- TEMİZLEME FONKSİYONU ---
+  const clearLocationLocalState = () => {
+    setLocationSelection({
+      cityId: "",
+      cityName: "",
+      district: "",
+    });
+  };
+
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  // --- KRİTİK EKLEME: LocalStorage veya dışarıdan gelen filters prop'unu görsel state'e eşitle ---
+  useEffect(() => {
+    if (filters && Object.keys(filters).length > 0) {
+      setVisualFilters(filters);
+    } else {
+      // Eğer dışarıdan filtreler temizlenirse görseli de temizle
+      // setVisualFilters({}); // İsteğe bağlı, sonsuz döngüye dikkat
+    }
+  }, [filters]);
+
   const toggleDropdown = (dropdown) => {
     setOpenDropdown(openDropdown === dropdown ? null : dropdown);
   };
-
+  const toggleLocationDropdown = (e) => {
+    e.stopPropagation();
+    setIsLocationOpen((prev) => !prev);
+  };
   registerLocale("tr", tr);
 
   const CustomInput = forwardRef(({ value, onClick }, ref) => (
@@ -57,18 +142,17 @@ function FilterComp({
   CustomInput.displayName = "CustomInput";
 
   const handleFilterChange = (key, value) => {
-    // 1. GÖRSEL GÜNCELLEME (AÇIK): Ekranda seçim değişsin
+    // 1. GÖRSEL GÜNCELLEME
     setVisualFilters((prev) => ({ ...prev, [key]: value }));
 
-    // 2. GERÇEK FİLTRELEME (KAPALI): Veriler değişmesin
-    /* setFilters((prev) => ({ ...prev, [key]: value }));
-     */
+    // 2. GERÇEK FİLTRELEME (AÇIK)
+    setFilters((prev) => ({ ...prev, [key]: value }));
 
     if (key !== 4) setOpenDropdown(null);
   };
 
   const handleMultiFilterChange = (filterKey, option) => {
-    // Görsel state için hesaplama
+    // 1. GÖRSEL GÜNCELLEME
     setVisualFilters((prev) => {
       const currentValues = prev[filterKey] || [];
       if (option === "all") return { ...prev, [filterKey]: [] };
@@ -83,8 +167,7 @@ function FilterComp({
       }
     });
 
-    // GERÇEK FİLTRELEME (KAPALI)
-    /*
+    // 2. GERÇEK FİLTRELEME (AÇIK)
     setFilters((prev) => {
       const currentValues = prev[filterKey] || [];
       if (option === "all") return { ...prev, [filterKey]: [] };
@@ -97,37 +180,171 @@ function FilterComp({
         return { ...prev, [filterKey]: [...currentValues, option] };
       }
     });
-    */
   };
 
   const clearAllFilters = () => {
     // Görseli temizle
     setVisualFilters({});
-
-    // Gerçeği temizle (KAPALI)
-    // setFilters({});
-
+    clearLocationLocalState();
+    // Gerçeği temizle (AÇIK)
+    setFilters({});
     localStorage.removeItem("uniq_id");
     setStartDate(new Date());
     clearAddressSelection();
   };
   const handleAddressSelect = (address) => {
     if (address.latitude && address.longitude) {
+      // 1. Kayıtlı Adresi Set Et
       setUserLocation({
         lat: parseFloat(address.latitude),
         lon: parseFloat(address.longitude),
       });
       setSelectedAddressTitle(address.title);
-      setOpenDropdown(null);
+
+      // --- YENİ EKLENEN KISIM: Manuel İl/İlçe Seçimini Temizle ---
+      clearLocationLocalState(); // State'leri sıfırla
+
+      // Filtre objesinden il/ilçe verilerini sil (Backend'e gitmesin)
+      setVisualFilters((prev) => {
+        const { location, ...rest } = prev;
+        return rest;
+      });
+      setFilters((prev) => {
+        const { city, district, ...rest } = prev;
+        return rest;
+      });
+      // ------------------------------------------------------------
+
+      setOpenDropdown(null); // Menüyü kapat
     } else {
       setErrorMessage("Bu adresin konum bilgisi eksik.");
       setErrorModalOpen(true);
     }
   };
+
   const clearAddressSelection = () => {
     setSelectedAddressTitle(null);
-    setUserLocation({ lat: null, lon: null });
+    handleGetLocation();
+    //setUserLocation({ lat: null, lon: null });
   };
+  const CityDistrictSelector = () => (
+    <div className="relative h-fit w-full md:w-auto">
+      {/* Tetikleyici Buton */}
+      <button
+        onClick={toggleLocationDropdown} // Yeni fonksiyonu kullanıyoruz
+        className={`flex items-center justify-between px-3 py-2 rounded-4xl shadow-xl cursor-pointer w-full md:min-w-40 border border-gray-100 bg-white ${
+          locationSelection.cityId
+            ? "text-black bg-gray-50 border-gray-200"
+            : "text-black"
+        }`}
+      >
+        <div className="flex items-center gap-2">
+          <MapPin className="w-4 h-4" />
+          <span className="text-md font-light truncate">
+            {locationSelection.cityName
+              ? `${locationSelection.cityName} ${
+                  locationSelection.district
+                    ? `/ ${locationSelection.district}`
+                    : ""
+                }`
+              : "İl / İlçe Seç"}
+          </span>
+        </div>
+        <ChevronDown
+          className={`w-4 h-4 transition-transform ${
+            isLocationOpen ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+
+      {/* Dropdown İçeriği */}
+      {isLocationOpen && (
+        <div
+          onClick={(e) => e.stopPropagation()} // Tıklamayı yut, kapanmayı önle
+          className="absolute w-full md:w-[280px] top-full left-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-[60] p-4 flex flex-col gap-3 animate-in fade-in zoom-in-95 duration-200"
+        >
+          {/* Header */}
+          <div className="flex justify-between items-center border-b border-gray-100 pb-2 mb-1">
+            <span className="text-xs font-bold text-gray-500 uppercase">
+              Konum Seçimi
+            </span>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsLocationOpen(false); // State'i false yap
+              }}
+              className="p-1 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
+            >
+              <X size={18} className="text-gray-400 hover:text-black" />
+            </button>
+          </div>
+
+          {/* İl Seçimi */}
+          <div className="space-y-1">
+            <span className="text-xs font-bold text-gray-500 ml-1">İl</span>
+            <select
+              className="w-full p-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#FFD207] focus:border-transparent outline-none bg-gray-50 cursor-pointer text-black"
+              value={locationSelection.cityId}
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => {
+                e.stopPropagation();
+                handleCityChange(e);
+              }}
+            >
+              <option value="">İl Seçiniz</option>
+              {ilData[0].data.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* İlçe Seçimi */}
+          <div className="space-y-1">
+            <span className="text-xs font-bold text-gray-500 ml-1">İlçe</span>
+            <select
+              className="w-full p-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#FFD207] focus:border-transparent outline-none bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 transition-colors cursor-pointer text-black"
+              value={locationSelection.district}
+              onChange={handleDistrictChange}
+              disabled={!locationSelection.cityId}
+              onClick={(e) => e.stopPropagation()} // Select'e tıklayınca kapanmasın
+            >
+              <option value="">
+                {locationSelection.cityId ? "İlçe Seçiniz" : "Önce İl Seçin"}
+              </option>
+              {filteredDistricts.map((dist) => (
+                <option key={dist.id} value={dist.name}>
+                  {dist.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Temizle Butonu */}
+          {locationSelection.cityId && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                clearLocationLocalState();
+                setVisualFilters((prev) => {
+                  const { location, ...rest } = prev;
+                  return rest;
+                });
+                setFilters((prev) => {
+                  const { city, district, ...rest } = prev;
+                  return rest;
+                });
+              }}
+              className="text-xs text-red-500 hover:text-red-700 font-bold self-end mt-1 border-b border-transparent hover:border-red-500"
+            >
+              Seçimi Temizle
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
   const AddressDropdown = () => (
     <div className="relative h-fit w-full md:w-auto">
       <ErrorModal
@@ -198,6 +415,7 @@ function FilterComp({
       )}
     </div>
   );
+
   const DropdownButton = ({ label, value, options, filterKey, icon: Icon }) => (
     <div className="relative h-fit w-full md:w-auto">
       <button
@@ -246,7 +464,6 @@ function FilterComp({
   }) => {
     const selectedValues = Array.isArray(value) ? value : [];
 
-    // Toggle işlemini handleMultiFilterChange içine taşıdık, burası sadece tetikleyici
     const toggleOption = (option) => {
       handleMultiFilterChange(filterKey, option);
     };
@@ -314,9 +531,6 @@ function FilterComp({
     return categories?.map((item) => {
       const values = item.options["tr"];
 
-      // NOT: Burada 'activeFilters' kullanıyoruz (görsel state).
-      // İleride gerçek state'e dönmek için 'activeFilters' tanımını değiştirmek yeterli.
-
       if (item.question_type === "single")
         return (
           <DropdownButton
@@ -377,8 +591,7 @@ function FilterComp({
 
   const renderActiveTags = () => (
     <div className="flex flex-wrap gap-2">
-      {/* Burada da activeFilters kullanıyoruz ki etiketler ekranda belirebilsin */}
-      {/* 👇 YENİ EKLENECEK KISIM: Seçili adres varsa etiket olarak göster */}
+      {/* Seçili adres etiketi */}
       {selectedAddressTitle && (
         <span className="px-3 py-1 text-sm font-semibold rounded-full gap-2 bg-black text-white shadow-md border border-black flex justify-center items-center">
           📍 {selectedAddressTitle}
@@ -389,6 +602,8 @@ function FilterComp({
           />
         </span>
       )}
+
+      {/* Dinamik filtre etiketleri */}
       {Object.entries(activeFilters).map(([filterKey, value]) => {
         if (Array.isArray(value)) {
           return value
@@ -401,24 +616,32 @@ function FilterComp({
                 {val}
                 <X
                   size={16}
-                  onClick={
-                    () =>
-                      // Çarpıya basınca görsel state'den sil
-                      setVisualFilters((prev) => {
-                        const updatedValues = prev[filterKey].filter(
-                          (v) => v !== val
-                        );
-                        if (updatedValues.length === 0) {
-                          const { [filterKey]: _, ...rest } = prev;
-                          return rest;
-                        }
-                        return { ...prev, [filterKey]: updatedValues };
-                      })
-                    // GERÇEK SİLME İŞLEMİ (KAPALI)
-                    /*
-                    setFilters((prev) => { ... })
-                    */
-                  }
+                  onClick={() => {
+                    // 1. Görsel Silme
+                    setVisualFilters((prev) => {
+                      const updatedValues = prev[filterKey].filter(
+                        (v) => v !== val
+                      );
+                      if (updatedValues.length === 0) {
+                        const { [filterKey]: _, ...rest } = prev;
+                        return rest;
+                      }
+                      return { ...prev, [filterKey]: updatedValues };
+                    });
+
+                    // 2. Gerçek Silme (AÇIK)
+                    setFilters((prev) => {
+                      const currentValues = prev[filterKey] || [];
+                      const updatedValues = currentValues.filter(
+                        (v) => v !== val
+                      );
+                      if (updatedValues.length === 0) {
+                        const { [filterKey]: _, ...rest } = prev;
+                        return rest;
+                      }
+                      return { ...prev, [filterKey]: updatedValues };
+                    });
+                  }}
                   className="ml-1 text-gray-500 hover:text-red-500 cursor-pointer"
                 />
               </span>
@@ -433,19 +656,21 @@ function FilterComp({
               {value}
               <X
                 size={16}
-                onClick={
-                  () =>
-                    // Görsel silme
-                    setVisualFilters((prev) => {
-                      const updated = { ...prev };
-                      delete updated[filterKey];
-                      return updated;
-                    })
-                  // GERÇEK SİLME (KAPALI)
-                  /*
-                  setFilters((prev) => { ... })
-                  */
-                }
+                onClick={() => {
+                  // 1. Görsel Silme
+                  setVisualFilters((prev) => {
+                    const updated = { ...prev };
+                    delete updated[filterKey];
+                    return updated;
+                  });
+
+                  // 2. Gerçek Silme (AÇIK)
+                  setFilters((prev) => {
+                    const updated = { ...prev };
+                    delete updated[filterKey];
+                    return updated;
+                  });
+                }}
                 className="ml-1 text-gray-500 hover:text-red-500 cursor-pointer"
               />
             </span>
@@ -462,11 +687,11 @@ function FilterComp({
         <div className="flex flex-wrap gap-3 w-3/4 h-fit">
           {renderFilterInputs()}
           <AddressDropdown />
+          <CityDistrictSelector />
         </div>
 
         <div className="w-1/4 flex flex-col justify-end items-end gap-4">
           <div className="w-full flex justify-end items-end">
-            {/* KONUM FİLTRESİ AKTİF (Gerçek fonksiyonları kullanıyor) */}
             <GetLocation
               setUserLocation={setUserLocation}
               userLocation={userLocation}
@@ -474,6 +699,7 @@ function FilterComp({
               range={range}
             />
           </div>
+
           <button
             onClick={() => clearAllFilters()}
             className="cursor-pointer bg-black text-white rounded-4xl px-4 py-2 hover:scale-105 transition-all text-sm font-bold"
@@ -529,7 +755,7 @@ function FilterComp({
               </p>
               <div className="flex flex-col gap-5">
                 {renderFilterInputs()}
-                <AddressDropdown />{" "}
+                <AddressDropdown /> <CityDistrictSelector />
               </div>
             </div>
             <div className="p-5 border-t border-gray-100 bg-white flex gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] absolute bottom-0 w-full">

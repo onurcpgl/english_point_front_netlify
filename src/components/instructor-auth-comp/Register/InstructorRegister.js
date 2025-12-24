@@ -154,7 +154,6 @@ export default function InstructorRegister() {
     description: { bio: "" },
     availability: [{ day: "sunday", timeFrom: "", timeTo: "" }],
   });
-  console.log("formdata", formData);
   const days = [
     "monday",
     "tuesday",
