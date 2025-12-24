@@ -128,7 +128,7 @@ function SessionListComp({ mappedData, loading }) {
       const response = await addSession(sessionCourse);
       console.log("asdadasd", response);
       // Başarılı durumu
-      if (response?.status) {
+      if (response?.success) {
         setSuccessModal({
           isOpen: true,
           message: "Eğitim başarıyla sepete eklendi, yönlendiriliyorsunuz...",
