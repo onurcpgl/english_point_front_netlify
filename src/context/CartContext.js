@@ -82,7 +82,8 @@ export const CartProvider = ({ children }) => {
     }
   }, [sessions]);
 
-  const addSession = async (sessionData) => {
+  const addSession = async (data) => {
+    const sessionData = data.basket;
     try {
       const result = await generalService.addToBasket(sessionData.id);
 

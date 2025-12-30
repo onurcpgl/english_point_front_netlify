@@ -22,69 +22,58 @@ function MyEducations() {
     queryFn: generalService.getUserSession,
   });
 
-  // 🔹 Eğitimleri filtreleme kuralları
-  const filterSessions = (sessions, status) => {
-    if (!sessions) return [];
-
-    switch (status) {
-      case "active":
-        return sessions.filter((s) =>
-          ["registered"].includes(s.attendance_status)
-        );
-      case "completed":
-        return sessions.filter((s) =>
-          ["attended", "completed"].includes(s.attendance_status)
-        );
-      case "cancelled":
-        return sessions.filter((s) =>
-          [
-            "canceled_by_user",
-            "canceled_by_admin",
-            "no_show",
-            "instructor_absent",
-          ].includes(s.attendance_status)
-        );
-      default:
-        return sessions;
-    }
+  // 🔹 Statü Gruplarını Tanımlıyoruz
+  // Bu dizileri hem sayaçta hem de listelemede kullanacağız, böylece tutarlılık sağlanır.
+  const STATUS_GROUPS = {
+    active: ["registered"],
+    completed: ["completed", "attended"],
+    cancelled: [
+      "canceled_by_user",
+      "canceled_by_admin",
+      "no_show",
+      "instructor_absent",
+    ],
   };
 
-  // 🔹 Sayaçları hesapla
-  // 1. Sayaçları Hesaplayan useEffect
+  // 🔹 1. Sayaçları Hesaplayan useEffect
   useEffect(() => {
     if (myCourses?.sessions) {
-      console.log("myCourses.sessions", myCourses.sessions);
-
       const sessions = myCourses.sessions;
 
       // Hepsi
       const all = sessions.length;
 
-      // item.course_session.status değerine göre filtrele
-      const active = sessions.filter(
-        (item) => item.course_session?.status === "active"
+      // item.attendance_status değerine göre filtrele
+      const active = sessions.filter((item) =>
+        STATUS_GROUPS.active.includes(item.attendance_status)
       ).length;
 
-      const completed = sessions.filter(
-        (item) => item.course_session?.status === "completed"
+      const completed = sessions.filter((item) =>
+        STATUS_GROUPS.completed.includes(item.attendance_status)
       ).length;
 
-      const cancelled = sessions.filter(
-        (item) => item.course_session?.status === "cancelled"
+      const cancelled = sessions.filter((item) =>
+        STATUS_GROUPS.cancelled.includes(item.attendance_status)
       ).length;
 
       setSessionCounts({ all, active, completed, cancelled });
     }
   }, [myCourses]);
 
-  // 2. Ekrana Basılacak Filtrelenmiş Liste
+  // 🔹 2. Ekrana Basılacak Filtrelenmiş Liste
   const filteredSessions = myCourses?.sessions?.filter((item) => {
-    // Eğer "all" (Tümü) seçiliyse hepsini göster
+    // Eğer "all" (Tümü) seçiliyse hepsini göster (Opsiyonel, şu an UI'da butonu yok ama mantıkta dursun)
     if (selectedSessionStatus === "all") return true;
 
-    // Aksi takdirde course_session.status ile eşleşeni göster
-    return item.course_session?.status === selectedSessionStatus;
+    // Seçilen sekmeye (active, completed, cancelled) ait statü listesini al
+    const allowedStatuses = STATUS_GROUPS[selectedSessionStatus] || [];
+
+    // Kullanıcının attendance_status değeri bu listede var mı kontrol et
+    return allowedStatuses.includes(item.attendance_status);
   });
+
+  console.log("sessionCounts", sessionCounts);
+  console.log("filteredSessions", filteredSessions);
 
   function Loading() {
     return (
@@ -132,7 +121,7 @@ function MyEducations() {
 
       {/* Eğitim Listesi */}
       {!isLoading ? (
-        filteredSessions.length > 0 ? (
+        filteredSessions?.length > 0 ? (
           <div className="h-auto p-3 w-full">
             <div className="rounded-3xl w-full bg-[#F5F5F5]">
               <div className="flex flex-col gap-4 mt-6">

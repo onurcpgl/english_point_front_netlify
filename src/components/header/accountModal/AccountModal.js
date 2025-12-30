@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   User,
+  Home,
   Settings,
   Bell,
   Shield,
@@ -27,6 +28,7 @@ const AccountModal = ({
   const [isClosing, setIsClosing] = useState(false);
 
   const menuItems = [
+    { icon: Home, label: "Ana sayfa", href: "/" },
     { icon: User, label: "Profilim", href: "/account/profile" },
     { icon: Settings, label: "Ayarlar", href: "/account/settings" },
     { icon: Bell, label: "Bildirimler", href: "/account/message" },

@@ -19,7 +19,11 @@ import instructorPanelService from "../../../utils/axios/instructorPanelService"
 import { echo } from "../../../utils/lib/echo";
 import UserConfirmComp from "../userConfirmComp/UserConfirmComp";
 import { toast } from "react-toastify";
-import { enFormatDate, enFormatTime } from "../../../utils/helpers/formatters";
+import {
+  enFormatDate,
+  enFormatTime,
+  formatTime,
+} from "../../../utils/helpers/formatters";
 import ConfirmModal from "../../ui/ConfirmModal/ConfirmModal";
 import SuccesMessageComp from "../../ui/SuccesModal/SuccesMessageComp";
 import ErrorModal from "../../ui/ErrorModal/ErrorModal";
@@ -64,7 +68,6 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
   const openCourseRef = useRef(null);
   const [sessionList, setSessionList] = useState([]);
   const [quotaLoading, setQuotaLoading] = useState(true);
-
   // 1. Props'tan gelen veriyi state'e atıyoruz
   useEffect(() => {
     if (data?.course_sessions) {
@@ -221,7 +224,7 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
 
   const handleConfirmFinish = async (result) => {
     // result: { success: true, message: "...", data: ... }
-    console.log("result", result);
+
     if (result && result.success) {
       // 1. Başarılı mesajını göster (Senin kodunda zaten successModal var)
       setSuccessModal({
@@ -265,7 +268,6 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
     const endTime = new Date(startTime.getTime() + 70 * 60 * 1000);
 
     const now = new Date();
-
     // 3. Şu anki zaman bitişi geçtiyse VE statü "active" ise TRUE döner
     return now > endTime && session.status === "active";
   };
@@ -372,6 +374,7 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
       prev.filter((sessionId) => sessionId !== id)
     );
   };
+
   return (
     <div>
       {isModalOpen && sessionToReview && (
@@ -610,12 +613,18 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
 
                       <button
                         onClick={() => handleToggleCard(item)}
-                        className={`group flex items-center justify-center max-lg:w-full cursor-pointer gap-2 px-4 py-2.5 rounded-full text-xs font-bold transition-all duration-300 shadow-sm border
-      ${
-        openCourseInfo?.id === item.id
-          ? "bg-black text-white border-black" // AÇIK HALİ: Siyah
-          : "bg-[#FFD207] text-black border-[#FFD207] hover:bg-white hover:text-black hover:border-gray-200" // İLK HALİ: Sarı | HOVER: Beyaz
-      }`}
+                        className={`group items-center justify-center max-lg:w-full cursor-pointer gap-2 px-4 py-2.5 rounded-full text-xs font-bold transition-all duration-300 shadow-sm border
+  ${
+    // GÖRÜNÜRLÜK KONTROLÜ:
+    // Eğer active veya completed ise 'flex' (görünür), değilse 'hidden' (gizli)
+    item.status === "active" || item.status === "completed" ? "flex" : "hidden"
+  }
+  ${
+    // RENK KONTROLÜ (Mevcut kodun):
+    openCourseInfo?.id === item.id
+      ? "bg-black text-white border-black"
+      : "bg-[#FFD207] text-black border-[#FFD207] hover:bg-white hover:text-black hover:border-gray-200"
+  }`}
                       >
                         <span>
                           {openCourseInfo?.id === item.id
@@ -656,7 +665,7 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
                     </div>
                     <div className="flex items-center gap-1">
                       <FiClock />
-                      <span>{enFormatTime(item.session_date)}</span>
+                      <span>{formatTime(item.session_date, "long")}</span>
                     </div>
                   </div>
 
@@ -742,7 +751,8 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
           `}
                                   // 3. Tıklama mantığı: Sadece onaylı DEĞİLSE fonksiyon çalışsın
                                   onClick={() => {
-                                    if (!isConfirmed) {
+                                    // EĞER statüsü 'active' ise VE onaylanmamışsa işlem yap
+                                    if (status === "active" && !isConfirmed) {
                                       userConfirmHandler(user);
                                     }
                                   }}
@@ -754,7 +764,11 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
                                     }`}
                                   >
                                     <Image
-                                      src={user?.profile_image || userimage}
+                                      src={
+                                        user?.profile_image ||
+                                        user?.avatar ||
+                                        userimage
+                                      }
                                       alt={user?.name}
                                       fill
                                       // Onaylıysa yeşil çerçeve, değilse siyah çerçeve

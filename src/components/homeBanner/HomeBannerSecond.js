@@ -5,9 +5,12 @@ function HomeBannerSecond() {
     <div className="w-full h-[800px] bg-[#FFD207]">
       <div className="w-full h-full flex flex-col justify-center items-start">
         <div className="container mx-auto px-5 md:px-0 text-black text-4xl md:text-6xl leading-snug   ">
-          <p className="font-light">En iyi özel dil dersleriyle</p>
+          <p className="font-light">
+            Native Speaker ya da İngilizce öğretmeni eşliğinde
+          </p>
           <p className="font-bold">
-            sana yakın konumda konuşma grupları ile birlikte öğren!
+            sana en yakın konumdaki kafede hem sosyalleş hem İngilizce pratik
+            yap
           </p>
           <Link
             href="find-session"

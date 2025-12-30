@@ -14,6 +14,7 @@ import {
   FiTrash2,
   FiAlertCircle,
   FiSend,
+  FiLoader,
   FiArrowLeft,
 } from "react-icons/fi";
 import "react-calendar/dist/Calendar.css";
@@ -27,7 +28,12 @@ import generalService from "../../../utils/axios/generalService";
 import ErrorModal from "../../ui/ErrorModal/ErrorModal";
 import ConfirmModal from "../../ui/ConfirmModal/ConfirmModal";
 import SuccessModal from "../../ui/SuccesModal/SuccesMessageComp";
-
+const CANCELLED_STATUSES = [
+  "canceled_by_user",
+  "canceled_by_admin",
+  "no_show",
+  "instructor_absent",
+];
 const EducationCard = ({ data }) => {
   const [openEnterDoc, setOpenEnterDoc] = useState({
     status: false,
@@ -36,7 +42,8 @@ const EducationCard = ({ data }) => {
 
   const [activeCourseId, setActiveCourseId] = useState(null);
   const [activeMenuId, setActiveMenuId] = useState(null);
-
+  const [loadingId, setLoadingId] = useState(null);
+  const [cancelLoadingBtn, setcancelLoadingBtn] = useState(false);
   // Input State'leri
   const [isInputMode, setIsInputMode] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
@@ -88,6 +95,20 @@ const EducationCard = ({ data }) => {
     }
   };
 
+  const checkCourseCancelStatus = async (courseSessionUserId) => {
+    try {
+      const response = await generalService.checkCancelStatus(
+        courseSessionUserId
+      );
+      console.log("jkgfwıfjqwgfpqofqghwfpqw", response);
+
+      return response;
+    } catch (error) {
+      console.error("İptal durumu kontrol hatası:", error);
+      return null;
+    }
+  };
+
   // --- ONAY MODALINI TETİKLEME ---
   const triggerConfirmModal = (item, isDirectCancel, reasonText) => {
     const title =
@@ -117,6 +138,7 @@ const EducationCard = ({ data }) => {
 
   // --- API İSTEĞİNİ ATAN FONKSİYON ---
   const executeApiRequest = async (item, isDirectCancel, reasonText) => {
+    setcancelLoadingBtn(true);
     const payload = isDirectCancel ? {} : { reason: reasonText };
 
     try {
@@ -126,6 +148,7 @@ const EducationCard = ({ data }) => {
       );
 
       if (response.status) {
+        setcancelLoadingBtn(false);
         // Başarılı Modalı Aç
         setModalState((prev) => ({
           ...prev,
@@ -212,17 +235,16 @@ const EducationCard = ({ data }) => {
         onConfirm={modalState.confirm.onConfirm}
         onCancel={closeConfirmModal}
       />
-
       {data?.map((item, i) => {
-        const program = item.course_session.program;
+        const program = item?.course_session?.program;
         const isOpen = activeCourseId === item.id;
         const isMenuOpen = activeMenuId === item.id;
 
         const canDirectCancel = checkCancellationStatus(
-          item.course_session.session_date
+          item?.course_session?.session_date
         );
-        const isActiveSession = item.course_session.status === "active";
-
+        const isActiveSession = item?.course_session?.status === "active";
+        const isCancelled = CANCELLED_STATUSES.includes(item.attendance_status);
         return (
           <div
             key={i}
@@ -233,19 +255,78 @@ const EducationCard = ({ data }) => {
             {/* --- KARTIN ANA GÖVDESİ --- */}
             <article className="relative bg-white shadow-lg rounded-3xl flex flex-col md:flex-row border border-gray-100 transition-transform hover:shadow-xl overflow-visible">
               {/* --- 3 NOKTA MENÜSÜ --- */}
-              {isActiveSession && (
+              {!isCancelled && isActiveSession && (
                 <div className="absolute top-4 right-4 z-50 prevent-close">
                   <button
-                    onClick={() => {
+                    // 1. Eğer şu an bu item yükleniyorsa butonu pasif yap
+                    disabled={loadingId === item.id}
+                    onClick={async () => {
+                      // Menü zaten açıksa kapat (API'ye gitmeye gerek yok)
                       if (isMenuOpen) {
                         closeMenu();
-                      } else {
-                        setActiveMenuId(item.id);
+                        return;
+                      }
+
+                      // 2. İşlem başlıyor, bu ID'yi loading durumuna al
+                      setLoadingId(item.id);
+
+                      try {
+                        const response = await checkCourseCancelStatus(item.id);
+
+                        if (response && response.can_cancel === true) {
+                          setActiveMenuId(item.id);
+                        } else {
+                          setModalState((prev) => ({
+                            ...prev,
+                            error: {
+                              open: true,
+                              message:
+                                response?.message ||
+                                "Bu işlem için yetkiniz bulunmuyor.",
+                            },
+                          }));
+                        }
+                      } catch (error) {
+                        console.error("İşlem hatası:", error);
+                      } finally {
+                        // 3. İşlem bitti (başarılı veya hatalı), loading'i kapat
+                        setLoadingId(null);
                       }
                     }}
-                    className="p-2 rounded-full bg-white/60 hover:bg-white text-gray-600 hover:text-black transition-colors shadow-sm backdrop-blur-sm border border-transparent hover:border-gray-200"
+                    // Görsel olarak butonun pasif olduğunu hissettir (opacity-50 ve cursor-not-allowed)
+                    className={`p-2 rounded-full transition-colors shadow-sm backdrop-blur-sm border border-transparent 
+    ${
+      loadingId === item.id
+        ? "bg-gray-100 text-gray-400 cursor-not-allowed" // Yüklenirken gri ve tıklanmaz
+        : "bg-white/60 hover:bg-white text-gray-600 hover:text-black hover:border-gray-200 cursor-pointer" // Normal hali
+    }`}
                   >
-                    <FiMoreVertical size={22} />
+                    {/* Yükleniyorsa dönen bir ikon göster, yoksa normal ikonu göster */}
+                    {loadingId === item.id ? (
+                      // Basit bir Loading Spinner (Dönen daire)
+                      <svg
+                        className="animate-spin h-[22px] w-[22px]"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                    ) : (
+                      <FiMoreVertical size={22} />
+                    )}
                   </button>
 
                   {/* AÇILIR MENÜ */}
@@ -298,11 +379,28 @@ const EducationCard = ({ data }) => {
                               onClick={() =>
                                 handleFinalAction(item, false, cancelReason)
                               }
-                              disabled={!cancelReason.trim()}
+                              // Hem input boşsa HEM DE yükleme işlemi sürüyorsa butonu disable yapıyoruz
+                              disabled={
+                                !cancelReason.trim() || cancelLoadingBtn
+                              }
                               className="w-full mt-1 bg-black hover:bg-gray-600 disabled:bg-gray-200 disabled:text-gray-400 text-white font-semibold py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors shadow-sm"
                             >
-                              <span>Gönder</span>
-                              <FiSend size={14} />
+                              {cancelLoadingBtn ? (
+                                /* Yükleme Durumu: Dönen ikon ve mesaj */
+                                <>
+                                  <FiLoader
+                                    className="animate-spin"
+                                    size={14}
+                                  />
+                                  <span>Gönderiliyor...</span>
+                                </>
+                              ) : (
+                                /* Normal Durum: Gönder yazısı ve ikonu */
+                                <>
+                                  <span>Gönder</span>
+                                  <FiSend size={14} />
+                                </>
+                              )}
                             </button>
                           </div>
                         ) : (
@@ -362,15 +460,15 @@ const EducationCard = ({ data }) => {
               <div className="md:w-56 w-full h-56 md:h-auto shrink-0 relative overflow-hidden rounded-t-3xl md:rounded-l-3xl md:rounded-tr-none">
                 <Image
                   src={
-                    item?.course_session.google_cafe?.image ||
+                    item?.course_session?.google_cafe?.image ||
                     "https://via.placeholder.com/300"
                   }
-                  alt={item.course_session.google_cafe?.name}
+                  alt={item.course_session?.google_cafe?.name}
                   className="w-full h-full object-cover"
                   fill
                 />
                 <div className="absolute top-3 left-3 bg-white text-black text-sm px-2.5 py-1 rounded-md backdrop-blur-sm font-medium">
-                  {item.course_session.language_level}
+                  {item?.course_session?.language_level}
                 </div>
               </div>
 
@@ -378,7 +476,7 @@ const EducationCard = ({ data }) => {
               <div className="flex-1 p-6 flex flex-col gap-4">
                 <div>
                   <h3 className="text-2xl font-bold text-black leading-tight pr-10">
-                    {program?.title?.tr || item.course_session.session_title}
+                    {program?.title?.tr || item?.course_session?.session_title}
                   </h3>
 
                   <p className="text-base text-gray-600 mt-2 line-clamp-2">
@@ -387,17 +485,17 @@ const EducationCard = ({ data }) => {
 
                   <div className="mt-4 space-y-1.5">
                     <p className="text-sm font-bold text-gray-900">
-                      {item.course_session.google_cafe?.name}
+                      {item.course_session?.google_cafe?.name}
                     </p>
                     <p className="text-sm text-gray-600">
-                      {item.course_session.google_cafe?.address}
+                      {item.course_session?.google_cafe?.address}
                     </p>
                     <p className="text-sm text-gray-800 pt-1">
                       <span className="font-semibold text-amber-600">
                         Eğitmen:
                       </span>{" "}
-                      {item?.course_session.instructor?.first_name}{" "}
-                      {item?.course_session.instructor?.last_name}
+                      {item?.course_session?.instructor?.first_name}{" "}
+                      {item?.course_session?.instructor?.last_name}
                     </p>
                   </div>
                 </div>
@@ -418,13 +516,23 @@ const EducationCard = ({ data }) => {
                     </span>
                   </div>
 
-                  <button
-                    onClick={() => setActiveCourseId(isOpen ? null : item.id)}
-                    className="flex items-center text-sm text-blue-600 hover:text-blue-800 gap-1.5 font-semibold ml-auto transition-transform active:scale-95"
-                  >
-                    <FiInfo className="text-xl" />
-                    {isOpen ? "Detayı Gizle" : "Program Detayı"}
-                  </button>
+                  {/* İptal DEĞİLSE butonu göster */}
+                  {!isCancelled && (
+                    <button
+                      onClick={() => setActiveCourseId(isOpen ? null : item.id)}
+                      className="flex items-center text-sm text-blue-600 hover:text-blue-800 gap-1.5 font-semibold ml-auto transition-transform active:scale-95"
+                    >
+                      <FiInfo className="text-xl" />
+                      {isOpen ? "Detayı Gizle" : "Program Detayı"}
+                    </button>
+                  )}
+
+                  {/* İstersen İptal durumunda buraya bir yazı koyabilirsin (Opsiyonel) */}
+                  {isCancelled && (
+                    <span className="ml-auto text-sm font-bold text-red-500 border border-red-200 bg-red-50 px-3 py-1 rounded-lg">
+                      İPTAL EDİLDİ
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -433,7 +541,7 @@ const EducationCard = ({ data }) => {
                 <div className="flex flex-col items-center gap-1 mb-2 pt-6 md:pt-0">
                   <div className="bg-[#FFD207] w-12 h-12 rounded-2xl flex flex-col items-center justify-center shadow-sm">
                     <span className="font-bold text-black text-lg">
-                      {item.course_session.duration_minutes / 60}
+                      {item.course_session?.duration_minutes / 60}
                     </span>
                     <span className="text-sm text-black -mt-1 font-medium">
                       saat
@@ -445,35 +553,46 @@ const EducationCard = ({ data }) => {
                   <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl shadow-sm w-full justify-center">
                     <FiCalendar className="text-amber-500 text-lg" />
                     <span className="font-medium">
-                      {formatDate(item.course_session.session_date, "short")}
+                      {formatDate(item.course_session?.session_date, "short")}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl shadow-sm w-full justify-center">
                     <FiClock className="text-amber-500 text-lg" />
                     <span className="font-medium">
-                      {formatTime(item.course_session.session_date)}
+                      {formatTime(item.course_session?.session_date)}
                     </span>
                   </div>
                 </div>
 
-                <div
-                  onClick={() =>
-                    setOpenEnterDoc({
-                      status: true,
-                      doc: { uniqueCode: item?.attendance_code },
-                    })
-                  }
-                  className="w-full mt-auto group flex items-center justify-center gap-3 bg-[#FFD207] hover:bg-[#e6c200] transition-all px-4 py-3 rounded-xl cursor-pointer shadow-md hover:shadow-lg z-20 relative"
-                >
-                  <div className="bg-white p-1.5 rounded-full flex items-center justify-center shrink-0">
-                    <QrCode className="w-5 h-5 text-[#FFD207] group-hover:text-[#e6c200] transition-colors" />
+                {/* İptal DEĞİLSE Giriş Kodunu Göster */}
+                {!isCancelled ? (
+                  <div
+                    onClick={() =>
+                      setOpenEnterDoc({
+                        status: true,
+                        doc: { uniqueCode: item?.attendance_code },
+                      })
+                    }
+                    className="w-full mt-auto group flex items-center justify-center gap-3 bg-[#FFD207] hover:bg-[#e6c200] transition-all px-4 py-3 rounded-xl cursor-pointer shadow-md hover:shadow-lg z-20 relative"
+                  >
+                    <div className="bg-white p-1.5 rounded-full flex items-center justify-center shrink-0">
+                      <QrCode className="w-5 h-5 text-[#FFD207] group-hover:text-[#e6c200] transition-colors" />
+                    </div>
+                    <span className="text-black font-bold text-sm whitespace-nowrap leading-tight">
+                      Giriş Kodunu
+                      <br />
+                      Görüntüle
+                    </span>
                   </div>
-                  <span className="text-black font-bold text-sm whitespace-nowrap leading-tight">
-                    Giriş Kodunu
-                    <br />
-                    Görüntüle
-                  </span>
-                </div>
+                ) : (
+                  /* İPTAL İSE: Burayı boş bırakabilir veya gri bir kutu gösterebilirsin */
+                  <div className="w-full mt-auto flex items-center justify-center gap-2 bg-gray-100 px-4 py-3 rounded-xl cursor-not-allowed opacity-70">
+                    <FiAlertCircle className="text-gray-400" />
+                    <span className="text-gray-500 font-bold text-sm">
+                      Erişim Kapalı
+                    </span>
+                  </div>
+                )}
               </div>
             </article>
 

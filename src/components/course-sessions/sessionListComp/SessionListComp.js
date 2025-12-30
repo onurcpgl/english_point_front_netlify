@@ -125,21 +125,24 @@ function SessionListComp({ mappedData, loading }) {
     setProcessingSessionId(sessionCourse.id);
 
     try {
-      const response = await addSession(sessionCourse);
-      console.log("asdadasd", response);
+      const response = await addSession({
+        success: true,
+        basket: sessionCourse,
+      });
+
       // Başarılı durumu
       if (response?.success) {
-        setSuccessModal({
-          isOpen: true,
-          message: "Eğitim başarıyla sepete eklendi, yönlendiriliyorsunuz...",
-        });
+        // setSuccessModal({
+        //   isOpen: true,
+        //   message: "Eğitim başarıyla sepete eklendi, yönlendiriliyorsunuz...",
+        // });
 
         setTimeout(() => {
           setSuccessModal((prev) => ({ ...prev, isOpen: false }));
           // Yönlendirme sırasında butonun loading'i durmasın ki kullanıcı tekrar tıklamasın
           router.push("/sepet");
           setProcessingSessionId(null);
-        }, 2000);
+        }, 1000);
       } else {
         throw new Error(response?.message);
       }

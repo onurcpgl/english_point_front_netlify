@@ -26,6 +26,7 @@ const SepetComp = () => {
 
   const handleRemoveClick = () => setShowConfirm(true);
   const handleConfirmYes = async () => {
+    console.log("silme işlemi", sessions);
     try {
       await removeSession(sessions.basket.id); // backend’den gelen basket_id
       setShowConfirm(false);

@@ -79,9 +79,10 @@ export default function InstructorCreateSession() {
   });
 
   const languageLevels = [
-    { value: "Beginner", label: "Beginner" },
-    { value: "Intermediate", label: "Intermediate" },
-    { value: "Advanced", label: "Advanced" },
+    // { value: "Beginner", label: "Beginner" },
+    // { value: "Intermediate", label: "Intermediate" },
+    // { value: "Advanced", label: "Advanced" },
+    { value: "A2", label: "A2" },
   ];
 
   // useEffect(() => {

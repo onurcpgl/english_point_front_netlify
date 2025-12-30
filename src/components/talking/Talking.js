@@ -42,7 +42,7 @@ function Talking() {
         <div className="flex flex-col sm:flex-row justify-between gap-6 sm:gap-4 items-center text-black text-center sm:text-left">
           <div className="text-2xl sm:text-3xl md:text-4xl leading-snug flex-1">
             <span className="font-medium">
-              <Counter end={500} duration={3} />+{" "}
+              <Counter end={100} duration={3} />+{" "}
             </span>
             <p>Öğretmen</p>
           </div>
@@ -56,7 +56,7 @@ function Talking() {
 
           <div className="text-2xl sm:text-3xl md:text-4xl leading-snug flex-1">
             <span className="font-medium">
-              <Counter end={300000} duration={3} />+{" "}
+              <Counter end={80} duration={3} />+{" "}
             </span>
             <p>Öğretmen Yorumu</p>
           </div>

@@ -110,10 +110,10 @@ export default function CafeLocationComp({ onSelectCafe, initialValue }) {
         const cafeData = {
           name: place.name,
           address: place.formatted_address,
-          lat: place.geometry.location.lat(),
-          lng: place.geometry.location.lng(),
+          latitude: place.geometry.location.lat(),
+          longitude: place.geometry.location.lng(),
           image: photoUrl,
-          googlePlaceId: placeId,
+          google_place_id: placeId,
           district: district,
           city: city, // 3. ŞEHRİ VERİYE EKLEDİK
         };
@@ -137,7 +137,7 @@ export default function CafeLocationComp({ onSelectCafe, initialValue }) {
       {/* INPUT ALANI AYNI KALDI */}
       <div className="relative w-full">
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Cafe Location (Google)
+          Cafe/Location:
         </label>
 
         <div className="relative">

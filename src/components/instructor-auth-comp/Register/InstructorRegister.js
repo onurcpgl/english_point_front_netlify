@@ -1687,7 +1687,7 @@ export default function InstructorRegister() {
                           </tr>
                           <tr className=" border-gray-100">
                             <td className="py-2 font-semibold text-[#686464]">
-                              2 student
+                              2 students
                             </td>
                             <td className="py-2 text-right font-bold">
                               250 TL
@@ -1695,7 +1695,7 @@ export default function InstructorRegister() {
                           </tr>
                           <tr className=" border-gray-100">
                             <td className="py-2 font-semibold text-[#686464]">
-                              3 student
+                              3 students
                             </td>
                             <td className="py-2 text-right font-bold">
                               300 TL
@@ -1703,7 +1703,7 @@ export default function InstructorRegister() {
                           </tr>
                           <tr className=" border-gray-100">
                             <td className="py-2 font-semibold text-[#686464]">
-                              4 student
+                              4 students
                             </td>
                             <td className="py-2 text-right font-bold">
                               400 TL
@@ -1711,18 +1711,18 @@ export default function InstructorRegister() {
                           </tr>
                           <tr className=" border-gray-100">
                             <td className=" py-2 font-semibold text-[#686464]">
-                              5 student
+                              5 students
                             </td>
                             <td className=" py-2 text-right font-bold">
-                              600 TL
+                              500 TL
                             </td>
                           </tr>
                           <tr>
                             <td className="py-2 font-semibold text-[#686464]">
-                              6 student
+                              6 students
                             </td>
                             <td className="py-2 text-right font-bold">
-                              800 TL
+                              600 TL
                             </td>
                           </tr>
                         </tbody>

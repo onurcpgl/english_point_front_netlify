@@ -3,7 +3,7 @@ import { getSession, signOut } from "next-auth/react";
 
 const api = axios.create({
   baseURL:
-    process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.englishpoint.com.tr",
+    process.env.NEXT_PUBLIC_API_BASE_URL || "https://www.englishpoint.com.tr",
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",

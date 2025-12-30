@@ -277,9 +277,7 @@ export default function InstructorUpdateSessionModal({
                   className="w-full h-14 outline-none px-4 bg-white text-black border border-gray-300  cursor-pointer"
                 >
                   <option value="">Select Level</option>
-                  <option value="Beginner">Beginner</option>
-                  <option value="Intermediate">Intermediate</option>
-                  <option value="Advanced">Advanced</option>
+                  <option value="A2">A2</option>
                 </select>
               </div>
             </div>

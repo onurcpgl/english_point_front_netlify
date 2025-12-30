@@ -3,7 +3,9 @@ import { useSession } from "next-auth/react";
 import { useEffect, useState, useMemo } from "react"; // useMemo eklendi
 import { signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
-import EnglishPointLogo from "../../assets/logo/logovector.svg";
+import EnglishPointLogoDisi from "../../assets/logo/logodisi.png";
+import EnglishPointLogo from "../../assets/logo/logo.png";
+
 import AccountModal from "./accountModal/AccountModal";
 import BasketButton from "./basketButton/BasketButton";
 import { useQuery } from "@tanstack/react-query";
@@ -15,6 +17,7 @@ import AuthLinks from "./headerLink/AuthLinks";
 import generalService from "../../utils/axios/generalService";
 import GuestLinks from "./headerLink/GuestLink";
 import GuestModal from "./accountModal/GuestModal";
+import Image from "next/image";
 
 export default function SecondHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -55,7 +58,7 @@ export default function SecondHeader() {
         <div className="flex pr-10">
           <Link href="/" className="p-1.5">
             <span className="sr-only">English Point</span>
-            <svg
+            {/* <svg
               viewBox="0 0 90 111"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
@@ -83,7 +86,16 @@ export default function SecondHeader() {
                   <rect width="90" height="111" fill="white" />
                 </clipPath>
               </defs>
-            </svg>
+            </svg> */}
+            <Image
+              src={
+                isActive && status === "authenticated"
+                  ? EnglishPointLogo
+                  : EnglishPointLogoDisi
+              }
+              alt="English Point Logo"
+              className="logo w-52 h-auto"
+            />
           </Link>
         </div>
         {menuOpenGuest && (

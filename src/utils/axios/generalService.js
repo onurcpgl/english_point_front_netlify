@@ -228,6 +228,12 @@ export const sendResendCode = async () => {
   const response = await axiosInstance.post("/api/email/resend-new");
   return response.data;
 };
+export const checkCancelStatus = async (courseSessionUserId) => {
+  const response = await axiosInstance.get(
+    `/api/course-sessions/check-cancel-status/${courseSessionUserId}`
+  );
+  return response.data;
+};
 export const canceledCourseByUser = async (courseSessionId, value) => {
   const response = await axiosInstance.post(
     `/api/course-sessions/${courseSessionId}/cancel`,
@@ -236,6 +242,7 @@ export const canceledCourseByUser = async (courseSessionId, value) => {
   return response.data;
 };
 const generalService = {
+  checkCancelStatus,
   canceledCourseByUser,
   sendEmailCode,
   sendResendCode,

@@ -65,9 +65,14 @@ function SpeechBlock() {
           </div>
         </div>
       </div>
-      <div className="w-full container mx-auto px-4 md:px-6 mt-8 md:mt-44 mb-10 md:mb-20 max-xl:mt-0 flex flex-col md:flex-row justify-between gap-8 md:gap-0">
+      <div className="w-full container mx-auto px-4 md:px-6 mt-16 md:mt-44 mb-10 md:mb-20 max-xl:mt-0 flex flex-col md:flex-row justify-between gap-8 md:gap-0">
         {/* Image Section */}
-        <div className="w-full md:w-3/6 z-30 md:relative md:left-[-5rem] flex justify-center md:justify-start">
+        <div className="w-full md:w-3/6 z-30 md:relative md:left-[-5rem] flex flex-col justify-center md:justify-start">
+          <div className="flex flex-col lg:flex-row gap-2 text-3xl lg:text-4xl mb-10 text-black">
+            <h1 className="font-bold text-center lg:text-left">
+              Became a Native Speaker
+            </h1>
+          </div>
           <div className="w-full max-w-[400px] md:w-[500px] h-64 md:h-full  rounded-lg flex items-center justify-center">
             <Image
               className="w-full h-full object-cover"
