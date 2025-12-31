@@ -1,9 +1,10 @@
 import Image from "next/image";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { Calendar, Clock, Loader2 } from "lucide-react"; // Loader2 eklendi
 import { IoPerson, IoPersonOutline } from "react-icons/io5";
 import { FaLocationDot } from "react-icons/fa6";
 import generalService from "../../../utils/axios/generalService";
+import Loading from "../../loading/Loading";
 import { useCart } from "../../../context/CartContext";
 import InstructorProfileCard from "../instructor-profile-card/InstructorProfileCard";
 import SessionListSkeleton from "../../../components/ui/LoadingSkeleton/SessionListSkeleton";
@@ -12,7 +13,7 @@ import SuccesMessageComp from "../../ui/SuccesModal/SuccesMessageComp";
 import { echo } from "../../../utils/lib/echo";
 import { useSearchParams, useParams, useRouter } from "next/navigation";
 import SessionDetailModal from "../sessionDetailModal/SessionDetailModal";
-function SessionListComp({ mappedData, loading }) {
+function CourseContentList({ mappedData, loading }) {
   const [selectedInstructor, setSelectedInstructor] = useState(null);
   const [displaySessions, setDisplaySessions] = useState([]);
   const [quotaData, setQuotaData] = useState([]);
@@ -459,4 +460,10 @@ function SessionListComp({ mappedData, loading }) {
   );
 }
 
-export default SessionListComp;
+export default function SessionListComp() {
+  return (
+    <Suspense fallback={<Loading />}>
+      <CourseContentList />
+    </Suspense>
+  );
+}
