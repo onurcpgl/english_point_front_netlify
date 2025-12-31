@@ -114,6 +114,12 @@ const getCourseSessionById = async (id) => {
   const response = await axiosInstance.get(`/api/get-course-sessions/${id}`);
   return response.data;
 };
+const getCourseSessionSingle = async (id) => {
+  const response = await axiosInstance.get(
+    `/api/get-course-session-single/${id}`
+  );
+  return response.data;
+};
 
 const getCourseSessionQuotaInfo = async () => {
   const response = await axiosInstance.get("/api/get-course-quota-info");
@@ -243,6 +249,7 @@ export const canceledCourseByUser = async (courseSessionId, value) => {
 };
 const generalService = {
   checkCancelStatus,
+  getCourseSessionSingle,
   canceledCourseByUser,
   sendEmailCode,
   sendResendCode,

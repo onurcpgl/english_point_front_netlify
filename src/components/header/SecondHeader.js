@@ -44,8 +44,6 @@ export default function SecondHeader() {
       .length;
   }, [data, status]);
 
-  console.log("unreadCount", unreadCount);
-
   const pathname = usePathname();
   const isActive = pathname === "/course-sessions";
 

@@ -36,6 +36,7 @@
     "react-places-autocomplete": "^7.3.0",
     "react-qr-code": "^2.0.18",
     "react-router-dom": "^7.8.2",
+    "react-share": "^5.2.2",
     "react-slick": "^0.31.0",
     "react-time-picker": "^8.0.2",
     "react-toastify": "^11.0.5",

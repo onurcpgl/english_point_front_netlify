@@ -1,13 +1,18 @@
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { IoLocationSharp, IoPerson, IoPersonOutline } from "react-icons/io5";
+
 import {
   FiCalendar,
   FiClock,
   FiRefreshCw,
   FiEdit,
   FiTrash2,
+  FiCheck,
+  FiShare2,
+  FiCopy,
 } from "react-icons/fi";
+import ShareComp from "../another-comp/ShareComp";
 import "react-calendar/dist/Calendar.css";
 import userimage from "../../../assets/instructor_sidebar/dummy_user.png";
 import Slider from "react-slick";
@@ -46,6 +51,11 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
   const [successModal, setSuccessModal] = useState({
     open: false,
     message: "",
+  });
+  const [shareModalData, setShareModalData] = useState({
+    open: false, // 🔥 BURAYI FALSE YAP, YOKSA SAYFA AÇILIR AÇILMAZ ÇIKAR
+    url: "",
+    title: "",
   });
   const [errorModal, setErrorModal] = useState({ open: false, message: "" });
   const [openCourseInfo, setOpenCourseInfo] = useState(null);
@@ -89,7 +99,17 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
       setQuotaLoading(false);
     }
   };
+  const handleShareClick = (e, session) => {
+    e.stopPropagation();
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const url = `${origin}/course-sessions/${session.id}`;
 
+    setShareModalData({
+      open: true,
+      url: url,
+      title: `Join my session: ${session.session_title} at ${session.google_cafe.name}`,
+    });
+  };
   useEffect(() => {
     if (data && data.course_sessions.length > 0) {
       fetchQuotaInfo();
@@ -422,12 +442,18 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
           setConfirmConfig((prev) => ({ ...prev, isOpen: false }))
         }
       />
+
       {status === "awaiting" && (
         <p className="text-gray-700 px-2">
           You can delete or edit your sessions that are in awaiting status.
         </p>
       )}
-
+      <ShareComp
+        isOpen={shareModalData.open}
+        onClose={() => setShareModalData({ ...shareModalData, open: false })}
+        shareUrl={shareModalData.url}
+        title={shareModalData.title}
+      />
       {sessionList.map(
         (item, i) =>
           item.status === status && (
@@ -586,8 +612,15 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
                         >
                           View Location
                         </span>
-                      </div>
-
+                      </div>{" "}
+                      <button
+                        onClick={(e) => handleShareClick(e, item)}
+                        className="flex items-center cursor-pointer justify-center gap-2 px-3 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-full transition-all text-xs font-bold border border-blue-100"
+                        title="Share this session"
+                      >
+                        <FiShare2 size={14} />
+                        <span>Share</span>
+                      </button>
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-semibold">Quota:</span>
                         {quotaLoading ? (
@@ -610,7 +643,6 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
                           </div>
                         )}
                       </div>
-
                       <button
                         onClick={() => handleToggleCard(item)}
                         className={`group items-center justify-center max-lg:w-full cursor-pointer gap-2 px-4 py-2.5 rounded-full text-xs font-bold transition-all duration-300 shadow-sm border

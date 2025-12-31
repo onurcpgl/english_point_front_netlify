@@ -6,12 +6,12 @@ import { FaLocationDot } from "react-icons/fa6";
 import generalService from "../../../utils/axios/generalService";
 import { useCart } from "../../../context/CartContext";
 import InstructorProfileCard from "../instructor-profile-card/InstructorProfileCard";
-import { useRouter } from "next/navigation";
 import SessionListSkeleton from "../../../components/ui/LoadingSkeleton/SessionListSkeleton";
 import ErrorModal from "../../ui/ErrorModal/ErrorModal";
 import SuccesMessageComp from "../../ui/SuccesModal/SuccesMessageComp";
 import { echo } from "../../../utils/lib/echo";
-
+import { useSearchParams, useParams, useRouter } from "next/navigation";
+import SessionDetailModal from "../sessionDetailModal/SessionDetailModal";
 function SessionListComp({ mappedData, loading }) {
   const [selectedInstructor, setSelectedInstructor] = useState(null);
   const [displaySessions, setDisplaySessions] = useState([]);
@@ -32,7 +32,11 @@ function SessionListComp({ mappedData, loading }) {
   });
 
   const { addSession } = useCart();
+  const searchParams = useSearchParams();
+  const params = useParams();
   const router = useRouter();
+  const [sessionDetailCompModal, setSessionDetailCompModal] = useState(false);
+  const [sessionDetailData, setSessionDetailData] = useState(null);
 
   // 1. ADIM: API İSTEĞİ
   useEffect(() => {
@@ -88,6 +92,7 @@ function SessionListComp({ mappedData, loading }) {
       }
       return session;
     });
+
     setDisplaySessions(mergedData);
   }, [mappedData, quotaData]);
 
@@ -119,6 +124,49 @@ function SessionListComp({ mappedData, loading }) {
     });
   }
 
+  useEffect(() => {
+    const checkAndFetchSession = async () => {
+      // 1. ID Yakalama
+      const queryId = searchParams.get("id") || searchParams.get("sessionId");
+      const pathId = params?.id
+        ? Array.isArray(params.id)
+          ? params.id[0]
+          : params.id
+        : null;
+
+      const finalId = pathId || queryId;
+
+      if (finalId) {
+        console.log("TRUE - ID BULUNDU:", finalId);
+        try {
+          // 2. API İsteği (getSessionIdHandler mantığı)
+          const result = await generalService.getCourseSessionSingle(finalId);
+
+          // 3. State Güncelleme ve Modal Açma
+          if (result) {
+            setSessionDetailData(result);
+            setSessionDetailCompModal(true);
+          }
+        } catch (error) {
+          console.error("Eğitim detayı çekilemedi:", error);
+        }
+      } else {
+        console.log("FALSE - NORMAL LINK (ID YOK)");
+      }
+    };
+
+    checkAndFetchSession();
+  }, [searchParams, params]);
+
+  // 🔥 MODAL KAPATMA FONKSİYONU
+  const handleCloseModal = () => {
+    const newPath = window.location.pathname.replace(/\/[\d]+$/, ""); // Eğer /86 varsa temizle
+    router.replace(newPath === "" ? "/" : newPath, { scroll: false });
+    setSessionDetailCompModal(false);
+    setSessionDetailData(null);
+
+    // URL'i temizle
+  };
   // --- SEPETE EKLEME İŞLEMİ ---
   const addedSessionBasket = async (sessionCourse) => {
     // 1. Loading başlat (Tıklanan ID'yi set et)
@@ -168,6 +216,31 @@ function SessionListComp({ mappedData, loading }) {
   const closeSuccessModal = () =>
     setSuccessModal((prev) => ({ ...prev, isOpen: false }));
 
+  const getMergedSessionDetail = () => {
+    // 1. Eğer detay datası henüz yoksa null dön
+    if (!sessionDetailData?.data) return null;
+
+    // 2. Bu session'ın ID'sini al
+    const currentId = sessionDetailData.data.id;
+
+    // 3. Global quotaData içinde bu ID'ye sahip güncel bilgi var mı?
+    const liveQuota = quotaData.find((q) => q.id === currentId);
+
+    // 4. Varsa merge et, yoksa mevcut datayı kullan
+    if (liveQuota) {
+      return {
+        ...sessionDetailData.data, // API'den gelen statik detaylar (resim, açıklama vs.)
+        users_count: liveQuota.users_count, // WebSocket/Quota API'den gelen güncel sayı
+        quota: liveQuota.quota, // WebSocket/Quota API'den gelen güncel kapasite
+      };
+    }
+
+    // 5. Quota bilgisi henüz yüklenmediyse, detay API'sinden gelenle devam et
+    return sessionDetailData.data;
+  };
+
+  const activeSessionForModal = getMergedSessionDetail();
+
   if (loading) {
     return (
       <div className="flex flex-col gap-4">
@@ -200,9 +273,26 @@ function SessionListComp({ mappedData, loading }) {
           onClose={() => setSelectedInstructor(null)}
         />
       )}
+      {/* <SessionDetailModal
+        isOpen={sessionDetailCompModal}
+        onClose={handleCloseModal}
+        addedSessionBasket={addedSessionBasket}
+        session={sessionDetailData?.data}
+        user={true}
+      /> */}
+      <SessionDetailModal
+        isOpen={sessionDetailCompModal}
+        onClose={handleCloseModal}
+        addedSessionBasket={addedSessionBasket}
+        // DEĞİŞİKLİK BURADA:
+        // Eski hali: session={sessionDetailData?.data}
+        session={activeSessionForModal}
+        user={true}
+      />
 
       {displaySessions.length > 0 ? (
         displaySessions.map((item, i) => {
+          console.log("askjfgasfas", item);
           // Kontenjan dolu mu kontrolü
           const isQuotaFull = (item.users_count || 0) >= item.quota;
           // Şu an bu butona mı basıldı kontrolü

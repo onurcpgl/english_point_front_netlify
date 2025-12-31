@@ -1,16 +1,20 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import React, { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import Loading from "../loading/Loading";
 import CourseBannerImage from "../../assets/course/course-banner-image.png";
 import { useSession } from "next-auth/react";
-
+import { useSearchParams, useParams, useRouter } from "next/navigation";
+import SessionDetailModal from "../course-sessions/sessionDetailModal/SessionDetailModal";
+import generalService from "../../utils/axios/generalService";
 function CourseComp() {
   const { data: session, status } = useSession();
   const router = useRouter();
-
+  const searchParams = useSearchParams();
+  const params = useParams();
+  const [sessionDetailCompModal, setSessionDetailCompModal] = useState(false);
+  const [sessionDetailData, setSessionDetailData] = useState(null);
   useEffect(() => {
     if (status === "loading") return;
 
@@ -21,6 +25,49 @@ function CourseComp() {
     }
   }, [session, status, router]);
 
+  useEffect(() => {
+    const checkAndFetchSession = async () => {
+      // 1. ID Yakalama
+      const queryId = searchParams.get("id") || searchParams.get("sessionId");
+      const pathId = params?.id
+        ? Array.isArray(params.id)
+          ? params.id[0]
+          : params.id
+        : null;
+
+      const finalId = pathId || queryId;
+
+      if (finalId) {
+        console.log("TRUE - ID BULUNDU:", finalId);
+        try {
+          // 2. API İsteği (getSessionIdHandler mantığı)
+          const result = await generalService.getCourseSessionSingle(finalId);
+          console.log(result);
+          // 3. State Güncelleme ve Modal Açma
+          if (result) {
+            setSessionDetailData(result);
+            setSessionDetailCompModal(true);
+          }
+        } catch (error) {
+          console.error("Eğitim detayı çekilemedi:", error);
+        }
+      } else {
+        console.log("FALSE - NORMAL LINK (ID YOK)");
+      }
+    };
+
+    checkAndFetchSession();
+  }, [searchParams, params]);
+
+  // 🔥 MODAL KAPATMA FONKSİYONU
+  const handleCloseModal = () => {
+    const newPath = window.location.pathname.replace(/\/[\d]+$/, ""); // Eğer /86 varsa temizle
+    router.replace(newPath === "" ? "/" : newPath, { scroll: false });
+    setSessionDetailCompModal(false);
+    setSessionDetailData(null);
+
+    // URL'i temizle
+  };
   if (status === "loading") {
     return <Loading />;
   }
@@ -29,6 +76,12 @@ function CourseComp() {
     // Mobilde h-screen iptal edildi (min-h-screen), içerik sığmazsa scroll açılır.
     // Masaüstünde dikey ortalama (items-center) korundu.
     <div className="relative w-full min-h-screen bg-[#FFD207] flex items-center">
+      <SessionDetailModal
+        isOpen={sessionDetailCompModal}
+        onClose={handleCloseModal}
+        session={sessionDetailData?.data}
+        user={false}
+      />
       {/* Container: Mobilde dikey padding (py-12), masaüstünde padding yok */}
       <div className="container mx-auto px-6 py-12 lg:px-0 lg:py-0">
         {/* Flex Yapısı: Mobilde alt alta (col), Masaüstünde yan yana (row) */}

@@ -5,8 +5,6 @@ import generalService from "../../utils/axios/generalService";
 import FilterComp from "./filterComp/FilterComp";
 import SessionListComp from "./sessionListComp/SessionListComp";
 import { motion } from "framer-motion";
-import Loading from "../../components/loading/Loading";
-
 function getDistance(lat1, lon1, lat2, lon2) {
   const R = 6371; // Dünya yarıçapı (km)
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -54,6 +52,7 @@ function CourseSessionsComp() {
   const [range, setRange] = useState(5); // km
   const [mappedData, setMappedData] = useState(courseSessions || []);
   const [showFilterBar, setShowFilterBar] = useState(true);
+
   const lastScrollY = useRef(0);
 
   // --- 📍 GELİŞMİŞ KONUM ALMA FONKSİYONU ---
