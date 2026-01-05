@@ -25,8 +25,8 @@ function MyEducations() {
   // 🔹 Statü Gruplarını Tanımlıyoruz
   // Bu dizileri hem sayaçta hem de listelemede kullanacağız, böylece tutarlılık sağlanır.
   const STATUS_GROUPS = {
-    active: ["registered"],
-    completed: ["completed", "attended"],
+    active: ["registered", "attended"],
+    completed: ["completed"],
     cancelled: [
       "canceled_by_user",
       "canceled_by_admin",
