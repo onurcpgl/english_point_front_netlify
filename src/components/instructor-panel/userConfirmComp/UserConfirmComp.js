@@ -36,6 +36,7 @@ function UserConfirmComp({
       const response = await instrocturPanelService.confirmCourseUser({
         code: code,
         user: userConfirmSelectedUser,
+        course: openCourseInfo,
       });
 
       if (response.status) {
@@ -74,9 +75,11 @@ function UserConfirmComp({
 
       try {
         // 3. Servis isteği
+
         const response = await instrocturPanelService.confirmCourseUser({
           code: rawValue,
           user: userConfirmSelectedUser,
+          course: openCourseInfo,
         });
 
         // 4. Servisten gelen cevabın kontrolü (handleConfirm ile aynı mantık)
