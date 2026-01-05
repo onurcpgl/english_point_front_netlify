@@ -93,9 +93,16 @@ function MyEducations() {
   return (
     <div className="flex flex-col w-full max-w-full overflow-hidden bg-[#F5F5F5] p-10 max-lg:p-2 h-auto rounded-3xl relative">
       {/* Filtre butonları */}
-      <div className="w-full mb-4">
-        {/* Kapsayıcı Div */}
-        <div className="flex gap-4 overflow-x-auto no-scrollbar p-3 items-center w-full">
+      <div className="w-full mb-4 max-lg:mb-0">
+        <div
+          className="
+      flex items-center gap-4 p-2
+      /* MOBİL AYARLARI (Varsayılan): Kaydırmalı, sola yaslı, scrollbar gizli */
+      overflow-x-auto no-scrollbar justify-start
+      /* WEB AYARLARI (md ve üstü): Kaydırma kapalı, tam genişlik, yayılmış */
+      md:overflow-visible md:justify-between md:p-0
+    "
+        >
           {[
             { key: "active", label: "Aktif Eğitimlerim" },
             { key: "completed", label: "Tamamlanan Eğitimlerim" },
@@ -103,13 +110,18 @@ function MyEducations() {
           ].map((btn) => (
             <button
               key={btn.key}
-              // Mobilde sıkışmaması için 'min-w-fit' veya 'whitespace-nowrap' ekledik
-              // 'flex-shrink-0' butonun küçülmesini engeller
-              className={`group px-5 py-3 relative rounded-4xl shadow-xl max-lg:shadow cursor-pointer font-semibold transition-all duration-200 hover:shadow-2xl flex-shrink-0 whitespace-nowrap ${
-                selectedSessionStatus === btn.key
-                  ? "bg-black text-white"
-                  : "bg-white text-black"
-              }`}
+              className={`
+          group px-5 py-3 relative rounded-4xl shadow-xl max-lg:shadow cursor-pointer font-semibold transition-all duration-200 hover:shadow-2xl
+          /* MOBİL BUTON: Sıkışmaz, genişliği içeriği kadar */
+          flex-shrink-0 w-auto whitespace-nowrap
+          /* WEB BUTON: Eşit dağılır, genişliği container'ı doldurur */
+          md:w-full md:flex-shrink
+          ${
+            selectedSessionStatus === btn.key
+              ? "bg-black text-white"
+              : "bg-white text-black"
+          }
+        `}
               onClick={() => setSelectedSessionStatus(btn.key)}
             >
               {btn.label}
@@ -124,7 +136,7 @@ function MyEducations() {
       {/* Eğitim Listesi */}
       {!isLoading ? (
         filteredSessions?.length > 0 ? (
-          <div className="h-auto p-3 w-full">
+          <div className="h-auto px-2 py-1 w-full">
             <div className="rounded-3xl w-full bg-[#F5F5F5]">
               <div className="flex flex-col gap-4 mt-6">
                 <EducationCard data={filteredSessions} />
