@@ -7,7 +7,7 @@ import {
   FiCalendar,
   FiClock,
   FiUser,
-  FiInfo,
+  FiAlertCircle, // Uyarı ikonu eklendi
 } from "react-icons/fi";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -16,10 +16,12 @@ const SessionDetailModal = ({
   isOpen,
   onClose,
   session,
-  onJoin,
   addedSessionBasket,
   user,
 }) => {
+  const router = useRouter();
+
+  // Scroll kilitleme efekti
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -28,8 +30,56 @@ const SessionDetailModal = ({
     }
     return () => (document.body.style.overflow = "unset");
   }, [isOpen]);
-  const router = useRouter();
-  if (!isOpen || !session) return null;
+
+  // 1. ADIM: Sadece modal kapalıysa hiçbir şey render etme.
+  if (!isOpen) return null;
+
+  // 2. ADIM: Modal açık ama session verisi YOKSA (null/undefined) uyarı göster.
+  if (!session) {
+    return (
+      <div
+        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-300"
+        onClick={onClose}
+      >
+        <div
+          className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl relative flex flex-col items-center text-center"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Kapatma Butonu */}
+          <button
+            onClick={onClose}
+            className="absolute top-3 right-3 bg-gray-100 hover:bg-gray-200 p-2 rounded-full transition-colors"
+          >
+            <FiX size={20} className="text-gray-600" />
+          </button>
+
+          {/* Uyarı İkonu */}
+          <div className="bg-yellow-100 p-4 rounded-full mb-4">
+            <FiAlertCircle className="w-10 h-10 text-yellow-600" />
+          </div>
+
+          {/* Mesaj */}
+          <h3 className="text-xl font-bold text-gray-900 mb-2">
+            Eğitim Bulunamadı
+          </h3>
+          <p className="text-gray-600 mb-6 leading-relaxed">
+            Aradığınız eğitimin süresi geçmiş ya da iptal edilmiş olabilir.
+            Lütfen güncel eğitimlerimize göz atın.
+          </p>
+
+          {/* Aksiyon Butonu */}
+          <button
+            onClick={onClose}
+            className="bg-[#FFD207] hover:bg-[#e6bd06] text-black font-bold py-3 px-8 rounded-full transition-transform active:scale-95 w-full"
+          >
+            Eğitimler
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // --- Buradan aşağısı session verisi VARSA çalışır ---
 
   // Tarih Formatlama
   const sessionDate = session?.session_date
@@ -45,8 +95,6 @@ const SessionDetailModal = ({
       })
     : "-";
 
-  // Kontenjan Doluluk Oranı (Örnek: 0/6)
-  // Backend'den 'users_count' gelirse onu kullan, yoksa 0 varsayalım.
   const currentUsers = session.users_count || 0;
   const quota = session.quota || 0;
 
@@ -55,7 +103,6 @@ const SessionDetailModal = ({
       className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-300"
       onClick={onClose}
     >
-      {/* Kartın Kendisi (Maksimum genişlik artırıldı) */}
       <div
         className="bg-white rounded-xl w-full max-w-5xl shadow-2xl relative overflow-hidden flex flex-col md:flex-row"
         onClick={(e) => e.stopPropagation()}
@@ -78,7 +125,6 @@ const SessionDetailModal = ({
             fill
             className="object-cover"
           />
-          {/* Logo Overlay (Örn: English Point) */}
           <div className="absolute top-4 right-4 bg-black/80 text-[#FFD207] font-bold px-3 py-1 rounded text-sm">
             English <span className="text-white">Point</span>
           </div>
@@ -86,9 +132,7 @@ const SessionDetailModal = ({
 
         {/* SAĞ TARAF: İçerik */}
         <div className="flex-1 p-6 flex flex-col justify-between">
-          {/* Üst Kısım: Başlık ve Sağ Bilgiler */}
           <div className="flex flex-col md:flex-row justify-between gap-4">
-            {/* Sol: Başlık ve Mekan */}
             <div className="flex-1 pr-4">
               <h2 className="text-2xl font-bold text-gray-900 leading-tight mb-2">
                 {session?.session_title}
@@ -101,9 +145,7 @@ const SessionDetailModal = ({
               </p>
             </div>
 
-            {/* Sağ: Sarı Kutu ve Tarih/Saat */}
             <div className="flex flex-col items-end gap-3 shrink-0">
-              {/* Sarı Süre Kutusu */}
               <div className="flex flex-col items-center">
                 <div className="bg-[#FFD207] w-16 h-16 flex flex-col items-center justify-center font-bold text-black rounded-sm shadow-sm">
                   <span className="text-xl">
@@ -118,7 +160,6 @@ const SessionDetailModal = ({
                 </span>
               </div>
 
-              {/* Tarih ve Saat */}
               <div className="flex items-center gap-4 text-sm font-bold text-black mt-2">
                 <div className="flex items-center gap-1">
                   <FiCalendar className="text-[#FFD207] text-lg" />
@@ -130,7 +171,6 @@ const SessionDetailModal = ({
                 </div>
               </div>
 
-              {/* Eğitmen Bilgisi Butonu (Sarı Hap) */}
               <div className="flex flex-col items-end gap-1 mt-1">
                 <div className="bg-[#FFD207] px-4 py-1.5 rounded-full font-bold text-xs text-black shadow-sm flex items-center gap-1">
                   Eğitmen: {session?.instructor?.first_name}{" "}
@@ -140,11 +180,8 @@ const SessionDetailModal = ({
             </div>
           </div>
 
-          {/* Alt Kısım: Konum, Kontenjan ve Buton */}
           <div className="flex flex-col md:flex-row items-center justify-between mt-8 pt-6 border-t border-gray-100 gap-4">
-            {/* Sol Alt: Konum ve Kontenjan */}
             <div className="flex flex-wrap items-center gap-6 w-full md:w-auto">
-              {/* Konumu Gör Linki */}
               <a
                 href={`https://www.google.com/maps/search/?api=1&query=${session?.google_cafe?.latitude},${session?.google_cafe?.longitude}`}
                 target="_blank"
@@ -163,8 +200,6 @@ const SessionDetailModal = ({
                 <span className="text-sm font-mono text-gray-500">
                   ({currentUsers}/{quota})
                 </span>
-
-                {/* İnsan İkonları (Dolu/Boş) */}
                 <div className="flex gap-1 text-gray-300">
                   {Array.from({ length: quota }).map((_, i) => (
                     <FiUser
@@ -180,7 +215,6 @@ const SessionDetailModal = ({
               </div>
             )}
 
-            {/* Sağ Alt: Sarı Katıl Butonu */}
             {user ? (
               <button
                 onClick={() => {

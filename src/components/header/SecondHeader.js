@@ -45,8 +45,7 @@ export default function SecondHeader() {
   }, [data, status]);
 
   const pathname = usePathname();
-  const isActive = pathname === "/course-sessions";
-
+  const isActive = pathname.startsWith("/course-sessions");
   return (
     <header className="absolute w-full z-50">
       <nav
@@ -99,7 +98,6 @@ export default function SecondHeader() {
         {menuOpenGuest && (
           <GuestModal menuOpen={menuOpenGuest} setMenuOpen={setMenuOpenGuest} />
         )}
-
         {status === "loading" ? (
           <div className="hidden lg:flex lg:gap-x-12 items-center">
             <span className="text-lg text-gray-900/40 blur-[3px] animate-pulse select-none">

@@ -28,7 +28,6 @@ const SepetComp = () => {
   const handleConfirmYes = async () => {
     try {
       const result = await removeSession(sessions.basket.id); // backend’den gelen basket_id
-      console.log("Sepet silme sonucu:", result);
       setShowConfirm(false);
     } catch (e) {
       console.error(e);

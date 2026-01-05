@@ -32,6 +32,7 @@ function CourseContent() {
     const checkAndFetchSession = async () => {
       // 1. ID Yakalama
       const queryId = searchParams.get("id") || searchParams.get("sessionId");
+
       const pathId = params?.id
         ? Array.isArray(params.id)
           ? params.id[0]
@@ -45,6 +46,7 @@ function CourseContent() {
           // 2. API İsteği
           const result = await generalService.getCourseSessionSingle(finalId);
           // 3. State Güncelleme ve Modal Açma
+
           if (result) {
             setSessionDetailData(result);
             setSessionDetailCompModal(true);
@@ -53,7 +55,6 @@ function CourseContent() {
           console.error("Eğitim detayı çekilemedi:", error);
         }
       } else {
-        console.log("FALSE - NORMAL LINK (ID YOK)");
       }
     };
 

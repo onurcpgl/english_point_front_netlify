@@ -141,7 +141,6 @@ function CourseContentList({ mappedData, loading }) {
         try {
           // 2. API İsteği (getSessionIdHandler mantığı)
           const result = await generalService.getCourseSessionSingle(finalId);
-
           // 3. State Güncelleme ve Modal Açma
           if (result) {
             setSessionDetailData(result);
@@ -151,7 +150,6 @@ function CourseContentList({ mappedData, loading }) {
           console.error("Eğitim detayı çekilemedi:", error);
         }
       } else {
-        console.log("FALSE - NORMAL LINK (ID YOK)");
       }
     };
 
@@ -160,8 +158,6 @@ function CourseContentList({ mappedData, loading }) {
 
   // 🔥 MODAL KAPATMA FONKSİYONU
   const handleCloseModal = () => {
-    const newPath = window.location.pathname.replace(/\/[\d]+$/, ""); // Eğer /86 varsa temizle
-    router.replace(newPath === "" ? "/" : newPath, { scroll: false });
     setSessionDetailCompModal(false);
     setSessionDetailData(null);
 
@@ -284,8 +280,6 @@ function CourseContentList({ mappedData, loading }) {
         isOpen={sessionDetailCompModal}
         onClose={handleCloseModal}
         addedSessionBasket={addedSessionBasket}
-        // DEĞİŞİKLİK BURADA:
-        // Eski hali: session={sessionDetailData?.data}
         session={activeSessionForModal}
         user={true}
       />

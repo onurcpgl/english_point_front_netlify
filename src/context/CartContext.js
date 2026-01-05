@@ -19,7 +19,6 @@ export const CartProvider = ({ children }) => {
     if (!data?.basket?.course_session) return data;
 
     const courseSession = data.basket.course_session;
-    console.log("anan");
     // Eğer normal cafe YOKSA ama google_cafe VARSA
     if (!courseSession.cafe && courseSession.google_cafe) {
       const gCafe = courseSession.google_cafe;
@@ -55,7 +54,7 @@ export const CartProvider = ({ children }) => {
       setLoading(true);
       try {
         const res = await generalService.getBasket();
-        console.log("backendgel", res);
+
         // --- DEĞİŞİKLİK BURADA ---
         // Veriyi state'e atmadan önce işliyoruz
         const processedRes = processBasketData(res);
