@@ -3,7 +3,14 @@
 @import "flowbite-react/plugin/tailwindcss";
 
 @source "../../.flowbite-react/class-list.json";
-
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+/* IE, Edge ve Firefox için scrollbar gizleme */
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE ve Edge */
+  scrollbar-width: none; /* Firefox */
+}
 .container {
   padding-left: 15px;
   padding-right: 15px;

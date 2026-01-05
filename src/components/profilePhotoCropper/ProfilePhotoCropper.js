@@ -97,7 +97,7 @@ const ProfilePhotoCropper = ({ onCropDone }) => {
                 onClick={handleCrop}
                 className="px-5 py-2.5 rounded-full text-sm font-bold text-black bg-yellow-400 hover:bg-yellow-500 transition-colors shadow-sm"
               >
-                Kırp ve Kaydett
+                Kırp ve Kaydet
               </button>
             </div>
           </div>

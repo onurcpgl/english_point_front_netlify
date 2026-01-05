@@ -93,27 +93,32 @@ function MyEducations() {
   return (
     <div className="flex flex-col w-full max-w-full overflow-hidden bg-[#F5F5F5] p-10 max-lg:p-2 h-auto rounded-3xl relative">
       {/* Filtre butonları */}
-      <div className="w-full rounded-full p-3 mb-4 flex justify-between items-center gap-4">
-        {[
-          { key: "active", label: "Aktif Eğitimlerim" },
-          { key: "completed", label: "Tamamlanan Eğitimlerim" },
-          { key: "cancelled", label: "İptal Olan Eğitimlerim" },
-        ].map((btn) => (
-          <button
-            key={btn.key}
-            className={`group px-5 py-3 relative rounded-4xl w-full shadow-xl cursor-pointer font-semibold transition-all duration-200 hover:shadow-2xl ${
-              selectedSessionStatus === btn.key
-                ? "bg-black text-white"
-                : "bg-white text-black"
-            }`}
-            onClick={() => setSelectedSessionStatus(btn.key)}
-          >
-            {btn.label}
-            <span className="absolute -top-2 -right-2 bg-[#ffd207] text-black text-xs font-bold min-w-[24px] h-6 rounded-full flex items-center justify-center border-2 border-white transition-transform duration-500 ease-out translate-y-0 group-hover:-translate-y-2">
-              {sessionCounts[btn.key]}
-            </span>
-          </button>
-        ))}
+      <div className="w-full mb-4">
+        {/* Kapsayıcı Div */}
+        <div className="flex gap-4 overflow-x-auto no-scrollbar p-3 items-center w-full">
+          {[
+            { key: "active", label: "Aktif Eğitimlerim" },
+            { key: "completed", label: "Tamamlanan Eğitimlerim" },
+            { key: "cancelled", label: "İptal Olan Eğitimlerim" },
+          ].map((btn) => (
+            <button
+              key={btn.key}
+              // Mobilde sıkışmaması için 'min-w-fit' veya 'whitespace-nowrap' ekledik
+              // 'flex-shrink-0' butonun küçülmesini engeller
+              className={`group px-5 py-3 relative rounded-4xl shadow-xl max-lg:shadow cursor-pointer font-semibold transition-all duration-200 hover:shadow-2xl flex-shrink-0 whitespace-nowrap ${
+                selectedSessionStatus === btn.key
+                  ? "bg-black text-white"
+                  : "bg-white text-black"
+              }`}
+              onClick={() => setSelectedSessionStatus(btn.key)}
+            >
+              {btn.label}
+              <span className="absolute -top-2 -right-2 bg-[#ffd207] text-black text-xs font-bold min-w-[24px] h-6 rounded-full flex items-center justify-center border-2 border-white transition-transform duration-500 ease-out translate-y-0 group-hover:-translate-y-2">
+                {sessionCounts[btn.key]}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Eğitim Listesi */}
