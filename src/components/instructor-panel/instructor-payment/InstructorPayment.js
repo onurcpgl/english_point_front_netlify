@@ -67,7 +67,6 @@ function InstructorPayment() {
   });
 
   const stats = paymentStat;
-  console.log("status", stats);
   const historyList = paymentHistory?.data?.data || [];
 
   // Loading State

@@ -72,9 +72,6 @@ function MyEducations() {
     return allowedStatuses.includes(item.attendance_status);
   });
 
-  console.log("sessionCounts", sessionCounts);
-  console.log("filteredSessions", filteredSessions);
-
   function Loading() {
     return (
       <div className="flex justify-center items-center mt-10">

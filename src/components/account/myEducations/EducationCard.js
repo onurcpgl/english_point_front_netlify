@@ -100,7 +100,6 @@ const EducationCard = ({ data }) => {
       const response = await generalService.checkCancelStatus(
         courseSessionUserId
       );
-      console.log("jkgfwıfjqwgfpqofqghwfpqw", response);
 
       return response;
     } catch (error) {

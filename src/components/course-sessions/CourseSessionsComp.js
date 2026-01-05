@@ -240,6 +240,7 @@ function CourseSessionsComp() {
       >
         <FilterComp
           categories={categories}
+          categoriesLoading={categoriesLoading}
           setFilters={setFilters}
           filters={filters}
           // setUserLocation prop'unu artık kullanmasan da FilterComp içinde manuel buton varsa diye bırakıyoruz

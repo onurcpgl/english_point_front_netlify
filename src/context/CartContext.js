@@ -2,15 +2,15 @@
 import { createContext, useContext, useState, useEffect, useRef } from "react";
 import generalService from "../utils/axios/generalService";
 import { useSession } from "next-auth/react";
-
+import { usePathname } from "next/navigation";
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
   const { data: session, status } = useSession();
   const [sessions, setSessions] = useState(null);
   const [loading, setLoading] = useState(true);
+  const pathname = usePathname();
   const isInitialLoad = useRef(true);
-
   // --- YENİ EKLENEN MANİPÜLASYON FONKSİYONU ---
   // Bu fonksiyon gelen veriyi kontrol eder ve Google Cafe varsa
   // onu normal Cafe formatına çevirip 'cafe' alanına koyar.
@@ -19,7 +19,7 @@ export const CartProvider = ({ children }) => {
     if (!data?.basket?.course_session) return data;
 
     const courseSession = data.basket.course_session;
-
+    console.log("anan");
     // Eğer normal cafe YOKSA ama google_cafe VARSA
     if (!courseSession.cafe && courseSession.google_cafe) {
       const gCafe = courseSession.google_cafe;
@@ -55,11 +55,10 @@ export const CartProvider = ({ children }) => {
       setLoading(true);
       try {
         const res = await generalService.getBasket();
-
+        console.log("backendgel", res);
         // --- DEĞİŞİKLİK BURADA ---
         // Veriyi state'e atmadan önce işliyoruz
         const processedRes = processBasketData(res);
-
         setSessions(processedRes || { basket: null, success: true });
         localStorage.setItem("cartSessions", JSON.stringify(processedRes));
       } catch (e) {
@@ -69,7 +68,7 @@ export const CartProvider = ({ children }) => {
       }
     }
     loadCart();
-  }, [status]);
+  }, [status, session, pathname]);
 
   useEffect(() => {
     if (isInitialLoad.current) {
@@ -88,8 +87,8 @@ export const CartProvider = ({ children }) => {
       const result = await generalService.addToBasket(sessionData.id);
 
       if (result.success) {
-        setSessions(sessionData);
-        localStorage.setItem("cartSessions", JSON.stringify(sessionData));
+        setSessions({ basket: result.basket, success: true });
+        localStorage.setItem("cartSessions", JSON.stringify(result));
         return result;
       } else {
         // Backend 200 döndü ama success:false ise
@@ -101,8 +100,6 @@ export const CartProvider = ({ children }) => {
       if (e.response && e.response.data) {
         return e.response.data; // { success: false, message: "Bu eğitimi zaten aldınız." } döner.
       }
-
-      // Eğer sunucuya hiç ulaşılamadıysa hatayı fırlatmaya devam et
       throw e;
     }
   };
@@ -110,12 +107,18 @@ export const CartProvider = ({ children }) => {
   const removeSession = async (basket_id) => {
     try {
       const resultSession = await generalService.clearBasket(basket_id);
+
       if (resultSession.success) {
         localStorage.removeItem("cartSessions");
+        // State'i güncelle
         setSessions({ basket: null, success: true });
+        return true; // BAŞARILI: İşlem bitti, true dönüyoruz
+      } else {
+        return false; // BAŞARISIZ: Backend success: false döndü
       }
     } catch (e) {
       console.error(e);
+      return false; // HATA: Try-catch'e düştü, false dönüyoruz
     }
   };
 

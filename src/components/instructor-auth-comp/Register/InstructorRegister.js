@@ -288,7 +288,6 @@ export default function InstructorRegister() {
       }
 
       const allowedCountries = countries.map((c) => c.name);
-      //console.log(countries);
       const allowedSelectedCountyCitys = countries.filter(
         (c) => c.name === current_location
       );
@@ -503,7 +502,6 @@ export default function InstructorRegister() {
 
     try {
       const res = await generalService.registerInstructor(fd);
-      //console.log("res", res);
       if (res.status === "success") {
         //setSelectedStepSection(selectedStepSection + 1);
         setFinalStep(true);

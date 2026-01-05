@@ -15,6 +15,7 @@ import ilceData from "../../../utils/helpers/ilce";
 
 function FilterComp({
   categories,
+  categoriesLoading,
   filters, // Parent'tan gelen (veya local'den set edilen) filtreler
   setFilters, // Gerçek filtreleme fonksiyonu
   setUserLocation,
@@ -679,15 +680,33 @@ function FilterComp({
       })}
     </div>
   );
+  const renderSkeletonLoader = () => {
+    // Tahmini olarak 4-5 tane filtre geleceğini varsayarak array oluşturuyoruz
+    return Array(8)
+      .fill(0)
+      .map((_, index) => (
+        <div
+          key={index}
+          // Inputların stiline (rounded-4xl, h-10 vb.) benzeyen gri kutular
+          className="h-10 w-full md:w-40 bg-gray-200 rounded-4xl animate-pulse"
+        />
+      ));
+  };
 
   return (
     <div className="w-full container mx-auto bg-white z-50 px-4 md:px-0">
       {/* DESKTOP GÖRÜNÜM */}
       <div className="hidden md:flex mx-auto pt-4 gap-4 justify-between">
         <div className="flex flex-wrap gap-3 w-3/4 h-fit">
-          {renderFilterInputs()}
-          <AddressDropdown />
-          <CityDistrictSelector />
+          {!categoriesLoading ? (
+            <>
+              {renderFilterInputs()}
+              <AddressDropdown />
+              <CityDistrictSelector />
+            </>
+          ) : (
+            renderSkeletonLoader()
+          )}
         </div>
 
         <div className="w-1/4 flex flex-col justify-end items-end gap-4">

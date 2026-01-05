@@ -4,6 +4,7 @@ import { useCart } from "../../../context/CartContext";
 
 export default function BasketButton() {
   const { sessions, loading } = useCart(); // artık tek eğitim objesi
+
   const [open, setOpen] = useState(false);
   function getDate(dateTimeString) {
     const date = new Date(dateTimeString);
@@ -52,14 +53,14 @@ export default function BasketButton() {
             >
               <div className="flex flex-col">
                 <p className="font-medium text-sm text-black">
-                  {sessions?.basket.course_session.session_title}
+                  {sessions?.basket?.course_session.session_title}
                 </p>
                 <span className="text-gray-500 text-xs">
-                  {sessions?.basket.course_session.language_level}
+                  {sessions?.basket?.course_session.language_level}
                 </span>
                 <span className="text-gray-500 text-xs">
-                  {getDate(sessions?.basket.course_session.session_date)} -{" "}
-                  {getTime(sessions?.basket.course_session.session_date)}
+                  {getDate(sessions?.basket?.course_session.session_date)} -{" "}
+                  {getTime(sessions?.basket?.course_session.session_date)}
                 </span>
                 <hr className="border w-full my-2" />
                 <span className="text-gray-500 text-xs">200₺</span>

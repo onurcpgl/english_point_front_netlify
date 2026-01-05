@@ -44,7 +44,6 @@ function CourseContent() {
         try {
           // 2. API İsteği
           const result = await generalService.getCourseSessionSingle(finalId);
-          console.log(result);
           // 3. State Güncelleme ve Modal Açma
           if (result) {
             setSessionDetailData(result);

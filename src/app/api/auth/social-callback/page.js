@@ -93,7 +93,7 @@ function SocialCallbackContent() {
           user: JSON.stringify(userPayload),
           redirect: false,
         });
-        console.log("res", res);
+
         if (res?.error) {
           setStatus("Oturum açma hatası.");
           setTimeout(() => router.push("/login"), 2000);

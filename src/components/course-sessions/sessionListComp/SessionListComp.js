@@ -138,7 +138,6 @@ function CourseContentList({ mappedData, loading }) {
       const finalId = pathId || queryId;
 
       if (finalId) {
-        console.log("TRUE - ID BULUNDU:", finalId);
         try {
           // 2. API İsteği (getSessionIdHandler mantığı)
           const result = await generalService.getCourseSessionSingle(finalId);
@@ -293,7 +292,6 @@ function CourseContentList({ mappedData, loading }) {
 
       {displaySessions.length > 0 ? (
         displaySessions.map((item, i) => {
-          console.log("askjfgasfas", item);
           // Kontenjan dolu mu kontrolü
           const isQuotaFull = (item.users_count || 0) >= item.quota;
           // Şu an bu butona mı basıldı kontrolü
@@ -460,10 +458,10 @@ function CourseContentList({ mappedData, loading }) {
   );
 }
 
-export default function SessionListComp() {
+export default function SessionListComp({ mappedData, loading }) {
   return (
     <Suspense fallback={<Loading />}>
-      <CourseContentList />
+      <CourseContentList mappedData={mappedData} loading={loading} />
     </Suspense>
   );
 }
