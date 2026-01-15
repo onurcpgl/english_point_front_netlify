@@ -374,31 +374,36 @@ function CourseContentList({ mappedData, loading }) {
               </div>
 
               {/* ORTA KISIM */}
+              {/* ORTA KISIM */}
               <div className="relative flex justify-center items-center w-full lg:w-auto my-4 max-md:my-1 lg:my-0">
-                <div
-                  className={`
-      relative lg:absolute lg:-top-[1.3rem] 
-      p-4 flex justify-center items-center flex-col 
-      font-bold leading-[1] 
-      rounded-lg lg:rounded-none 
-      w-full lg:w-auto
-      ${
-        item?.program?.category?.slug?.includes("daily")
-          ? "bg-[#FFD207] text-black" // Daily ise: SARI Zemin - SİYAH Yazı
-          : "bg-[#0F172A] text-white" // Değilse (Business): LACİVERT Zemin - BEYAZ Yazı
-      }
-  `}
-                >
-                  <span>{item?.program?.category?.name}</span>
+                {/* YENİ DÜZENLEME: 
+      İki kutuyu saran tek bir div oluşturduk. 
+      absolute özelliği SADECE bu kapsayıcı div'de var. 
+      İçeridekiler flex ile yan yana duruyor.
+  */}
+                <div className="flex flex-col lg:flex-row gap-2 w-full lg:w-auto lg:absolute lg:-top-[1.3rem]">
+                  {/* Kategori Kutusu */}
+                  <div
+                    className={`
+        p-4 flex justify-center items-center flex-col 
+        font-bold leading-[1] 
+        rounded-lg lg:rounded-none 
+        w-full lg:w-auto shadow-sm
+        ${
+          item?.program?.category?.slug?.includes("daily")
+            ? "bg-[#FFD207] text-black"
+            : "bg-[#0F172A] text-white"
+        }
+      `}
+                  >
+                    <span>{item?.program?.category?.name}</span>
+                  </div>
+
+                  {/* Süre Kutusu */}
+                  <div className="bg-[#FFD207] text-center text-black p-4 flex justify-center items-center flex-col font-bold leading-[1] rounded-lg lg:rounded-none w-full lg:w-auto shadow-sm">
+                    <span>1 Saat</span>
+                  </div>
                 </div>
-              </div>
-              <div className="relative flex justify-center items-center w-full lg:w-auto my-4 max-md:my-1 lg:my-0">
-                <div className="bg-[#FFD207] relative lg:absolute lg:-top-[1.3rem] p-4 flex justify-center items-center flex-col font-bold leading-[1] rounded-lg lg:rounded-none w-full lg:w-auto">
-                  <span>1 Saat</span>
-                </div>
-                <p className="mt-2 lg:mt-8 font-bold text-sm lg:text-base max-lg:hidden">
-                  Eğitim süresi
-                </p>
               </div>
 
               {/* SAĞ KISIM */}

@@ -155,9 +155,6 @@ const SessionDetailModal = ({
                   </span>
                   <span className="text-xs uppercase">Saat</span>
                 </div>
-                <span className="text-xs font-bold text-black mt-1">
-                  Eğitim süresi
-                </span>
               </div>
 
               <div className="flex items-center gap-4 text-sm font-bold text-black mt-2">
