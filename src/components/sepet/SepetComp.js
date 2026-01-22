@@ -253,7 +253,7 @@ const SepetComp = () => {
       const form = document.createElement("form");
       form.method = "POST";
       form.action = url;
-      form.target = popupName; // KRİTİK: Formu az önce açtığımız pop-up ismine gönderiyoruz
+      form.target = "_self"; // KRİTİK: Formu az önce açtığımız pop-up ismine gönderiyoruz
 
       // PaReq, TermUrl ve MD alanlarını formun içine göm
       Object.keys(fields).forEach((key) => {
