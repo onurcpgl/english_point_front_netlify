@@ -57,7 +57,7 @@ export default function InstructorCreateSession() {
   const [selectCafe, onSelectCafe] = useState();
   const subTopics = useMemo(() => {
     const businessCategory = categories.find(
-      (cat) => cat.slug === "business" || cat.id === 2
+      (cat) => cat.slug === "business" || cat.id === 2,
     );
     return businessCategory?.sub_categories || [];
   }, [categories]);
@@ -122,7 +122,7 @@ export default function InstructorCreateSession() {
             return !!value;
           }
           return true; // Diğer kategorilerde zorunlu değil
-        }
+        },
       ),
       // start_answers: Yup.object(
       //   startQuestions?.reduce((acc, q) => {
@@ -183,7 +183,7 @@ export default function InstructorCreateSession() {
 
     // 1. Seçilen Ana Kategoriyi Bul
     const selectedCategory = categories.find(
-      (cat) => cat.id === Number(selectedCategoryId)
+      (cat) => cat.id === Number(selectedCategoryId),
     );
     if (!selectedCategory) return [];
 
@@ -196,7 +196,7 @@ export default function InstructorCreateSession() {
       if (selectedSubId) {
         // Seçilen alt konuyu bul (Örn: Law id=7)
         const selectedSubTopic = subTopics.find(
-          (sub) => sub.id === selectedSubId
+          (sub) => sub.id === selectedSubId,
         );
 
         // Onun slug'ını al (Örn: "law")
@@ -205,7 +205,7 @@ export default function InstructorCreateSession() {
         // Programları filtrele (business_slug === "law")
         if (targetSlug) {
           filteredPrograms = filteredPrograms.filter(
-            (prog) => prog.business_slug === targetSlug
+            (prog) => prog.business_slug === targetSlug,
           );
         }
       } else {
@@ -223,7 +223,7 @@ export default function InstructorCreateSession() {
   ]);
   const selectedProgram = useMemo(() => {
     return programs?.data?.find(
-      (p) => p.id.toString() === formik.values.program_id?.toString()
+      (p) => p.id.toString() === formik.values.program_id?.toString(),
     );
   }, [programs, formik.values.program_id]);
 
@@ -246,7 +246,7 @@ export default function InstructorCreateSession() {
 
   // 1. Kategoriler arasından slug'ı 'business' olanı (veya ID'si 2 olanı) buluyoruz
   const businessCategory = categoriesData.find(
-    (cat) => cat.slug === "business" || cat.id === 2
+    (cat) => cat.slug === "business" || cat.id === 2,
   );
 
   // 2. Onun içindeki 'sub_categories' dizisini alıyoruz.
@@ -257,11 +257,11 @@ export default function InstructorCreateSession() {
   const isButtonDisabled = !formik.isValid || !selectedCafe;
   if (!initialValues) return null;
   return (
-    <div className="w-full h-auto bg-[#F5F5F5] rounded-3xl p-5">
+    <div className="w-full h-auto bg-[#F5F5F5] rounded-3xl mb-2 p-5 max-lg:p-0 max-lg:my-4">
       <div className="w-full bg-white rounded-full p-3 mb-4">
         <p className="text-black font-semibold text-xl ml-2">Create session</p>
       </div>
-      <form onSubmit={formik.handleSubmit} className="space-y-6 p-3">
+      <form onSubmit={formik.handleSubmit} className="space-y-6 p-3 max-lg:p-0">
         <div className="w-full space-y-6 px-4">
           <div className="space-y-4">
             <div className="space-y-2">
@@ -345,8 +345,8 @@ export default function InstructorCreateSession() {
                     {!selectedCategoryId
                       ? "First select a session category"
                       : activePrograms.length === 0
-                      ? "No programs in this category"
-                      : "Select a Material"}
+                        ? "No programs in this category"
+                        : "Select a Material"}
                   </option>
 
                   {/* activePrograms listesini dönüyoruz */}
@@ -831,7 +831,7 @@ export default function InstructorCreateSession() {
         )}
          */}
         {/* Submit Button */}
-        <div className="flex justify-end pt-6 border-t border-gray-200">
+        <div className="flex justify-end pt-6 border-t border-gray-200 py-5 max-lg:px-2">
           <button
             onClick={() => router.back()}
             type="button"

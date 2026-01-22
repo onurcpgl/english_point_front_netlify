@@ -27,22 +27,22 @@ function InstructorDashboard() {
   useEffect(() => {
     const filterStartData = () => {
       const filtredCompletedData = myCourses?.data.course_sessions.filter(
-        (item) => item.status === "completed"
+        (item) => item.status === "completed",
       );
       setCompletedSession(filtredCompletedData);
 
       const filtredActiveData = myCourses?.data.course_sessions.filter(
-        (item) => item.status === "active"
+        (item) => item.status === "active",
       );
       setActiveSession(filtredActiveData);
 
       const filtredAwaitingData = myCourses?.data.course_sessions.filter(
-        (item) => item.status === "awaiting"
+        (item) => item.status === "awaiting",
       );
       setAwaitingSession(filtredAwaitingData);
 
       const filtredCancelledData = myCourses?.data.course_sessions.filter(
-        (item) => item.status === "cancelled"
+        (item) => item.status === "cancelled",
       );
       setCancelledSession(filtredCancelledData);
     };
@@ -122,7 +122,7 @@ function InstructorDashboard() {
                 <div className="h-auto p-3 w-full">
                   <div className="rounded-3xl  w-full bg-[#F5F5F5]">
                     <div className="flex flex-col gap-4 mt-2">
-                      <MiniCourseSessionCard data={activeSession} />
+                      <MiniCourseSessionCard data={activeSession.slice(0, 4)} />
                       {activeSession.length > 4 && (
                         <div className="text-center ">
                           <a

@@ -33,7 +33,11 @@ const Login = () => {
   const [modalMessage, setModalMessage] = useState("");
   const searchParams = useSearchParams();
   const { update } = useSession();
-  const callbackUrl = searchParams.get("callbackUrl") || "/";
+  //const callbackUrl = searchParams.get("callbackUrl") || "/";
+  const targetPath =
+    searchParams.get("redirect") ||
+    searchParams.get("callbackUrl") ||
+    "/course-sessions";
   const router = useRouter();
 
   // Initial values
@@ -55,7 +59,7 @@ const Login = () => {
     // 2. Eğer verified=true ise
     if (isVerified === "true") {
       setModalMessage(
-        "Tebrikler! Hesabınız başarıyla doğrulandı. Şimdi giriş yapabilirsiniz."
+        "Tebrikler! Hesabınız başarıyla doğrulandı. Şimdi giriş yapabilirsiniz.",
       );
       setSuccessOpen(true);
 
@@ -80,60 +84,87 @@ const Login = () => {
         email: values.email,
         password: values.password,
         role: "user",
-        redirect: false,
-        callbackUrl: callbackUrl ? callbackUrl : "/",
+        redirect: false, // Kontrolü biz alıyoruz
       });
 
       if (res?.ok) {
-        // Giriş başarılıysa
-        if (callbackUrl) {
-          //router.push(callbackUrl); // callback varsa oraya
-          window.location.href = callbackUrl;
-          return;
-        } else {
-          window.location.href = res.url;
-          return;
-        }
-      } else {
-        // Giriş başarısız
-        console.log("Login failed", res);
-      }
-      if (res?.error) {
-        let errorMessage =
-          "Username or password is incorrect. Please check and try again.";
-        if (res.error === "CredentialsSignin") {
-          errorMessage =
-            "The information you entered does not match. Please try again.";
-        }
-        setStatus(errorMessage);
+        // Başarılıysa doğrudan anket sayfasına (targetPath) uçuruyoruz
+        window.location.href = targetPath;
         return;
       }
 
-      if (res?.ok) {
-        // Başarılı login → dashboard’a yönlendir
-        await getSession();
-        router.push("/");
-      } else {
-        // Hata mesajı göster
-        setStatus(res?.error || "Giriş yaparken bir hata oluştu");
+      if (res?.error) {
+        setStatus("E-posta veya şifre hatalı. Lütfen tekrar deneyiniz.");
       }
     } catch (error) {
       console.error("Login error:", error);
-      setStatus(
-        "Giriş yaparken bir hata oluştu. Lütfen bilgilerinizi kontrol ediniz."
-      );
+      setStatus("Giriş yaparken bir hata oluştu.");
     } finally {
       setSubmitting(false);
     }
   };
+  // const handleLoginSubmit = async (values, { setSubmitting, setStatus }) => {
+  //   try {
+  //     setStatus(null);
+
+  //     const res = await signIn("credentials", {
+  //       email: values.email,
+  //       password: values.password,
+  //       role: "user",
+  //       redirect: false,
+  //       callbackUrl: callbackUrl ? callbackUrl : "/",
+  //     });
+
+  //     if (res?.ok) {
+  //       // Giriş başarılıysa
+  //       if (callbackUrl) {
+  //         //router.push(callbackUrl); // callback varsa oraya
+  //         window.location.href = callbackUrl;
+  //         return;
+  //       } else {
+  //         window.location.href = res.url;
+  //         return;
+  //       }
+  //     } else {
+  //       // Giriş başarısız
+  //       console.log("Login failed", res);
+  //     }
+  //     if (res?.error) {
+  //       let errorMessage =
+  //         "Username or password is incorrect. Please check and try again.";
+  //       if (res.error === "CredentialsSignin") {
+  //         errorMessage =
+  //           "The information you entered does not match. Please try again.";
+  //       }
+  //       setStatus(errorMessage);
+  //       return;
+  //     }
+
+  //     if (res?.ok) {
+  //       // Başarılı login → dashboard’a yönlendir
+  //       await getSession();
+  //       router.push("/");
+  //     } else {
+  //       // Hata mesajı göster
+  //       setStatus(res?.error || "Giriş yaparken bir hata oluştu");
+  //     }
+  //   } catch (error) {
+  //     console.error("Login error:", error);
+  //     setStatus(
+  //       "Giriş yaparken bir hata oluştu. Lütfen bilgilerinizi kontrol ediniz.",
+  //     );
+  //   } finally {
+  //     setSubmitting(false);
+  //   }
+  // };
   const handleForgotPasswordSubmit = async (
     values,
-    { setSubmitting, setStatus }
+    { setSubmitting, setStatus },
   ) => {
     setSubmitting(true);
     try {
       const result = await generalService.userResetPasswordRequest(
-        values.email
+        values.email,
       );
 
       // status tipini de gönderiyoruz

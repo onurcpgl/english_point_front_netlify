@@ -20,6 +20,9 @@ export default withAuth(
     // Auth işlemleri için izin ver
     if (pathname.startsWith("/api/auth")) return NextResponse.next();
 
+    if (pathname.startsWith("/survey")) {
+      return NextResponse.next(); // Token olsa da olmasa da bu yolu middleware engellemesin
+    }
     // --- YENİ EKLENEN KISIM BAŞLANGIÇ ---
     // Eğer kullanıcı giriş yapmışsa (token varsa) ve Ana Sayfadaysa ('/')
     if (token && pathname === "/") {
@@ -40,7 +43,7 @@ export default withAuth(
     // Instructor erişim kontrolü (Mevcut kodunuz)
     if (token.role === "instructor") {
       const isAllowed = instructorAllowedPaths.some((path) =>
-        pathname.startsWith(path)
+        pathname.startsWith(path),
       );
 
       if (!isAllowed) {
@@ -54,7 +57,7 @@ export default withAuth(
     callbacks: {
       authorized: () => true, // Bu ayar, middleware fonksiyonunun her sayfada çalışmasını sağlar
     },
-  }
+  },
 );
 
 export const config = {

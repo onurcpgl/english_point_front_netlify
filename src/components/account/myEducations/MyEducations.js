@@ -47,15 +47,15 @@ function MyEducations() {
 
       // item.attendance_status değerine göre filtrele
       const active = sessions.filter((item) =>
-        STATUS_GROUPS.active.includes(item.attendance_status)
+        STATUS_GROUPS.active.includes(item.attendance_status),
       ).length;
 
       const completed = sessions.filter((item) =>
-        STATUS_GROUPS.completed.includes(item.attendance_status)
+        STATUS_GROUPS.completed.includes(item.attendance_status),
       ).length;
 
       const cancelled = sessions.filter((item) =>
-        STATUS_GROUPS.cancelled.includes(item.attendance_status)
+        STATUS_GROUPS.cancelled.includes(item.attendance_status),
       ).length;
 
       setSessionCounts({ all, active, completed, cancelled });
@@ -98,7 +98,7 @@ function MyEducations() {
       <div className="w-full mb-4 max-lg:mb-0">
         <div
           className="
-      flex items-center gap-4 p-2
+      flex items-center gap-4 p-2 py-5
       /* MOBİL AYARLARI (Varsayılan): Kaydırmalı, sola yaslı, scrollbar gizli */
       overflow-x-auto no-scrollbar justify-start
       /* WEB AYARLARI (md ve üstü): Kaydırma kapalı, tam genişlik, yayılmış */

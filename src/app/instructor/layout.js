@@ -6,6 +6,17 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../utils/lib/authOptions";
 import { InstructorSessionProvider } from "../../providers/InstructorSessionProvider";
 
+export const metadata = {
+  title: "Instructor Panel | English Point",
+  description:
+    "Access your instructor dashboard to create, manage, and edit your English conversation sessions. Track your schedule and connect with students effortlessly.",
+  robots: {
+    index: false, // Panel olduğu için arama sonuçlarında gizliyoruz
+    follow: false,
+    nocache: true,
+  },
+};
+
 export default async function InstructorLayout({ children }) {
   const session = await getServerSession(authOptions);
   if (!session) {

@@ -98,9 +98,8 @@ const EducationCard = ({ data }) => {
 
   const checkCourseCancelStatus = async (courseSessionUserId) => {
     try {
-      const response = await generalService.checkCancelStatus(
-        courseSessionUserId
-      );
+      const response =
+        await generalService.checkCancelStatus(courseSessionUserId);
 
       return response;
     } catch (error) {
@@ -144,7 +143,7 @@ const EducationCard = ({ data }) => {
     try {
       const response = await generalService.canceledCourseByUser(
         item.course_session_id,
-        payload
+        payload,
       );
 
       if (response.status) {
@@ -263,7 +262,7 @@ const EducationCard = ({ data }) => {
         const isMenuOpen = activeMenuId === item.id;
 
         const canDirectCancel = checkCancellationStatus(
-          item?.course_session?.session_date
+          item?.course_session?.session_date,
         );
         const isActiveSession = item?.course_session?.status === "active";
         const isCancelled = CANCELLED_STATUSES.includes(item.attendance_status);
@@ -502,14 +501,12 @@ const EducationCard = ({ data }) => {
     px-3 py-1 
     rounded-md 
     text-xs font-bold tracking-wide uppercase 
-    shadow-lg backdrop-blur-sm border 
+    shadow-lg backdrop-blur-sm border
     ${
-      // Slug kontrolü (Güvenli erişim operatörü ile)
-      item?.course_session?.program?.category?.slug?.includes("business")
-        ? "bg-slate-800/95 text-slate-100 border-slate-600 ring-1 ring-slate-900/50" // Business: Ciddi, Koyu, Kurumsal
-        : item?.course_session?.program?.category?.slug?.includes("daily")
-        ? "bg-orange-500/95 text-white border-orange-400 ring-1 ring-orange-600/50" // Daily: Canlı, Enerjik, Sıcak
-        : "bg-gray-800/90 text-gray-100 border-gray-600" // Varsayılan (Diğerleri)
+      // Sadece 'daily' kontrolü, geri kalan her şey koyu mavi
+      item?.course_session?.program?.category?.slug?.includes("daily")
+        ? "bg-[#f4a22a] text-black border-[#e08f1b]" // Daily: Turuncu ve Siyah Yazı
+        : "bg-[#003f6f] text-white border-[#002d52]" // Diğerleri: Koyu Mavi ve Beyaz Yazı
     }
 `}
                 >
@@ -550,7 +547,7 @@ const EducationCard = ({ data }) => {
                     onClick={() =>
                       window.open(
                         `${item?.course_session?.google_cafe.map_url}`,
-                        "_blank"
+                        "_blank",
                       )
                     }
                     className="flex items-center text-sm text-gray-500 cursor-pointer hover:text-gray-500 transition-colors group"

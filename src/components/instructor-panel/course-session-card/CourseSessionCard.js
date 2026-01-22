@@ -9,10 +9,17 @@ import {
   FiEdit,
   FiTrash2,
   FiCheck,
+  FiBell,
+  FiUser,
+  FiUsers,
+  FiCheckCircle,
+  FiFileText,
   FiShare2,
   FiCopy,
 } from "react-icons/fi";
 import ShareComp from "../another-comp/ShareComp";
+import DocumentPopup from "../another-comp/DocsComp";
+
 import "react-calendar/dist/Calendar.css";
 import userimage from "../../../assets/instructor_sidebar/dummy_user.png";
 import Slider from "react-slick";
@@ -58,6 +65,11 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
     url: "",
     title: "",
   });
+  const [docModalData, setDocModalData] = useState({
+    open: false,
+    title: "",
+    content: "", // Buraya doküman linki veya metni gelebilir
+  });
   const [errorModal, setErrorModal] = useState({ open: false, message: "" });
   const [openCourseInfo, setOpenCourseInfo] = useState(null);
   const [sessionToReview, setSessionToReview] = useState(null);
@@ -99,6 +111,14 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
     } finally {
       setQuotaLoading(false);
     }
+  };
+  const handleDocumentClick = (e, session) => {
+    e.stopPropagation();
+    setDocModalData({
+      open: true,
+      title: `${session.session_title} - Session Document`,
+      content: session.program || "Doküman henüz hazır değil.", // Backend'den gelen veri
+    });
   };
   const handleShareClick = (e, session) => {
     e.stopPropagation();
@@ -154,9 +174,8 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
     setUsersLoading(true); // Yükleme başlasın
     setSelectedSessionUsers([]); // Önceki datayı temizle
     try {
-      const response = await instructorPanelService.getMySessionUsers(
-        sessionId
-      );
+      const response =
+        await instructorPanelService.getMySessionUsers(sessionId);
 
       if (Array.isArray(response)) {
         setSelectedSessionUsers(response);
@@ -181,7 +200,7 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
     // 2. Eğer soğuma süresindeyse (cooldown) işlem yapma
     if (!canRefresh) {
       toast.warning(
-        "Çok sık yenileme yapıyorsunuz, lütfen 10 saniye bekleyin."
+        "Çok sık yenileme yapıyorsunuz, lütfen 10 saniye bekleyin.",
       );
       return;
     }
@@ -409,7 +428,7 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
     e.stopPropagation(); // Kartın tıklanma olayını engelle
     // ID'yi dismissed listesinden çıkarıyoruz, böylece overlay geri geliyor
     setDismissedSessionIds((prev) =>
-      prev.filter((sessionId) => sessionId !== id)
+      prev.filter((sessionId) => sessionId !== id),
     );
   };
 
@@ -472,19 +491,24 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
         shareUrl={shareModalData.url}
         title={shareModalData.title}
       />
+      <DocumentPopup
+        isOpen={docModalData.open}
+        onClose={() => setDocModalData({ ...docModalData, open: false })}
+        title={docModalData.title}
+        content={docModalData.content}
+      />
       {sessionList.map(
         (item, i) =>
           item.status === status && (
             <div key={item.id || i} className="space-y-4 relative my-2">
-              <article className="session-card-trigger relative bg-white shadow-md overflow-hidden flex flex-col md:flex-row  p-5">
+              <article className="session-card-trigger relative bg-white shadow-md overflow-hidden flex flex-col md:flex-row p-4 md:p-5 rounded-2xl border border-gray-100">
+                {/* --- ÜST KATMANLAR (Overlay & Bell) - Mevcut Mantığın Tamamen Aynı --- */}
                 {isSessionCompleted(item) &&
                   !dismissedSessionIds.includes(item.id) && (
-                    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/60 backdrop-blur-[3px] rounded-2xl transition-all duration-500 animate-in fade-in group-hover:bg-white/70">
-                      {/* Kapatma Butonu (X) */}
+                    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/60 backdrop-blur-[3px] rounded-2xl animate-in fade-in duration-500">
                       <button
                         onClick={(e) => handleDismissOverlay(item.id, e)}
-                        className="absolute top-3 right-3 p-2 bg-white border border-gray-200 text-gray-400 hover:text-red-500 hover:bg-gray-50 rounded-full transition-all duration-200 shadow-sm hover:shadow-md z-30 cursor-pointer"
-                        title="Dismiss notification"
+                        className="absolute top-3 right-3 p-2 bg-white border border-gray-200 text-gray-400 hover:text-red-500 rounded-full shadow-sm z-30 cursor-pointer"
                       >
                         <svg
                           className="w-5 h-5"
@@ -497,10 +521,9 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
                             strokeLinejoin="round"
                             strokeWidth="2.5"
                             d="M6 18L18 6M6 6l12 12"
-                          ></path>
+                          />
                         </svg>
                       </button>
-
                       <div className="mb-4 text-center">
                         <span className="inline-flex items-center justify-center w-10 h-10 mb-2 bg-[#FFD207] text-black rounded-full shadow-sm">
                           <svg
@@ -514,53 +537,35 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
                               strokeLinejoin="round"
                               strokeWidth="2"
                               d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                            ></path>
+                            />
                           </svg>
                         </span>
                         <h3 className="text-gray-900 font-bold text-lg leading-tight">
-                          {"Time's Up!"}
+                          Time's Up!
                         </h3>
                         <p className="text-gray-600 text-xs font-medium">
                           Waiting for confirmation
                         </p>
                       </div>
-
-                      {/* Mark Completed Butonu */}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           setIsModalOpen(true);
                           setSessionToReview(item);
                         }}
-                        className="group relative inline-flex items-center justify-center px-8 py-3 font-bold text-white transition-all duration-200 bg-black rounded-xl hover:bg-gray-800 hover:scale-105 shadow-xl hover:shadow-2xl cursor-pointer"
+                        className="px-8 py-3 font-bold text-white bg-black rounded-xl hover:bg-gray-800 transition-all cursor-pointer"
                       >
-                        <span>Mark Completed</span>
-                        <svg
-                          className="w-4 h-4 ml-2 text-[#FFD207] transition-transform duration-200 group-hover:translate-x-1"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M5 13l4 4L19 7"
-                          ></path>
-                        </svg>
+                        Mark Completed
                       </button>
                     </div>
                   )}
 
-                {/* --- DURUM 2: YENİ EKLENEN ZIPLAYAN ÇAN (Overlay Kapatıldıysa Görünür) --- */}
                 {isSessionCompleted(item) &&
                   dismissedSessionIds.includes(item.id) && (
                     <button
                       onClick={(e) => handleRestoreOverlay(item.id, e)}
-                      className="absolute top-3 right-3 z-20 flex items-center justify-center w-10 h-10 bg-[#FFD207] text-black rounded-full shadow-lg cursor-pointer animate-bounce hover:scale-110 transition-transform duration-200 hover:bg-[#ffdb4d]"
-                      title="Show completion status"
+                      className="absolute top-3 right-3 z-20 flex items-center justify-center w-10 h-10 bg-[#FFD207] text-black rounded-full shadow-lg animate-bounce cursor-pointer"
                     >
-                      {/* Çan İkonu */}
                       <svg
                         className="w-5 h-5"
                         fill="none"
@@ -576,7 +581,9 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
                       </svg>
                     </button>
                   )}
-                <div className="w-64 h-50 relative flex-shrink-0 overflow-hidden mr-4 max-lg:w-full max-lg:h-56">
+
+                {/* --- SOL TARAF: RESİM --- */}
+                <div className="w-full md:w-64 h-48 md:h-52 relative flex-shrink-0 overflow-hidden rounded-xl">
                   <Image
                     src={item.google_cafe.image}
                     alt={item.google_cafe.name}
@@ -584,169 +591,144 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
                     fill
                   />
                 </div>
-                <div className="flex-1 p-4 flex flex-col justify-between">
-                  <div className="flex flex-col gap-3">
+
+                {/* --- ORTA TARAF: İÇERİK --- */}
+                <div className="flex-1 md:px-5 py-4 flex flex-col justify-between">
+                  <div className="space-y-3">
                     <div>
                       <h3 className="text-xl font-bold text-gray-900 leading-tight">
                         {item.session_title}
                       </h3>
-                      <p className="text-base font-semibold text-gray-800 mt-1">
+                      <p className="text-md font-semibold text-gray-800 mt-0.5">
                         {item.google_cafe.name}
                       </p>
                     </div>
 
-                    <div className="flex flex-col gap-1">
-                      <p className="text-md text-gray-600 leading-snug">
+                    <div className="space-y-0.5">
+                      <p className="text-sm text-gray-600 leading-snug line-clamp-1">
                         {item.google_cafe.address}
                       </p>
-                      <p className="text-md text-gray-500">
+                      <p className="text-sm text-gray-500 font-medium">
                         {item.google_cafe.phone}
                       </p>
                     </div>
 
-                    <div className="pt-2 mt-1 border-t border-gray-100">
-                      <p className="text-md text-gray-800">
-                        <span className="font-semibold text-black">
-                          Instructor:
-                        </span>{" "}
+                    <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
+                      <p className="text-sm text-gray-800">
+                        <span className="font-semibold">Instructor:</span>{" "}
                         {data?.first_name} {data?.last_name}
                       </p>
+                      {/* Kotayı buraya (Instructor yanına) aldım, mobilde çok şık durur */}
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] text-gray-500 font-mono">
+                          ({item.users_count || 0}/{item.quota})
+                        </span>
+                        {renderQuotaIcons(item.users_count, item.quota)}
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between mt-3 flex-wrap gap-2">
-                    <div className="flex items-center text-sm text-gray-800 gap-4 flex-wrap">
-                      <div className="flex justify-start items-center">
-                        <IoLocationSharp className="inline-block text-2xl mr-2 text-[#fdd207]" />
-                        <span
-                          onClick={(e) => {
-                            console.log("item.google_cafe", item.google_cafe);
-                            e.stopPropagation();
-                            window.open(
-                              `${item.google_cafe.map_url}`,
-                              "_blank"
-                            );
-                          }}
-                          className="text-md cursor-pointer hover:underline underline-offset-4"
-                        >
-                          View Location
-                        </span>
-                      </div>{" "}
-                      {status === "active" && (
-                        <button
-                          onClick={(e) => handleShareClick(e, item)}
-                          className="flex items-center cursor-pointer justify-center gap-2 px-3 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-full transition-all text-xs font-bold border border-blue-100"
-                          title="Share this session"
-                        >
-                          <FiShare2 size={14} />
-                          <span>Share</span>
-                        </button>
-                      )}
-                      <div className="flex items-center gap-2 max-sm:flex-col max-sm:justify-start">
-                        <span className="text-sm font-semibold">Quota:</span>
-                        {quotaLoading ? (
-                          <div className="flex items-center gap-1 animate-pulse">
-                            <div className="flex gap-1">
-                              {[1, 2, 3, 4].map((k) => (
-                                <div
-                                  key={k}
-                                  className="h-4 w-4 bg-gray-200 rounded-full"
-                                ></div>
-                              ))}
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-1">
-                            <span className="text-xs text-gray-500 font-mono mr-1">
-                              ({item.users_count || 0}/{item.quota})
-                            </span>
-                            {renderQuotaIcons(item.users_count, item.quota)}
-                          </div>
-                        )}
-                      </div>
-                      <button
-                        onClick={() => handleToggleCard(item)}
-                        className={`group items-center justify-center max-lg:w-full cursor-pointer gap-2 px-4 py-2.5 rounded-full text-xs font-bold transition-all duration-300 shadow-sm border
-  ${
-    // GÖRÜNÜRLÜK KONTROLÜ:
-    // Eğer active veya completed ise 'flex' (görünür), değilse 'hidden' (gizli)
-    item.status === "active" || item.status === "completed" ? "flex" : "hidden"
-  }
-  ${
-    // RENK KONTROLÜ (Mevcut kodun):
-    openCourseInfo?.id === item.id
-      ? "bg-black text-white border-black"
-      : "bg-[#FFD207] text-black border-[#FFD207] hover:bg-white hover:text-black hover:border-gray-200"
-  }`}
-                      >
-                        <span>
-                          {openCourseInfo?.id === item.id
-                            ? "Hide Participants"
-                            : "Participants"}
-                        </span>
-                        <FaChevronRight
-                          className={`transition-transform duration-500 ease-in-out 
-        ${
-          openCourseInfo?.id === item.id
-            ? "rotate-90"
-            : "group-hover:translate-x-1"
-        }`}
-                        />
-                      </button>
+                  {/* BUTONLAR ALANI */}
+                  <div className="flex flex-wrap items-center gap-2 mt-4">
+                    <div
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window.open(item.google_cafe.map_url, "_blank");
+                      }}
+                      className="flex items-center gap-1 cursor-pointer hover:underline text-sm font-medium"
+                    >
+                      <IoLocationSharp className="text-xl text-[#fdd207]" />
+                      <span className="text-gray-600">Location</span>
                     </div>
+
+                    {status === "active" && (
+                      <button
+                        onClick={(e) => handleShareClick(e, item)}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-full text-[11px] font-bold border border-blue-100"
+                      >
+                        <FiShare2 size={12} /> Share
+                      </button>
+                    )}
+
+                    {status === "active" && (
+                      <button
+                        onClick={(e) => handleDocumentClick(e, item)}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-green-50 text-green-600 rounded-full text-[11px] font-bold border border-green-100"
+                      >
+                        <FiFileText size={12} /> Materials
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => handleToggleCard(item)}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all ${
+                        openCourseInfo?.id === item.id
+                          ? "bg-black text-white"
+                          : "bg-[#FFD207] text-black border-[#FFD207]"
+                      }`}
+                    >
+                      <span>
+                        {openCourseInfo?.id === item.id
+                          ? "Hide"
+                          : "Participants"}
+                      </span>
+                      <FaChevronRight
+                        className={`transition-transform ${openCourseInfo?.id === item.id ? "rotate-90" : ""}`}
+                      />
+                    </button>
                   </div>
                 </div>
 
-                <div className="flex flex-col items-center justify-center p-3 gap-2 min-w-[80px] mt-2 md:mt-0">
-                  {/* Süre İkonu */}
-                  <div className="bg-[#FFD207] w-12 h-12 rounded-md flex flex-col items-center justify-center shadow-md">
-                    <span className="font-semibold text-black text-md">1</span>
-                    <span className="text-[10px] text-black leading-none">
-                      hours
-                    </span>
-                  </div>
-
-                  <div>
-                    <p className="text-black font-semibold">Session Duration</p>
-                  </div>
-
-                  {/* Tarih ve Saat Bilgisi */}
-                  <div className="flex flex-col items-center text-sm text-gray-700">
-                    <div className="flex items-center gap-1">
-                      <FiCalendar />
-                      <span>{enFormatDate(item.session_date, "long")}</span>
+                {/* --- SAĞ TARAF: ZAMAN BİLGİSİ --- */}
+                {/* Mobilde alta düşer ama md:w-32 ile genişliği sabitlenir, flex-col ile hizalanır */}
+                <div className="flex flex-row md:flex-col items-center justify-between md:justify-center p-3 md:p-0 bg-gray-50 md:bg-transparent rounded-xl md:rounded-none gap-3 md:min-w-[120px] border-t md:border-t-0 md:border-l border-gray-100">
+                  <div className="flex md:flex-col items-center gap-2 md:gap-1">
+                    <div className="bg-[#FFD207] w-10 h-10 md:w-12 md:h-12 rounded-md flex flex-col items-center justify-center shadow-sm">
+                      <span className="font-bold text-black text-sm md:text-md">
+                        1
+                      </span>
+                      <span className="text-[8px] md:text-[10px] text-black font-bold uppercase">
+                        hour
+                      </span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <FiClock />
-                      <span>{formatTime(item.session_date, "long")}</span>
+                    <p className="text-black font-bold text-xs md:text-sm hidden sm:block">
+                      Duration
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col items-end md:items-center text-[11px] md:text-sm text-gray-700 font-medium">
+                    <div className="flex items-center gap-1.5">
+                      <FiCalendar className="text-[#fdd207]" />
+                      <span>{enFormatDate(item.session_date, "short")}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <FiClock className="text-[#fdd207]" />
+                      <span>{formatTime(item.session_date)}</span>
                     </div>
                   </div>
 
-                  {/* --- Yeni Eklenen Düzenle ve Sil Butonları --- */}
+                  {/* Düzenle/Sil - Sadece awaiting durumunda */}
                   {item.status === "awaiting" && (
-                    <div className="flex items-center gap-4 mt-2 border-t pt-2 w-full justify-center">
+                    <div className="flex items-center gap-3 md:mt-2 md:pt-2 md:border-t w-full justify-center">
                       <button
                         onClick={() => handleEdit(item)}
-                        className="text-blue-600 hover:text-blue-800 transition-colors"
-                        title="Düzenle"
+                        className="text-blue-600 p-1"
                       >
-                        <FiEdit size={18} />
+                        <FiEdit size={16} />
                       </button>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDeleteRequest(item.id);
                         }}
-                        className="text-red-600 hover:text-red-800 transition-colors"
-                        title="Sil"
+                        className="text-red-600 p-1"
                       >
-                        <FiTrash2 size={18} />
+                        <FiTrash2 size={16} />
                       </button>
                     </div>
                   )}
                 </div>
               </article>
-
               {openCourseInfo?.id === item.id && (
                 <div
                   ref={openCourseRef}
@@ -775,7 +757,7 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
                     />
                   </button>
 
-                  <div className="flex justify-center items-center  rounded-full p-3 py-4 bg-yellow-300 w-lg max-sm:w-[-webkit-fill-available] px-20">
+                  <div className="flex justify-center items-center w-min  rounded-full p-3 py-4 bg-yellow-300 max-sm:w-[-webkit-fill-available] px-20">
                     <h2 className="text-xl font-bold max-md:text-lg text-black">
                       Participants
                     </h2>
@@ -899,7 +881,7 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
                 </div>
               )}
             </div>
-          )
+          ),
       )}
     </div>
   );

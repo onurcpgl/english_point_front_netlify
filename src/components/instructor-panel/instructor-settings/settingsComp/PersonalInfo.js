@@ -52,7 +52,7 @@ function PersonalInfo() {
   const filteredCountries =
     countries
       ?.filter((c) =>
-        c.name.toLowerCase().includes(searchCountry.toLowerCase())
+        c.name.toLowerCase().includes(searchCountry.toLowerCase()),
       )
       .sort((a, b) => a.name.localeCompare(b.name)) || [];
 
@@ -66,6 +66,7 @@ function PersonalInfo() {
   const initialValues = {
     first_name: data?.user?.first_name || "",
     last_name: data?.user?.last_name || "",
+    citizen_id: data?.user?.citizen_id || "",
     country_birth: data?.user?.country_birth || "", // 🔹 eklendi
     current_location: data?.user?.current_location || "",
     current_city: data?.user?.current_city || "",
@@ -79,7 +80,7 @@ function PersonalInfo() {
     if (data?.user?.current_location) {
       setSearchCountry(data.user.current_location); // input’a yaz
       const country = countries?.find(
-        (c) => c.name === data.user.current_location
+        (c) => c.name === data.user.current_location,
       );
       if (country) setSelectedCountry(country);
 
@@ -126,42 +127,56 @@ function PersonalInfo() {
       const formData = new FormData();
       formData.append("first_name", values.first_name);
       formData.append("last_name", values.last_name);
+      formData.append("citizen_id", values.citizen_id);
       formData.append("country_birth", values.country_birth);
       formData.append("current_location", values.current_location);
       formData.append("current_city", values.current_city);
 
-      // 🔹 Fotoğraf varsa ekle
       if (values.photo?.file) {
         formData.append("profile_image", values.photo.file);
       }
 
-      // 🔹 API isteği
-      const result = await instructorPanelService.getInstructorProfileUpdate(
-        formData
-      );
+      const result =
+        await instructorPanelService.getInstructorProfileUpdate(formData);
 
-      // 🔹 Sonuç kontrolü
       if (result.success) {
-        if (result.success) {
-          queryClient.invalidateQueries(["instructorProfile"]); // 🔹 tüm component’leri güncelle
-        }
+        queryClient.invalidateQueries(["instructorProfile"]);
         setAlert({
           visible: true,
           type: "success",
-          message: "Profile updated successfully!",
+          message: result.message || "Profile updated successfully!",
         });
       } else {
+        // API returned 200 but success: false (Logical error)
         setAlert({
           visible: true,
           type: "error",
-          message: "Something went wrong. Please try again.",
+          message: result.message || "An error occurred. Please try again.",
         });
       }
     } catch (error) {
+      // 🔹 Handling server-side validation (422) and other HTTP errors
+      let errorMessage = "A server error occurred. Please try again later.";
+
+      if (error.response?.data) {
+        const serverErrors = error.response.data.errors; // Laravel validation errors
+        const serverMessage = error.response.data.message; // General Laravel error message
+
+        if (serverErrors) {
+          // Flattens all field errors (e.g., "Citizen ID must be 11 digits. Email already taken.")
+          errorMessage = Object.values(serverErrors).flat().join(" ");
+        } else if (serverMessage) {
+          errorMessage = serverMessage;
+        }
+      } else if (error.message) {
+        // Network errors or others
+        errorMessage = error.message;
+      }
+
       setAlert({
         visible: true,
         type: "error",
-        message: "Server error occurred.",
+        message: errorMessage,
       });
     } finally {
       setBtnLoading(false);
@@ -280,7 +295,31 @@ function PersonalInfo() {
                     />
                   </div>
                 </div>
-
+                <div className="flex-1 space-y-3">
+                  <div className="flex-1">
+                    <label
+                      htmlFor="citizen_id"
+                      className="text-gray-700 text-sm"
+                    >
+                      Citizen ID
+                    </label>
+                    <Field
+                      id="citizen_id"
+                      type="text"
+                      name="citizen_id"
+                      placeholder="11 haneli kimlik numaranızı girin"
+                      maxLength="11" // 11 haneden fazlasını engeller
+                      inputMode="numeric" // Mobilde sayı klavyesini tetikler
+                      onKeyPress={(e) => {
+                        // Sadece rakam girilmesine izin verir
+                        if (!/[0-9]/.test(e.key)) {
+                          e.preventDefault();
+                        }
+                      }}
+                      className="w-full h-14 focus:outline-0 px-4 placeholder:text-[#8e8e8e] bg-white font-light text-black shadow"
+                    />
+                  </div>
+                </div>
                 <div className="relative w-full" ref={wrapperRefCountryBirth}>
                   <label className="text-gray-700 text-sm">Country Birth</label>
                   <input

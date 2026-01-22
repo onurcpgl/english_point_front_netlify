@@ -48,6 +48,7 @@ function InstructorPayment() {
   const {
     data: paymentStat,
     error: errorPaymentStat,
+    isFetching: isFetchingStat,
     isLoading: isLoadingPaymentStat,
     refetch: refetchPaymentStat,
   } = useQuery({
@@ -58,6 +59,7 @@ function InstructorPayment() {
   // 2. History Data
   const {
     data: paymentHistory,
+    isFetching: isFetchingHistory,
     error: errorPaymentHistory,
     isLoading: isLoadingPaymentHistory,
     refetch: refetchPaymentHistory,
@@ -65,6 +67,7 @@ function InstructorPayment() {
     queryKey: ["PaymentHistory"],
     queryFn: () => instructorPanelService.getPaymentHistory(),
   });
+  const isRefreshing = isFetchingStat || isFetchingHistory;
 
   const stats = paymentStat;
   const historyList = paymentHistory?.data?.data || [];
@@ -124,10 +127,15 @@ function InstructorPayment() {
             refetchPaymentStat();
             refetchPaymentHistory();
           }}
+          disabled={isRefreshing}
           className="p-2 bg-white rounded-full shadow-sm hover:shadow-md hover:scale-105 transition-all text-gray-600"
           title="Refresh Data"
         >
-          <RefreshCw className="w-5 h-5" />
+          <RefreshCw
+            className={`w-5 h-5 transition-colors ${
+              isRefreshing ? "animate-spin text-blue-600" : ""
+            }`}
+          />
         </button>
       </div>
 
@@ -196,7 +204,28 @@ function InstructorPayment() {
           </div>
         </div>
       </div>
-
+      <div className="px-2 text-gray-500 text-[11px] leading-tight mt-2 italic mb-2">
+        ** Pricing excludes taxes. Please{" "}
+        <a
+          href="https://www.gib.gov.tr/"
+          target="_blank"
+          className="underline hover:text-gray-700"
+        >
+          click here
+        </a>{" "}
+        for tax regulations.
+      </div>
+      <div className="px-2 text-gray-500 text-[11px] leading-tight mt-2 italic mb-2">
+        ** To ensure seamless payment processing, please make sure your
+        **Citizen ID** and profile information are complete in your{" "}
+        <a
+          href="/instructor/settings"
+          className="underline hover:text-gray-700 font-medium"
+        >
+          Profile Settings
+        </a>
+        .
+      </div>
       {/* --- 2. PAYMENT HISTORY TABLE --- */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-5 border-b border-gray-100 flex justify-between items-center">

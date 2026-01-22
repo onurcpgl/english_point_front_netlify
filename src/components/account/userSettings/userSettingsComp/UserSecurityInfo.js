@@ -45,10 +45,11 @@ function UserSecurityInfo() {
         setAlert({
           visible: true,
           type: "success",
-          message: "Şifreniz başarıyla güncellendi!",
+          message: result.message || "Şifreniz başarıyla güncellendi!",
         });
         resetForm();
       } else {
+        // API 200 döndü ama success false (Örn: Business logic hatası)
         setAlert({
           visible: true,
           type: "error",
@@ -56,10 +57,29 @@ function UserSecurityInfo() {
         });
       }
     } catch (error) {
+      // 🔹 Sunucudan gelen detaylı validasyon hatalarını yakalıyoruz
+      let errorMessage = "Sunucu hatası oluştu.";
+
+      if (error.response && error.response.data) {
+        const serverErrors = error.response.data.errors;
+        const serverMessage = error.response.data.message;
+
+        if (serverErrors) {
+          // Laravel'den gelen tüm validasyon mesajlarını birleştirir
+          // Örn: "Eski şifreniz hatalı. Yeni şifre en az 8 karakter olmalıdır."
+          errorMessage = Object.values(serverErrors).flat().join(" ");
+        } else if (serverMessage) {
+          // Hata mesajı direkt 'message' içinde gelmişse (401 veya özel fırlatılan hatalar)
+          errorMessage = serverMessage;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       setAlert({
         visible: true,
         type: "error",
-        message: "Sunucu hatası oluştu.",
+        message: errorMessage,
       });
     } finally {
       setBtnLoading(false);

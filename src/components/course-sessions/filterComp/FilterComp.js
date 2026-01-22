@@ -122,7 +122,7 @@ function FilterComp({
     if (cityId) {
       // ilceData[0].data içinden o ile ait ilçeleri bul
       const dists = ilceData[0].data.filter(
-        (d) => String(d.il_id) === String(cityId)
+        (d) => String(d.il_id) === String(cityId),
       );
       setFilteredDistricts(dists);
     } else {
@@ -511,7 +511,7 @@ function FilterComp({
   const EnglishSkillsDropdown = () => {
     // Seçenekleri burada tanımlıyoruz
     const skillOptions = [
-      { id: "business", title: "Business English" },
+      { id: "bussines", title: "Business English" },
       { id: "daily", title: "Daily English Skills" },
     ];
 
@@ -785,7 +785,7 @@ function FilterComp({
                     // 1. Görsel Silme
                     setVisualFilters((prev) => {
                       const updatedValues = prev[filterKey].filter(
-                        (v) => v !== val
+                        (v) => v !== val,
                       );
                       if (updatedValues.length === 0) {
                         const { [filterKey]: _, ...rest } = prev;
@@ -798,7 +798,7 @@ function FilterComp({
                     setFilters((prev) => {
                       const currentValues = prev[filterKey] || [];
                       const updatedValues = currentValues.filter(
-                        (v) => v !== val
+                        (v) => v !== val,
                       );
                       if (updatedValues.length === 0) {
                         const { [filterKey]: _, ...rest } = prev;
@@ -960,7 +960,7 @@ function FilterComp({
               </button>
             </div>
           </div>,
-          document.body
+          document.body,
         )}
 
       {/* SEÇİLİ FİLTRELER GÖSTERİMİ */}

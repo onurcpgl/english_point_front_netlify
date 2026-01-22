@@ -5,7 +5,7 @@ import axiosInstance from "./axiosInstance";
 const userChangePassword = async (values) => {
   const response = await axiosInstance.post(
     "/api/user/change-password",
-    values
+    values,
   );
   return response.data;
 };
@@ -14,7 +14,7 @@ const userResetPasswordRequest = async (email) => {
     "/api/user/request-reset-password",
     {
       email,
-    }
+    },
   );
   return response.data;
 };
@@ -29,7 +29,7 @@ const userCheckResetPasswordStatus = async (token) => {
     "/api/user/check-reset-password-status",
     {
       token,
-    }
+    },
   );
   return response.data;
 };
@@ -44,7 +44,7 @@ const getMessage = async () => {
 };
 const getMessageAsMarker = async (id) => {
   const response = await axiosInstance.get(
-    `/api/user/messages-markasread/${id}`
+    `/api/user/messages-markasread/${id}`,
   );
   return response.data;
 };
@@ -57,7 +57,7 @@ const saveAnswers = async (answers) => {
 
 const getByAnswerQuestion = async (uniq_id) => {
   const response = await axiosInstance.get(
-    `/api/get-by-question-answers/${uniq_id}`
+    `/api/get-by-question-answers/${uniq_id}`,
   );
   return response.data;
 };
@@ -71,7 +71,7 @@ const registerInstructor = async (instrocturRegisterValue) => {
       headers: {
         "Content-Type": "multipart/form-data", // axios bunu genellikle otomatik ayarlar
       },
-    }
+    },
   );
   return response.data;
 };
@@ -116,7 +116,7 @@ const getCourseSessionById = async (id) => {
 };
 const getCourseSessionSingle = async (id) => {
   const response = await axiosInstance.get(
-    `/api/get-course-session-single/${id}`
+    `/api/get-course-session-single/${id}`,
   );
   return response.data;
 };
@@ -147,7 +147,7 @@ const updateUserProfile = async (profileData) => {
       headers: {
         "Content-Type": "multipart/form-data", // ⚠ Genellikle axios bunu otomatik ayarlar
       },
-    }
+    },
   );
   return response.data;
 };
@@ -168,7 +168,7 @@ const deleteAdresses = async (addressId) => {
 const updatedAdress = async (addressInfo) => {
   const response = await axiosInstance.post(
     "/api/addresses-update",
-    addressInfo
+    addressInfo,
   );
   return response.data;
 };
@@ -236,19 +236,45 @@ export const sendResendCode = async () => {
 };
 export const checkCancelStatus = async (courseSessionUserId) => {
   const response = await axiosInstance.get(
-    `/api/course-sessions/check-cancel-status/${courseSessionUserId}`
+    `/api/course-sessions/check-cancel-status/${courseSessionUserId}`,
   );
   return response.data;
 };
 export const canceledCourseByUser = async (courseSessionId, value) => {
   const response = await axiosInstance.post(
     `/api/course-sessions/${courseSessionId}/cancel`,
-    value
+    value,
   );
   return response.data;
 };
+const initPayment = async (paymentData) => {
+  // Backend'e kart bilgilerini gönderip 3D form verilerini alıyoruz
+  const response = await axiosInstance.post("/api/payment/init", paymentData);
+  return response.data;
+};
+
+const getSurveyQuestions = async (educationId) => {
+  // educationId boş gelirse hata vermemesi için basit bir kontrol
+  if (!educationId) {
+    return { status: false, message: "Eğitim ID bilgisi eksik." };
+  }
+
+  const response = await axiosInstance.get(
+    `/api/survey/questions/${educationId}`,
+  );
+  return response.data;
+};
+// Cevapları gönderen servis
+const postSurveyAnswers = async (surveyData) => {
+  // surveyData: { education_id: 1, answers: { "1": "a", "2": "b" } }
+  const response = await axiosInstance.post("/api/survey/store", surveyData);
+  return response.data;
+};
 const generalService = {
+  getSurveyQuestions,
+  postSurveyAnswers,
   checkCancelStatus,
+  initPayment,
   getCourseSessionSingle,
   canceledCourseByUser,
   sendEmailCode,

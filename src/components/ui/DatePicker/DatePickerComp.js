@@ -10,14 +10,9 @@ export default function ModernDatePicker({ formik }) {
   useEffect(() => {
     if (!inputRef.current || fpInstance.current) return;
 
-    // --- HESAPLAMA ---
-    // Şu anki zamanı al
     const now = new Date();
-    // 2 saat ekle
     const startHour = now.getHours() + 2;
-    // Dakikayı 00 yap (Kullanıcının isteği: 13:15 değil 13:00 görünsün)
 
-    // Başlangıç için kısıtlama objesi oluşturuyoruz (Bugün için geçerli)
     const initialMinTime = new Date();
     initialMinTime.setHours(startHour);
     initialMinTime.setMinutes(0);
@@ -28,41 +23,59 @@ export default function ModernDatePicker({ formik }) {
       dateFormat: "Y-m-d H:i",
       minDate: "today",
       time_24hr: true,
-      closeOnSelect: false,
+      closeOnSelect: false, // Seçim yapınca hemen kapanmasın
       disableMobile: "true",
-
-      // GÖRSEL AYAR: Takvim açıldığında saat tekerleği nerede dursun?
-      // Eğer formik'te değer yoksa, hesapladığımız (Şu an + 2 saat) değerinde dursun.
       defaultHour: startHour,
       defaultMinute: 0,
-
-      // KISITLAMA: En erken seçilebilecek saat (Dakikayı 00'a yuvarladık)
       minTime: initialMinTime,
-
       defaultDate: formik.values.session_date,
+
+      // --- OK BUTONU EKLEME ---
+      onReady: function (selectedDates, dateStr, instance) {
+        // Eğer zaten buton varsa tekrar ekleme
+        if (instance.calendarContainer.querySelector(".flatpickr-confirm-btn"))
+          return;
+
+        const confirmBtn = document.createElement("div");
+        confirmBtn.className = "flatpickr-confirm-btn";
+        confirmBtn.innerHTML = "OK";
+
+        // Stil Ayarları (Tasarımınıza uygun sarı buton)
+        Object.assign(confirmBtn.style, {
+          backgroundColor: "#FFD207",
+          color: "#000",
+          padding: "10px",
+          margin: "10px",
+          textAlign: "center",
+          cursor: "pointer",
+          borderRadius: "8px",
+          fontWeight: "bold",
+          fontSize: "14px",
+        });
+
+        confirmBtn.addEventListener("click", () => {
+          instance.close();
+        });
+
+        instance.calendarContainer.appendChild(confirmBtn);
+      },
 
       onChange: function (selectedDates, dateStr, instance) {
         if (selectedDates.length > 0) {
           const selectedDate = selectedDates[0];
           const currentDate = new Date();
-
-          // Seçilen gün bugün mü?
           const isToday =
             selectedDate.toDateString() === currentDate.toDateString();
 
           if (isToday) {
-            // BUGÜN seçildiyse: Hesaplamayı tekrar yap (Anlık saat değişmiş olabilir)
             const dynamicNow = new Date();
             dynamicNow.setHours(dynamicNow.getHours() + 2);
-            dynamicNow.setMinutes(0); // Dakikayı sıfırla
-
+            dynamicNow.setMinutes(0);
             instance.set("minTime", dynamicNow);
           } else {
-            // BAŞKA GÜN seçildiyse: Saat kısıtlamasını kaldır (00:00 serbest)
             instance.set("minTime", null);
           }
         }
-
         formik.setFieldValue("session_date", dateStr ? dateStr + ":00" : "");
       },
     });
@@ -75,26 +88,61 @@ export default function ModernDatePicker({ formik }) {
     };
   }, []);
 
-  //Form temizleme senkronizasyonu
   useEffect(() => {
     if (fpInstance.current && !formik.values.session_date) {
       fpInstance.current.clear();
     }
   }, [formik.values.session_date]);
+
   return (
     <div className="space-y-2">
-      <label className="text-sm font-semibold text-gray-700">
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+  /* Seçili Günün Arka Planı (Mavi yerine Sarı) */
+  .flatpickr-day.selected, 
+  .flatpickr-day.startRange, 
+  .flatpickr-day.endRange, 
+  .flatpickr-day.selected:focus, 
+  .flatpickr-day.selected:hover, 
+  .flatpickr-day.prevMonthDay.selected, 
+  .flatpickr-day.nextMonthDay.selected {
+    background: #FFD207 !important;
+    border-color: #FFD207 !important;
+    color: #000 !important; /* Yazı siyah olsun ki okunsun */
+  }
+
+  /* Bugünün Etrafındaki Çizgi */
+  .flatpickr-day.today {
+    border-color: #FFD207 !important;
+  }
+
+  /* Bugünün üzerine gelince veya seçince */
+  .flatpickr-day.today:hover {
+    background: #FFD207 !important;
+    color: #000 !important;
+  }
+
+  /* Saat seçimindeki mavi odaklanmayı (focus) sarı yapma */
+  .flatpickr-time input:focus {
+    background: rgba(253, 210, 7, 0.1) !important;
+  }
+
+  /* Takvimin genelindeki OK butonunun hover efekti (önceki eklediğimiz) */
+  .flatpickr-confirm-btn:hover {
+    background-color: #eec506 !important;
+  }
+`,
+        }}
+      />
+      <label className="flex items-center text-sm font-medium text-gray-700">
         Session Date
       </label>
       <input
         ref={inputRef}
         type="text"
-        // ÖNEMLİ: value={} veya defaultValue={} KULLANMIYORUZ.
-        // Input'un görsel kontrolünü tamamen Flatpickr'a bırakıyoruz.
-
-        // iOS'ta klavye açılmasını engellemek için şart.
         readOnly={true}
-        className="w-full h-14 outline-none px-4 bg-white text-black placeholder:text-gray-400   cursor-pointer"
+        className="w-full h-14 rotate-0 focus:rounded-0 outline-0 px-4 placeholder:text-[#8e8e8e] bg-white font-light text-black"
         placeholder="Select date & time"
       />
       {formik.touched.session_date && formik.errors.session_date && (

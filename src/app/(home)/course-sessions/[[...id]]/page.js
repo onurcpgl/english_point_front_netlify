@@ -1,25 +1,18 @@
-"use client";
-
 import React from "react";
-import { useSession } from "next-auth/react";
-import CourseSessionsComp from "../../../../components/course-sessions/CourseSessionsComp";
-import CourseComp from "../../../../components/course/CourseComp";
-import LoadingSimple from "../../../../components/loading/LoadingSimple";
+import ParentCourseComp from "../../../../components/parentCourseComp/ParentCourseComp";
 
-function Educations() {
-  const { data: session, status } = useSession();
+const baseUrl = process.env.NEXTAUTH_URL;
 
-  // 🔄 Session yüklenirken
-  if (status === "loading") {
-    return <LoadingSimple />;
-  }
+export const metadata = {
+  title: 'Bölgenizdeki en yakın "English Point"i keşfedin!',
+  description:
+    "Sana en yakın EnglishPoint'te native-speaker eşliğinde, hem yeni arkadaşlar edin, hem İngilizceyi konuşarak öğren!",
+  alternates: {
+    // Başına değişkeni koyup sonuna yolu ekliyoruz
+    canonical: `${baseUrl}course-sessions`,
+  },
+};
 
-  // 🔒 Kullanıcı login olmuşsa CourseSessionsComp, değilse CourseComp
-  if (session?.user) {
-    return <CourseSessionsComp />;
-  } else {
-    return <CourseComp />;
-  }
+export default function Page({ params }) {
+  return <ParentCourseComp id={params.id} />;
 }
-
-export default Educations;

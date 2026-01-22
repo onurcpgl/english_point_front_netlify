@@ -32,7 +32,7 @@ export default function CafeLocationComp({ onSelectCafe, initialValue }) {
       autocompleteService.current =
         new window.google.maps.places.AutocompleteService();
       placesService.current = new window.google.maps.places.PlacesService(
-        document.createElement("div")
+        document.createElement("div"),
       );
     }
   }, [isLoaded]);
@@ -86,7 +86,7 @@ export default function CafeLocationComp({ onSelectCafe, initialValue }) {
           const cityComponent = place.address_components.find(
             (c) =>
               c.types.includes("administrative_area_level_1") ||
-              c.types.includes("locality")
+              c.types.includes("locality"),
           );
           if (cityComponent) city = cityComponent.long_name;
 
@@ -94,7 +94,7 @@ export default function CafeLocationComp({ onSelectCafe, initialValue }) {
             (c) =>
               c.types.includes("administrative_area_level_2") ||
               c.types.includes("sublocality_level_1") ||
-              c.types.includes("sublocality")
+              c.types.includes("sublocality"),
           );
           if (districtComponent) district = districtComponent.long_name;
         }
@@ -120,7 +120,7 @@ export default function CafeLocationComp({ onSelectCafe, initialValue }) {
         // Tıkladığında "Paylaş" ile alınan linkin açtığı sayfanın aynısını açar.
 
         const mapUrl = place.url;
-
+        console.log("place.url", place);
         const photoUrl =
           "https://api.englishpoint.com.tr/public/google_cafe/google_cafe_image.jpg";
 

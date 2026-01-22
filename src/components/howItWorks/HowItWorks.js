@@ -8,10 +8,12 @@ function HowItWorks() {
       <div className="container mx-auto px-4 lg:px-0 my-10 lg:my-20">
         <div className="flex flex-col gap-3 text-black">
           <div className="flex flex-col lg:flex-row gap-2 text-3xl lg:text-4xl">
-            <h1 className="font-bold text-center lg:text-left">
-              English Point
+            <h1 className="font-bold text-center lg:text-left flex gap-2">
+              English Point{" "}
+              <p className="font-light text-center lg:text-left">
+                nasıl işler?
+              </p>
             </h1>
-            <p className="font-light text-center lg:text-left">nasıl işler?</p>
           </div>
         </div>
       </div>

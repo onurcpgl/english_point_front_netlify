@@ -89,7 +89,7 @@ export const authOptions = {
                 "Content-Type": "application/json",
                 Accept: "application/json",
               },
-            }
+            },
           );
 
           // API'den gelen cevap

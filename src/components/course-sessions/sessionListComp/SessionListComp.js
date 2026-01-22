@@ -391,8 +391,8 @@ function CourseContentList({ mappedData, loading }) {
         w-full lg:w-auto shadow-sm
         ${
           item?.program?.category?.slug?.includes("daily")
-            ? "bg-[#FFD207] text-black"
-            : "bg-[#0F172A] text-white"
+            ? "bg-[#f4a22a] text-black"
+            : "bg-[#003f6f] text-white"
         }
       `}
                   >

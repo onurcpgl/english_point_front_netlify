@@ -27,6 +27,7 @@ function UserPersonalInfo({ data, error, isLoading }) {
     name: data?.user?.name || "",
     email: data?.user?.email || "",
     phone: data?.user?.phone || "",
+    citizen_id: data?.user?.citizen_id || "",
     photo: {},
   };
 
@@ -70,32 +71,55 @@ function UserPersonalInfo({ data, error, isLoading }) {
       const formData = new FormData();
       formData.append("name", values.name);
       formData.append("email", values.email);
-      formData.append("phone", values.phone); // phone eklendi
+      formData.append("citizen_id", values.citizen_id);
+      formData.append("phone", values.phone);
+
       if (values.photo?.file) {
         formData.append("profile_image", values.photo.file);
       }
 
       const result = await generalService.updateUserProfile(formData);
 
+      // 🔹 API 200 OK döndü ama kendi kontrolümüzde success false ise
       if (result.success) {
         queryClient.invalidateQueries(["userProfile"]);
         setAlert({
           visible: true,
           type: "success",
-          message: "Profil başarıyla güncellendi!",
+          message: result.message || "Profil başarıyla güncellendi!",
         });
       } else {
         setAlert({
           visible: true,
           type: "error",
-          message: "Bir hata oluştu. Lütfen tekrar deneyin.",
+          message: result.message || "Bir hata oluştu. Lütfen tekrar deneyin.",
         });
       }
     } catch (error) {
+      // 🔹 Sunucudan gelen hata mesajını ayıklıyoruz
+      let errorMessage = "Sunucu hatası oluştu.";
+
+      if (error.response && error.response.data) {
+        // Laravel validasyon hataları (422) genellikle 'errors' içinde döner
+        const serverErrors = error.response.data.errors;
+
+        if (serverErrors) {
+          // Tüm hataları birleştirip gösterebiliriz veya sadece ilkini seçebiliriz
+          // Örn: "citizen_id: T.C. Kimlik No 11 hane olmalıdır."
+          errorMessage = Object.values(serverErrors).flat().join(" ");
+        } else if (error.response.data.message) {
+          // Genel bir hata mesajı varsa (örn: "User not found")
+          errorMessage = error.response.data.message;
+        }
+      } else if (error.message) {
+        // Network hatası vb. durumlar için
+        errorMessage = error.message;
+      }
+
       setAlert({
         visible: true,
         type: "error",
-        message: "Sunucu hatası oluştu.",
+        message: errorMessage,
       });
     } finally {
       setBtnLoading(false);
@@ -218,6 +242,29 @@ function UserPersonalInfo({ data, error, isLoading }) {
                         />
                       )}
                     </Field>
+                  </div>
+                  <div className="flex-1 min-w-[200px]">
+                    <label
+                      htmlFor="citizen_id"
+                      className="text-gray-700 text-sm"
+                    >
+                      T.C. Kimlik No
+                    </label>
+                    <Field
+                      id="citizen_id"
+                      type="text"
+                      name="citizen_id"
+                      placeholder="11 haneli kimlik numaranız"
+                      maxLength="11" // 11 haneden fazlasını engeller
+                      inputMode="numeric" // Mobilde direkt rakam klavyesini açar
+                      onKeyPress={(e) => {
+                        // Sadece rakam girilmesine izin verir
+                        if (!/[0-9]/.test(e.key)) {
+                          e.preventDefault();
+                        }
+                      }}
+                      className="w-full h-14 outline-0 px-4 bg-white shadow text-black placeholder:text-gray-400 font-light"
+                    />
                   </div>
                 </div>
               </div>

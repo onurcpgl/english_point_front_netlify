@@ -42,21 +42,29 @@ export const CartProvider = ({ children }) => {
   // ------------------------------------------------
 
   useEffect(() => {
+    // 1. Session yükleniyorsa bekle
     if (status === "loading") return;
 
-    if (status !== "authenticated" || session.user.role !== "user") {
+    // 2. Giriş yapılmamışsa veya kullanıcı değilse sepeti temizle ve çık
+    if (status !== "authenticated" || session?.user?.role !== "user") {
       setSessions({ basket: null, success: false });
       setLoading(false);
       return;
     }
 
+    // --- KRİTİK DÜZENLEME ---
+    // 3. Eğer sessions içinde zaten basket verisi varsa, HİÇBİR ŞEY YAPMA.
+    // Bu sayede sekmeler arası geçişte veya sayfa değişiminde tekrar fetch atmaz.
+    if (sessions?.basket) {
+      setLoading(false); // Veri zaten var, loading'e gerek yok
+      return;
+    }
+
     async function loadCart() {
+      // Sadece veri gerçekten yokken loading'i true yap
       setLoading(true);
       try {
         const res = await generalService.getBasket();
-
-        // --- DEĞİŞİKLİK BURADA ---
-        // Veriyi state'e atmadan önce işliyoruz
         const processedRes = processBasketData(res);
         setSessions(processedRes || { basket: null, success: true });
         localStorage.setItem("cartSessions", JSON.stringify(processedRes));
@@ -66,9 +74,12 @@ export const CartProvider = ({ children }) => {
         setLoading(false);
       }
     }
-    loadCart();
-  }, [status, session, pathname]);
 
+    loadCart();
+
+    // 'pathname' bağımlılığını sildik!
+    // Böylece her sayfa değiştirdiğinde sepeti baştan kontrol etmeye çalışmayacak.
+  }, [status, session, sessions?.basket]);
   useEffect(() => {
     if (isInitialLoad.current) {
       isInitialLoad.current = false;

@@ -74,22 +74,22 @@ function CourseSessionsComp() {
         setLocationStatus("success");
       },
       (error) => {
-        console.error("Konum hatası:", error);
+        //console.error("Konum hatası:", error);
         setLocationStatus("error");
         switch (error.code) {
           case 1:
             setLocationErrorMsg(
-              "Konum izni reddedildi. Lütfen ayarlardan izin verin."
+              "Konum izni reddedildi. Lütfen ayarlardan izin verin.",
             );
             break;
           case 2:
             setLocationErrorMsg(
-              "Konum bilgisi alınamıyor (GPS kapalı olabilir)."
+              "Konum bilgisi alınamıyor (GPS kapalı olabilir).",
             );
             break;
           case 3:
             setLocationErrorMsg(
-              "Konum alma süresi doldu (Timeout). Tekrar deneyin."
+              "Konum alma süresi doldu (Timeout). Tekrar deneyin.",
             );
             break;
           default:
@@ -101,7 +101,7 @@ function CourseSessionsComp() {
         enableHighAccuracy: true,
         timeout: 20000,
         maximumAge: 0,
-      }
+      },
     );
   };
 
@@ -132,9 +132,8 @@ function CourseSessionsComp() {
     const uniq_id = localStorage.getItem("uniq_id");
 
     if (uniq_id !== null) {
-      const questionAnswerResult = await generalService.getByAnswerQuestion(
-        uniq_id
-      );
+      const questionAnswerResult =
+        await generalService.getByAnswerQuestion(uniq_id);
       if (questionAnswerResult?.answers) {
         const rawAnswers = JSON.parse(questionAnswerResult.answers);
 
@@ -154,9 +153,9 @@ function CourseSessionsComp() {
     return {};
   };
 
-  useEffect(() => {
-    getLocalFilter();
-  }, []);
+  // useEffect(() => {
+  //   getLocalFilter();
+  // }, []);
 
   // Filtreleme Logic
   // useEffect(() => {
@@ -239,16 +238,16 @@ function CourseSessionsComp() {
         s.google_cafe?.longitude
       ) {
         const cafeLat = parseFloat(
-          s.google_cafe.latitude.toString().replace(",", ".")
+          s.google_cafe.latitude.toString().replace(",", "."),
         );
         const cafeLon = parseFloat(
-          s.google_cafe.longitude.toString().replace(",", ".")
+          s.google_cafe.longitude.toString().replace(",", "."),
         );
         distance = getDistance(
           userLocation.lat,
           userLocation.lon,
           cafeLat,
-          cafeLon
+          cafeLon,
         );
       }
       return { ...s, distance };

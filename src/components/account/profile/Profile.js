@@ -29,7 +29,7 @@ function Profile() {
   const [formData, setFormData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [profileImage, setProfileImage] = useState(
-    "https://dummyimage.com/150x150/000/fff.png"
+    "https://dummyimage.com/150x150/000/fff.png",
   );
 
   const {
@@ -62,12 +62,13 @@ function Profile() {
             lastName: result.user.lastName || "",
             email: result.user.email || "",
             phone: result.user.phone || null,
+            citizen_id: result.user.citizen_id || null,
           });
 
           setProfileImage(
             result.user.profile_image ||
               result.user.avatar ||
-              "https://dummyimage.com/150x150/000/fff.png"
+              "https://dummyimage.com/150x150/000/fff.png",
           );
         }
       } catch (error) {
@@ -162,6 +163,40 @@ function Profile() {
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* --- SOL KOLON: PROFİL KARTI --- */}
         <div className="lg:col-span-5">
+          {/* 🔹 YANIP SÖNEN EKSİK BİLGİ UYARISI */}
+          {(!formData?.phone || !formData?.citizen_id || !formData?.email) && (
+            <div className="mb-6 p-5 bg-white border border-amber-100 rounded-[32px] shadow-lg shadow-amber-900/10 flex flex-col gap-4 relative overflow-hidden animate-pulse">
+              {/* Üstteki animate-pulse sınıfı kartın tamamını yavaşça parlatır */}
+
+              <div className="flex items-start gap-4 relative z-10">
+                <div className="bg-amber-500 p-3 rounded-2xl shadow-md shadow-amber-200 relative">
+                  {/* İkonun yanında küçük bir sinyal noktası (Opsiyonel) */}
+                  <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-600"></span>
+                  </span>
+                  <MapPin size={22} className="text-white" />
+                </div>
+
+                <div className="flex-1">
+                  <h4 className="text-gray-900 font-extrabold text-base mb-1">
+                    Profilini Tamamla
+                  </h4>
+                  <p className="text-gray-600 text-xs font-medium leading-relaxed">
+                    Ödemelerinizin aksamaması için eksik bilgileri doldurmanız
+                    gerekmektedir.
+                  </p>
+                </div>
+              </div>
+
+              <a
+                href="/account/settings"
+                className="w-full py-3 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-2xl text-center transition-all shadow-lg flex items-center justify-center gap-2"
+              >
+                Bilgileri Güncelle
+              </a>
+            </div>
+          )}
           <div className="rounded-3xl p-4 md:p-6 w-full bg-[#F5F5F5] shadow-sm h-auto">
             <CardHeader title="Profile" />
 

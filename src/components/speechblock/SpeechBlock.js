@@ -69,9 +69,9 @@ function SpeechBlock() {
         {/* Image Section */}
         <div className="w-full md:w-3/6 z-30 md:relative md:left-[-5rem] flex flex-col justify-center md:justify-start">
           <div className="flex flex-col lg:flex-row gap-2 text-3xl lg:text-4xl mb-10 text-black">
-            <h1 className="font-bold text-center lg:text-left">
+            <h2 className="font-bold text-center lg:text-left">
               Became a Native Speaker
-            </h1>
+            </h2>
           </div>
           <div className="w-full max-w-[400px] md:w-[500px] h-64 md:h-full  rounded-lg flex items-center justify-center">
             <Image
