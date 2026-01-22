@@ -253,7 +253,7 @@ const SepetComp = () => {
       const form = document.createElement("form");
       form.method = "POST";
       form.action = url;
-      form.target = "_self"; // KRİTİK: Formu az önce açtığımız pop-up ismine gönderiyoruz
+      form.target = popupName; // KRİTİK: Formu az önce açtığımız pop-up ismine gönderiyoruz
 
       // PaReq, TermUrl ve MD alanlarını formun içine göm
       Object.keys(fields).forEach((key) => {
@@ -366,45 +366,52 @@ const SepetComp = () => {
         />
 
         {/* HEADER & STEPS */}
-        <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-              <ShoppingCart className="w-8 h-8 text-black" />
+        <div className="bg-white rounded-2xl shadow-sm p-4 md:p-6 mb-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            {/* Başlık Bölümü - Mobilde ortalanır */}
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 flex items-center gap-3 justify-center md:justify-start">
+              <ShoppingCart className="w-6 h-6 md:w-8 md:h-8 text-black" />
               Sepetim
             </h1>
-            <div className="flex items-center gap-4">
+
+            {/* Adımlar Bölümü - Mobilde daha kompakt */}
+            <div className="flex items-center justify-center gap-3 md:gap-4 border-t md:border-none pt-3 md:pt-0">
+              {/* 1. Adım */}
               <div
                 className={`flex items-center gap-2 ${
                   currentStep === "sepet" ? "text-black" : "text-gray-400"
                 }`}
               >
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  className={`w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center text-sm md:text-base font-bold transition-colors ${
                     currentStep === "sepet"
-                      ? "bg-[#ffd103] text-black"
+                      ? "bg-[#ffd103] text-black shadow-sm"
                       : "bg-gray-200"
                   }`}
                 >
                   1
                 </div>
-                <span className="font-medium">Sepet</span>
+                <span className="text-sm md:text-base font-medium">Sepet</span>
               </div>
-              <ChevronRight className="w-5 h-5 text-gray-300" />
+
+              <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-gray-300" />
+
+              {/* 2. Adım */}
               <div
                 className={`flex items-center gap-2 ${
                   currentStep === "odeme" ? "text-black" : "text-gray-400"
                 }`}
               >
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  className={`w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center text-sm md:text-base font-bold transition-colors ${
                     currentStep === "odeme"
-                      ? "bg-[#ffd103] text-white"
+                      ? "bg-[#ffd103] text-black shadow-sm"
                       : "bg-gray-200"
                   }`}
                 >
                   2
                 </div>
-                <span className="font-medium">Ödeme</span>
+                <span className="text-sm md:text-base font-medium">Ödeme</span>
               </div>
             </div>
           </div>
@@ -442,22 +449,27 @@ const SepetComp = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-4">
               {sessions?.basket ? (
-                <div className="bg-white rounded-2xl shadow-sm p-6 hover:shadow-lg transition-shadow duration-300">
-                  <div className="flex gap-6">
-                    <Image
-                      width={50}
-                      height={50}
-                      src={sessions?.basket.course_session.cafe.image}
-                      alt={sessions?.basket.course_session.cafe.name}
-                      className="w-48 h-32 object-cover rounded-xl"
-                    />
-                    <div className="flex-1">
-                      <div className="flex justify-between items-start">
+                <div className="bg-white rounded-2xl shadow-sm p-4 md:p-6 hover:shadow-lg transition-shadow duration-300">
+                  <div className="flex flex-col md:flex-row gap-4 md:gap-6">
+                    {/* Görsel Alanı - Mobilde tam genişlik, Desktopta sabit genişlik */}
+                    <div className="w-full md:w-48 h-48 md:h-32 flex-shrink-0">
+                      <Image
+                        width={500} // Mobilde net görünmesi için yüksek çözünürlük desteği
+                        height={300}
+                        src={sessions?.basket.course_session.cafe.image}
+                        alt={sessions?.basket.course_session.cafe.name}
+                        className="w-full h-full object-cover rounded-xl"
+                      />
+                    </div>
+
+                    {/* İçerik Alanı */}
+                    <div className="flex-1 flex flex-col justify-between">
+                      <div className="flex justify-between items-start gap-2">
                         <div>
-                          <h3 className="text-xl font-bold text-gray-800 mb-2">
+                          <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-1 md:mb-2">
                             {sessions.basket.course_session.session_title}
                           </h3>
-                          <p className="text-gray-800 mb-3">
+                          <p className="text-sm md:text-base text-gray-800 mb-2 md:mb-3">
                             Eğitmen:{" "}
                             {
                               sessions.basket.course_session.instructor
@@ -468,38 +480,42 @@ const SepetComp = () => {
                                 .last_name
                             }
                           </p>
-                          <div className="flex items-center gap-4 text-sm text-gray-500">
+                          <div className="flex flex-wrap items-center gap-3 md:gap-4 text-xs md:text-sm text-gray-500">
                             <span className="flex items-center gap-1">
-                              <Clock className="w-4 h-4" />{" "}
+                              <Clock className="w-3.5 h-3.5 md:w-4 md:h-4" />{" "}
                               {getDate(
                                 sessions.basket.course_session.session_date,
                               )}
                             </span>
                             <span className="flex items-center gap-1">
-                              <Users className="w-4 h-4" />{" "}
+                              <Users className="w-3.5 h-3.5 md:w-4 md:h-4" />{" "}
                               {sessions.basket.course_session.quota} öğrenci
                             </span>
                           </div>
                         </div>
+                        {/* Çöp Kutusu - Mobilde sağ üstte kalmaya devam eder */}
                         <button
                           onClick={handleRemoveClick}
-                          className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors"
+                          className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors flex-shrink-0"
                         >
                           <Trash2 className="w-5 h-5" />
                         </button>
                       </div>
-                      <div className="mt-4 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <span className="text-2xl font-bold text-black">
+
+                      {/* Fiyat ve İndirim Alanı */}
+                      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex flex-wrap items-center gap-2 md:gap-3">
+                          <span className="text-xl md:text-2xl font-bold text-black">
                             ₺{toplamFiyat}
                           </span>
-                          {/* İndirim Görseli - Opsiyonel */}
-                          <span className="text-gray-400 line-through">
-                            ₺{toplamFiyat + toplamIndirim}
-                          </span>
-                          <span className="bg-green-100 text-green-700 px-2 py-1 rounded-lg text-sm font-semibold">
-                            %50 İndirim
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm md:text-base text-gray-400 line-through">
+                              ₺{toplamFiyat + toplamIndirim}
+                            </span>
+                            <span className="bg-green-100 text-green-700 px-2 py-0.5 md:py-1 rounded-lg text-[10px] md:text-sm font-semibold whitespace-nowrap">
+                              %50 İndirim
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>

@@ -1,36 +1,15 @@
 "use client";
-import { useEffect, useState } from "react";
 import Logo from "../../assets/logo/logodisi.png";
 import Image from "next/image";
+import { useRouter } from "next/navigation"; // Next.js yönlendirme için
 
 export default function PaymentSuccessPage() {
-  const [dots, setDots] = useState("");
+  const router = useRouter();
 
-  // 1. Nokta Animasyonu: . -> .. -> ... -> (boş)
-  useEffect(() => {
-    const dotInterval = setInterval(() => {
-      setDots((prev) => (prev.length < 3 ? prev + "." : ""));
-    }, 450);
-
-    return () => clearInterval(dotInterval);
-  }, []);
-
-  // 2. Mesaj Gönderme ve Kapanma Gecikmesi (2 Saniye)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (window.opener) {
-        // Ana sayfaya başarı bilgisini ilet
-        window.opener.postMessage(
-          { type: "PAYMENT_RESULT", status: "success" },
-          "*",
-        );
-        // Popup penceresini kapat
-        window.close();
-      }
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, []);
+  const handleGoToEducations = () => {
+    // Kullanıcıyı eğitimlerim sayfasına yönlendirir
+    router.push("/account/my-educations");
+  };
 
   return (
     <div className="flex min-h-screen text-black flex-col justify-center items-center gap-6 bg-[#fdd207] px-4">
@@ -41,20 +20,43 @@ export default function PaymentSuccessPage() {
           height={150}
           src={Logo}
           alt="EnglishPoint Logo"
-          className="animate-pulse"
+          className="animate-bounce" // Başarıyı kutlamak için zıplama efekti
         />
-        {/* Onay İkonu */}
       </div>
 
       <div className="text-center">
-        <p className="text-2xl font-bold mb-1">Ödeme Başarılı!</p>
-        <p className="text-lg opacity-90 mb-4">İşlem onaylandı.</p>
-
-        {/* Sabit metin ve hareketli noktalar alanı */}
-        <div className="flex justify-center items-center text-md font-medium opacity-75">
-          <span>Yönlendiriliyorsunuz</span>
-          <span className="w-8 text-left ml-1 font-bold">{dots}</span>
+        {/* Onay İkonu (Opsiyonel: SVG Tik İşareti) */}
+        <div className="flex justify-center mb-4">
+          <div className="bg-green-500 rounded-full p-2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-10 w-10 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={3}
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+          </div>
         </div>
+
+        <p className="text-3xl font-bold mb-2">Ödeme Başarılı!</p>
+        <p className="text-lg opacity-90 mb-8">
+          Eğitim paketiniz başarıyla tanımlandı.
+        </p>
+
+        {/* Eğitimlerime Git Butonu */}
+        <button
+          onClick={handleGoToEducations}
+          className="bg-black text-white px-8 py-3 rounded-full font-bold text-lg hover:scale-105 transition-transform shadow-lg active:bg-gray-800"
+        >
+          Eğitimlerime Git
+        </button>
       </div>
     </div>
   );
