@@ -23,7 +23,7 @@ export const authOptions = {
         let url;
 
         if (credentials.role === "instructor") {
-          url = `https://api.englishpoint.com.tr/instructor/login`;
+          url = `https://api.englishpoint.com.tr/api/instructor/login`;
         } else {
           url = `https://api.englishpoint.com.tr/api/login`;
         }

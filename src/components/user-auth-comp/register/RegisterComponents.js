@@ -62,7 +62,7 @@ export default function RegisterPage() {
         resetForm();
       } else {
         setErrorMessage(
-          response.message || "Kayıt başarısız oldu. Lütfen tekrar deneyin."
+          response.message || "Kayıt başarısız oldu. Lütfen tekrar deneyin.",
         );
         setErrorModalOpen(true);
       }
