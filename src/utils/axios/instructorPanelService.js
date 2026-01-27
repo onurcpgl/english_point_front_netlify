@@ -204,8 +204,15 @@ const getProgramCategories = async () => {
   return response.data;
 };
 
+const googleCafeImageCheck = async (googlePlaceId) => {
+  const response = await axiosInstance.post("/api/google-cafe/check-image", {
+    google_place_id: googlePlaceId,
+  });
+  return response.data;
+};
 const instructorService = {
   getPaymentsStats,
+  googleCafeImageCheck,
   getProgramCategories,
   getPaymentHistory,
   confirmCourseUser,

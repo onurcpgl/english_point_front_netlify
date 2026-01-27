@@ -4,9 +4,9 @@ import CredentialsProvider from "next-auth/providers/credentials";
 export const authOptions = {
   debug: true,
   providers: [
-    // 1. MEVCUT EMAIL/PASSWORD GİRİŞİ (Dokunmuyoruz)
+    // 1. MEVCUT EMAIL/PASSWORD GİRİŞİ
     CredentialsProvider({
-      id: "credentials", // Buna bir ID verdik (varsayılanı zaten credentials ama açıkça yazmak iyidir)
+      id: "credentials",
       name: "Credentials",
       credentials: {
         email: { label: "E-posta", type: "text" },
@@ -14,18 +14,22 @@ export const authOptions = {
         role: { label: "Role", type: "text" },
       },
       async authorize(credentials) {
-        // ... senin mevcut kodun aynen kalacak ...
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
 
         const rememberMe = credentials.rememberMe;
+
+        // ENV: http://127.0.0.1:8000 (Sonunda slash yok)
+        const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
         let url;
 
+        // DÜZELTME: Araya /api/ ekledik
         if (credentials.role === "instructor") {
-          url = `https://api.englishpoint.com.tr/api/instructor/login`;
+          url = `${baseURL}/api/instructor/login`;
         } else {
-          url = `https://api.englishpoint.com.tr/api/login`;
+          url = `${baseURL}/api/login`;
         }
 
         try {
@@ -43,6 +47,7 @@ export const authOptions = {
 
           const data = await res.json();
           const user = data.user;
+
           if (res.ok && user) {
             return {
               ...user,
@@ -61,38 +66,32 @@ export const authOptions = {
       },
     }),
 
-    // 2. YENİ EKLENEN SOCIAL LOGIN PROVIDER (Token ile Giriş)
-    // 2. YENİ EKLENEN SOCIAL LOGIN PROVIDER (Token ile Profil Çeken Versiyon)
+    // 2. SOCIAL LOGIN PROVIDER
     CredentialsProvider({
       id: "social-login-token",
       name: "Social Login",
       credentials: {
         token: { label: "Token", type: "text" },
-        // User verisine artık ihtiyacımız yok, token ile gidip kendimiz alacağız
       },
       async authorize(credentials) {
-        // Token yoksa işlem yapma
         if (!credentials?.token) {
           return null;
         }
 
         const token = credentials.token;
+        const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
         try {
-          // SENİN İSTEDİĞİN MANTIK: Token ile Profile İstek Atıyoruz
-          const res = await fetch(
-            "https://api.englishpoint.com.tr/api/user/profile",
-            {
-              method: "GET", // Genelde profil çekmek GET olur, endpoint POST ise burayı değiştir
-              headers: {
-                Authorization: `Bearer ${token}`, // Token'ı header'a ekledik
-                "Content-Type": "application/json",
-                Accept: "application/json",
-              },
+          // DÜZELTME: Araya /api/ ekledik
+          const res = await fetch(`${baseURL}/api/user/profile`, {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+              Accept: "application/json",
             },
-          );
+          });
 
-          // API'den gelen cevap
           const data = await res.json();
           const user = data.user || data.data || data;
 
@@ -117,7 +116,6 @@ export const authOptions = {
     }),
   ],
 
-  // ... SESSION, JWT, EVENTS, PAGES ve CALLBACKS kısımları aynen kalıyor ...
   session: {
     strategy: "jwt",
     maxAge: 60 * 3000,
@@ -129,7 +127,6 @@ export const authOptions = {
     error(message) {
       console.error("NEXTAUTH ERROR:", message);
     },
-    // ...
   },
   pages: {
     signIn: "/api/auth/signin",
@@ -142,8 +139,6 @@ export const authOptions = {
         token.email = user.email;
         token.profile_image = user.profile_image;
         token.role = user.role;
-
-        // DİKKAT: Normal girişte user.token, social girişte yine user.token olarak ayarladık
         token.accessToken = user.token || user.accessToken;
       }
       return token;

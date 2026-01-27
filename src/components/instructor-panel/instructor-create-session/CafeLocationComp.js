@@ -4,8 +4,16 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { useLoadScript } from "@react-google-maps/api";
 import Cropper from "react-easy-crop";
-import { FiCamera, FiX, FiCheck, FiMaximize, FiMinimize } from "react-icons/fi";
-import { getCroppedImg } from "../../../utils/cropImage"; // Bu yardımcı fonksiyonun var olduğunu varsayıyoruz
+import {
+  FiCamera,
+  FiX,
+  FiCheck,
+  FiMaximize,
+  FiMinimize,
+  FiUploadCloud,
+} from "react-icons/fi"; // Yeni ikon ekledik
+import { getCroppedImg } from "../../../utils/cropImage";
+import instructorPanelService from "../../../utils/axios/instructorPanelService";
 
 const libraries = ["places"];
 
@@ -14,6 +22,9 @@ export default function CafeLocationComp({ onSelectCafe, initialValue }) {
   const [options, setOptions] = useState([]);
   const [selectedCafe, setSelectedCafe] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
+
+  // --- File Input Ref (Bunu yeni ekledik) ---
+  const fileInputRef = useRef(null);
 
   // --- Image & Crop States ---
   const [imageSrc, setImageSrc] = useState(null);
@@ -46,7 +57,12 @@ export default function CafeLocationComp({ onSelectCafe, initialValue }) {
     }
   }, [isLoaded]);
 
-  // --- Dosya Seçme ve Kırpma Mantığı ---
+  // --- Dosya Seçme Tetikleyici ---
+  const triggerFileInput = () => {
+    // Hem resim üstündeki ikondan hem de alttaki yazıdan burayı tetikleyeceğiz
+    fileInputRef.current?.click();
+  };
+
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -65,7 +81,6 @@ export default function CafeLocationComp({ onSelectCafe, initialValue }) {
       const croppedBlob = await getCroppedImg(imageSrc, croppedAreaPixels);
       const croppedUrl = URL.createObjectURL(croppedBlob);
 
-      // Dosya olarak sakla (Backend'e göndermek için)
       const croppedFile = new File([croppedBlob], "cafe_photo.jpg", {
         type: "image/jpeg",
       });
@@ -73,13 +88,13 @@ export default function CafeLocationComp({ onSelectCafe, initialValue }) {
       const updatedCafe = {
         ...selectedCafe,
         image: croppedUrl,
-        imageFile: croppedFile, // Form gönderilirken bu kullanılacak
+        imageFile: croppedFile,
       };
 
       setSelectedCafe(updatedCafe);
       if (onSelectCafe) onSelectCafe(updatedCafe);
 
-      setImageSrc(null); // Modalı kapat
+      setImageSrc(null);
       setZoom(1);
     } catch (e) {
       console.error("Crop error:", e);
@@ -114,7 +129,7 @@ export default function CafeLocationComp({ onSelectCafe, initialValue }) {
       ],
     };
 
-    placesService.current.getDetails(request, (place, status) => {
+    placesService.current.getDetails(request, async (place, status) => {
       if (
         status === window.google.maps.places.PlacesServiceStatus.OK &&
         place
@@ -137,13 +152,25 @@ export default function CafeLocationComp({ onSelectCafe, initialValue }) {
           if (distComp) district = distComp.long_name;
         }
 
+        let finalImage =
+          "https://api.englishpoint.com.tr/public/google_cafe/google_cafe_image.jpg";
+
+        try {
+          const response =
+            await instructorPanelService.googleCafeImageCheck(placeId);
+          if (response && response.status === true && response.image) {
+            finalImage = response.image;
+          }
+        } catch (error) {
+          console.error("Cafe Image Check Error:", error);
+        }
+
         const cafeData = {
           name: place.name,
           address: place.formatted_address,
           latitude: place.geometry.location.lat(),
           longitude: place.geometry.location.lng(),
-          image:
-            "https://api.englishpoint.com.tr/public/google_cafe/google_cafe_image.jpg",
+          image: finalImage,
           google_place_id: placeId,
           district: district,
           city: city,
@@ -163,7 +190,16 @@ export default function CafeLocationComp({ onSelectCafe, initialValue }) {
 
   return (
     <div className="w-full space-y-6 px-4">
-      {/* --- ARAMA INPUTU (AYNI TASARIM) --- */}
+      {/* Gizli Input (Ref ile tetikleniyor) */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        className="hidden"
+        accept="image/*"
+        onChange={handleFileChange}
+      />
+
+      {/* --- ARAMA INPUTU --- */}
       <div className="relative w-full">
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Cafe/Location:
@@ -229,36 +265,33 @@ export default function CafeLocationComp({ onSelectCafe, initialValue }) {
         )}
       </div>
 
-      {/* --- DETAY KARTI (AYNI TASARIM + RESİM YÜKLEME) --- */}
+      {/* --- DETAY KARTI --- */}
       {selectedCafe && (
         <div className="w-full animate-in fade-in slide-in-from-top-4 duration-500">
           <div className="bg-slate-50 border border-slate-200 rounded-xl overflow-hidden shadow-sm flex flex-col md:flex-row">
+            {/* SOL TARAF: RESİM */}
             <div className="w-full md:w-1/3 h-48 md:h-auto relative bg-gray-200 group">
               <Image
-                src={
-                  selectedCafe.image ||
-                  "https://api.englishpoint.com.tr/public/google_cafe/google_cafe_image.jpg"
-                }
+                src={selectedCafe.image}
                 alt={selectedCafe.name}
                 fill
                 className="object-cover"
               />
-              {/* Resim Yükleme Overlay */}
-              <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-[#ffd207] cursor-pointer transition-all duration-200">
+              {/* Resim Üzerindeki Overlay (Tıklayınca yine aynı input açılır) */}
+              <div
+                onClick={triggerFileInput}
+                className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-[#ffd207] cursor-pointer transition-all duration-200"
+              >
                 <FiCamera size={32} strokeWidth={2.5} />
                 <span className="text-[10px] font-bold uppercase mt-2">
-                  Change Cafe Photo
+                  Change Photo
                 </span>
-                <input
-                  type="file"
-                  className="hidden"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                />
-              </label>
+              </div>
             </div>
 
-            <div className="flex-1 p-6 flex flex-col justify-center space-y-4">
+            {/* SAĞ TARAF: BİLGİLER VE YENİ ALAN */}
+            <div className="flex-1 p-6 flex flex-col justify-center gap-4">
+              {/* Başlık ve Rozet */}
               <div className="flex justify-between items-start">
                 <h3 className="text-xl font-bold text-gray-900">
                   {selectedCafe.name}
@@ -267,6 +300,8 @@ export default function CafeLocationComp({ onSelectCafe, initialValue }) {
                   Google Verified
                 </span>
               </div>
+
+              {/* Adres Kutusu */}
               <div className="flex items-start gap-3 bg-white p-3 rounded-lg border border-gray-200">
                 <div className="mt-0.5 text-blue-500">
                   <FiMapPin size={20} />
@@ -280,15 +315,40 @@ export default function CafeLocationComp({ onSelectCafe, initialValue }) {
                   </p>
                 </div>
               </div>
+
+              {/* --- YENİ EKLENEN KISIM: TEŞVİK MESAJI --- */}
+              {/* --- YENİ EKLENEN KISIM: TEŞVİK MESAJI (İNGİLİZCE) --- */}
+              <div
+                onClick={triggerFileInput}
+                className="group relative overflow-hidden bg-gradient-to-r from-amber-50 to-orange-50 border border-orange-100 rounded-lg p-4 cursor-pointer hover:shadow-md transition-all duration-300"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="bg-orange-100 p-2 rounded-full text-orange-600 shrink-0 group-hover:scale-110 transition-transform">
+                    <FiUploadCloud size={24} />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-gray-800 mb-1 group-hover:text-orange-700 transition-colors">
+                      Do you have a better photo?
+                    </h4>
+                    <p className="text-xs text-gray-600 leading-relaxed">
+                      If you have a better shot of this location, click here to
+                      upload it and contribute to our community.
+                    </p>
+                  </div>
+                </div>
+                {/* Hover Efekti için sağ alt köşe süsü */}
+                <div className="absolute -bottom-4 -right-4 text-orange-100/50 group-hover:text-orange-200/50 transition-colors rotate-12">
+                  <FiCamera size={80} />
+                </div>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* --- TAM EKRAN (FULL-SCREEN) KIRPMA MODALI --- */}
+      {/* --- CROP MODAL --- */}
       {imageSrc && (
         <div className="fixed inset-0 z-[9999] bg-black flex flex-col animate-in fade-in duration-300">
-          {/* Header */}
           <div className="h-16 flex items-center justify-between px-6 bg-black border-b border-gray-800 shrink-0">
             <div className="flex items-center gap-2">
               <div className="w-2 h-6 bg-[#ffd207]" />
@@ -304,7 +364,6 @@ export default function CafeLocationComp({ onSelectCafe, initialValue }) {
             </button>
           </div>
 
-          {/* Kırpma Alanı (Gövde) */}
           <div className="flex-1 relative bg-black">
             <Cropper
               image={imageSrc}
@@ -319,7 +378,6 @@ export default function CafeLocationComp({ onSelectCafe, initialValue }) {
             />
           </div>
 
-          {/* Footer (Kontroller) */}
           <div className="h-32 bg-black border-t border-gray-800 flex flex-col items-center justify-center px-6 shrink-0 gap-4">
             <div className="w-full max-w-xs flex items-center gap-4">
               <FiMinimize className="text-gray-500" />
@@ -335,7 +393,7 @@ export default function CafeLocationComp({ onSelectCafe, initialValue }) {
               <FiMaximize className="text-gray-500" />
             </div>
             <button
-              type="button" // 🔥 Bunu eklemezsen formu gönderir!
+              type="button"
               onClick={handleCropSave}
               className="bg-[#ffd207] text-black px-12 py-3 font-bold uppercase text-sm hover:bg-white transition-all flex items-center gap-2"
             >
@@ -349,7 +407,6 @@ export default function CafeLocationComp({ onSelectCafe, initialValue }) {
   );
 }
 
-// Yardımcı İkon (Opsiyonel ama şıklık katar)
 function FiMapPin({ size = 20 }) {
   return (
     <svg
