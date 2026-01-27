@@ -23,9 +23,9 @@ export const authOptions = {
         let url;
 
         if (credentials.role === "instructor") {
-          url = `http://127.0.0.1:8000/api/instructor/login`;
+          url = `https://api.englishpoint.com.tr/instructor/login`;
         } else {
-          url = `http://127.0.0.1:8000/api/login`;
+          url = `https://api.englishpoint.com.tr/api/login`;
         }
 
         try {
@@ -80,14 +80,17 @@ export const authOptions = {
 
         try {
           // SENİN İSTEDİĞİN MANTIK: Token ile Profile İstek Atıyoruz
-          const res = await fetch("http://127.0.0.1:8000/api/user/profile", {
-            method: "GET", // Genelde profil çekmek GET olur, endpoint POST ise burayı değiştir
-            headers: {
-              Authorization: `Bearer ${token}`, // Token'ı header'a ekledik
-              "Content-Type": "application/json",
-              Accept: "application/json",
+          const res = await fetch(
+            "https://api.englishpoint.com.tr/api/user/profile",
+            {
+              method: "GET", // Genelde profil çekmek GET olur, endpoint POST ise burayı değiştir
+              headers: {
+                Authorization: `Bearer ${token}`, // Token'ı header'a ekledik
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
             },
-          });
+          );
 
           // API'den gelen cevap
           const data = await res.json();

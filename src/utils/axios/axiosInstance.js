@@ -2,7 +2,8 @@ import axios from "axios";
 import { getSession, signOut } from "next-auth/react";
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000",
+  baseURL:
+    process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.englishpoint.com.tr",
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
@@ -42,7 +43,7 @@ api.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;
