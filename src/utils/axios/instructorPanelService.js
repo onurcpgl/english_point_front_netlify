@@ -23,14 +23,14 @@ const checkResetPasswordStatus = async (token) => {
     "/api/instructor/check-reset-password",
     {
       token,
-    }
+    },
   );
   return response.data;
 };
 const resetInstructorPasswordWithToken = async (values) => {
   const response = await axiosInstance.post(
     "/api/instructor/reset-password",
-    values
+    values,
   );
   return response.data;
 };
@@ -58,7 +58,11 @@ const getInstructorProfileUpdate = async (data) => {
   return response.data;
 };
 const saveCourseSession = async (values) => {
-  const response = await axiosInstance.post("/api/course-sessions", values);
+  const response = await axiosInstance.post("/api/course-sessions", values, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
   return response.data;
 };
 const getMySessions = async () => {
@@ -68,7 +72,7 @@ const getMySessions = async () => {
 const updateCourseSession = async (values) => {
   const response = await axiosInstance.post(
     "/api/course-sessions-update",
-    values
+    values,
   );
   return response.data;
 };
@@ -82,7 +86,7 @@ const getMySessionsActive = async () => {
 };
 const getMySessionUsers = async (id) => {
   const response = await axiosInstance.get(
-    `/api/get-course-session-users/${id}`
+    `/api/get-course-session-users/${id}`,
   );
   return response.data;
 };
@@ -96,7 +100,7 @@ const getContactInfo = async () => {
 const getContactInfoUpdate = async (data) => {
   const response = await axiosInstance.put(
     "/api/instructor-contact-info",
-    data
+    data,
   );
   return response.data;
 };
@@ -124,7 +128,7 @@ const getEducationUpdate = async (data, id) => {
       headers: {
         "Content-Type": "multipart/form-data", // ⚠ Genellikle axios bunu otomatik ayarlar
       },
-    }
+    },
   );
   return response.data;
 };
@@ -151,7 +155,7 @@ const getCertificateUpdate = async (data, id) => {
       headers: {
         "Content-Type": "multipart/form-data", // ⚠ Genellikle axios bunu otomatik ayarlar
       },
-    }
+    },
   );
   return response.data;
 };
@@ -171,7 +175,7 @@ const postLanguageInfo = async (data) => {
 const getLanguageUpdate = async (data) => {
   const response = await axiosInstance.put(
     "/api/instructor-language-info/1",
-    data
+    data,
   );
   return response.data;
 };
@@ -183,7 +187,7 @@ const confirmCourseUser = async (data) => {
 const courseSessionCompletedHandler = async (id) => {
   const response = await axiosInstance.post(
     `/api/course-sessions/${id}/complete`,
-    {}
+    {},
   );
   return response.data;
 };

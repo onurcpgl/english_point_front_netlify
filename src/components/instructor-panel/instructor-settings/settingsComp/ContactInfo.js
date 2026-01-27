@@ -29,7 +29,8 @@ function ContactInfo() {
     fetchData();
   }, []);
 
-  if (!initialValues) return <p>Loading contact info...</p>;
+  if (!initialValues)
+    return <p className="text-black">Loading contact info...</p>;
 
   const handleSubmit = async (values) => {
     try {

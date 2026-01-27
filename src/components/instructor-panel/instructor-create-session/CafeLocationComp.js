@@ -1,8 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { useLoadScript } from "@react-google-maps/api";
+import Cropper from "react-easy-crop";
+import { FiCamera, FiX, FiCheck, FiMaximize, FiMinimize } from "react-icons/fi";
+import { getCroppedImg } from "../../../utils/cropImage"; // Bu yardımcı fonksiyonun var olduğunu varsayıyoruz
 
 const libraries = ["places"];
 
@@ -11,7 +14,13 @@ export default function CafeLocationComp({ onSelectCafe, initialValue }) {
   const [options, setOptions] = useState([]);
   const [selectedCafe, setSelectedCafe] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
-  console.log("wssdds", selectedCafe);
+
+  // --- Image & Crop States ---
+  const [imageSrc, setImageSrc] = useState(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+
   useEffect(() => {
     if (initialValue) {
       setSelectedCafe(initialValue);
@@ -37,39 +46,71 @@ export default function CafeLocationComp({ onSelectCafe, initialValue }) {
     }
   }, [isLoaded]);
 
+  // --- Dosya Seçme ve Kırpma Mantığı ---
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.addEventListener("load", () => setImageSrc(reader.result));
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const onCropComplete = useCallback((_, croppedAreaPixels) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
+
+  const handleCropSave = async () => {
+    try {
+      const croppedBlob = await getCroppedImg(imageSrc, croppedAreaPixels);
+      const croppedUrl = URL.createObjectURL(croppedBlob);
+
+      // Dosya olarak sakla (Backend'e göndermek için)
+      const croppedFile = new File([croppedBlob], "cafe_photo.jpg", {
+        type: "image/jpeg",
+      });
+
+      const updatedCafe = {
+        ...selectedCafe,
+        image: croppedUrl,
+        imageFile: croppedFile, // Form gönderilirken bu kullanılacak
+      };
+
+      setSelectedCafe(updatedCafe);
+      if (onSelectCafe) onSelectCafe(updatedCafe);
+
+      setImageSrc(null); // Modalı kapat
+      setZoom(1);
+    } catch (e) {
+      console.error("Crop error:", e);
+    }
+  };
+
   const handleInputChange = (e) => {
     const value = e.target.value;
     setInputValue(value);
     setIsOpen(true);
-
     if (!value || !autocompleteService.current) {
       setOptions([]);
       return;
     }
-
-    const request = {
-      input: value,
-      types: ["cafe", "restaurant"],
-    };
-
-    autocompleteService.current.getPlacePredictions(request, (results) => {
-      setOptions(results || []);
-    });
+    const request = { input: value, types: ["cafe", "restaurant"] };
+    autocompleteService.current.getPlacePredictions(request, (results) =>
+      setOptions(results || []),
+    );
   };
 
-  // --- GÜNCELLENEN FONKSİYON BURASI ---
   const handleSelect = (placeId) => {
     if (!placesService.current) return;
-
     const request = {
       placeId: placeId,
       fields: [
-        "name", // İsim
-        "formatted_address", // Adres
-        "geometry", // Veritabanı için lat/lng (Link için kullanmayacağız)
-        "photos", // Resimler
-        "address_components", // Şehir/İlçe bulmak için
-        "url", // <--- İŞTE SENİN İSTEDİĞİN 'PAYLAŞ' LİNKİ BU ALANDA
+        "name",
+        "formatted_address",
+        "geometry",
+        "photos",
+        "address_components",
+        "url",
       ],
     };
 
@@ -81,95 +122,62 @@ export default function CafeLocationComp({ onSelectCafe, initialValue }) {
         let district = "";
         let city = "";
 
-        // --- ŞEHİR VE İLÇE BULMA (Standart Kodun) ---
         if (place.address_components) {
-          const cityComponent = place.address_components.find(
+          const cityComp = place.address_components.find(
             (c) =>
               c.types.includes("administrative_area_level_1") ||
               c.types.includes("locality"),
           );
-          if (cityComponent) city = cityComponent.long_name;
-
-          const districtComponent = place.address_components.find(
+          if (cityComp) city = cityComp.long_name;
+          const distComp = place.address_components.find(
             (c) =>
               c.types.includes("administrative_area_level_2") ||
-              c.types.includes("sublocality_level_1") ||
               c.types.includes("sublocality"),
           );
-          if (districtComponent) district = districtComponent.long_name;
+          if (distComp) district = distComp.long_name;
         }
-
-        // Şehir yedek kontrolü
-        if (!city && place.formatted_address) {
-          const parts = place.formatted_address.split("/");
-          if (parts.length > 1) {
-            city = parts[parts.length - 1].split(",")[0].trim();
-          } else {
-            const commaParts = place.formatted_address.split(",");
-            if (commaParts.length >= 2) {
-              city = commaParts[commaParts.length - 2]
-                .replace(/[0-9]/g, "")
-                .trim();
-            }
-          }
-        }
-
-        // --- RESMİ LİNKİ ALIYORUZ ---
-        // place.url: Google'ın bu işletme için ürettiği resmi ID'li linktir.
-        // Koordinat kayması olmaz. Yan binayı göstermez.
-        // Tıkladığında "Paylaş" ile alınan linkin açtığı sayfanın aynısını açar.
-
-        const mapUrl = place.url;
-        console.log("place.url", place);
-        const photoUrl =
-          "https://api.englishpoint.com.tr/public/google_cafe/google_cafe_image.jpg";
 
         const cafeData = {
           name: place.name,
           address: place.formatted_address,
-          // Veritabanına kaydetmek istersen diye ham koordinatlar:
           latitude: place.geometry.location.lat(),
           longitude: place.geometry.location.lng(),
-          image: photoUrl,
+          image:
+            "https://api.englishpoint.com.tr/public/google_cafe/google_cafe_image.jpg",
           google_place_id: placeId,
           district: district,
           city: city,
-          map_url: mapUrl, // <-- TIKLANACAK LİNK BU. NOKTA ATIŞI YAPAR.
+          map_url: place.url,
         };
-
-        console.log("AL KARDEŞİM İSTEDİĞİN RESMİ LİNK:", mapUrl);
 
         setSelectedCafe(cafeData);
         setInputValue(place.name);
         setIsOpen(false);
-
-        if (onSelectCafe) {
-          onSelectCafe(cafeData);
-        }
+        if (onSelectCafe) onSelectCafe(cafeData);
       }
     });
   };
+
   if (!isLoaded)
     return <div className="h-14 bg-gray-100 rounded animate-pulse" />;
 
   return (
     <div className="w-full space-y-6 px-4">
-      {/* INPUT ALANI AYNI KALDI */}
+      {/* --- ARAMA INPUTU (AYNI TASARIM) --- */}
       <div className="relative w-full">
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Cafe/Location:
         </label>
-
         <div className="relative">
           <input
             type="text"
             value={inputValue}
             onChange={handleInputChange}
             placeholder="Search for a cafe via Google..."
-            className="w-full h-14 outline-none px-4 bg-white text-black placeholder:text-gray-400 border border-gray-300 focus:ring-2 focus:ring-blue-500 transition-all"
+            className="w-full h-14 outline-none px-4 bg-white text-black border border-gray-300 focus:ring-2 focus:ring-blue-500 transition-all"
             onFocus={() => setIsOpen(true)}
           />
-          <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-400">
+          <div className="absolute inset-y-0 right-0 flex items-center px-4 text-gray-400">
             <svg
               className="w-5 h-5"
               fill="none"
@@ -181,7 +189,7 @@ export default function CafeLocationComp({ onSelectCafe, initialValue }) {
                 strokeLinejoin="round"
                 strokeWidth="2"
                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              ></path>
+              />
             </svg>
           </div>
         </div>
@@ -192,7 +200,7 @@ export default function CafeLocationComp({ onSelectCafe, initialValue }) {
               <div
                 key={option.place_id}
                 onClick={() => handleSelect(option.place_id)}
-                className="p-3 hover:bg-blue-50 cursor-pointer border-b border-gray-50 last:border-none transition-colors flex items-center gap-3"
+                className="p-3 hover:bg-blue-50 cursor-pointer border-b border-gray-50 last:border-none flex items-center gap-3"
               >
                 <div className="flex-shrink-0 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500">
                   <svg
@@ -207,7 +215,7 @@ export default function CafeLocationComp({ onSelectCafe, initialValue }) {
                     />
                   </svg>
                 </div>
-                <div>
+                <div className="flex-1">
                   <div className="font-semibold text-gray-900 text-sm">
                     {option.structured_formatting.main_text}
                   </div>
@@ -221,23 +229,33 @@ export default function CafeLocationComp({ onSelectCafe, initialValue }) {
         )}
       </div>
 
-      {/* DETAIL CARD */}
+      {/* --- DETAY KARTI (AYNI TASARIM + RESİM YÜKLEME) --- */}
       {selectedCafe && (
         <div className="w-full animate-in fade-in slide-in-from-top-4 duration-500">
           <div className="bg-slate-50 border border-slate-200 rounded-xl overflow-hidden shadow-sm flex flex-col md:flex-row">
-            <div className="w-full md:w-1/3 h-48 md:h-auto relative bg-gray-200">
-              {/* Resim kısmını da düzelttim: artık dinamik gelen resmi kullanıyor */}
+            <div className="w-full md:w-1/3 h-48 md:h-auto relative bg-gray-200 group">
               <Image
                 src={
                   selectedCafe.image ||
                   "https://api.englishpoint.com.tr/public/google_cafe/google_cafe_image.jpg"
                 }
                 alt={selectedCafe.name}
-                loading="eager"
-                className="w-full h-full object-cover"
-                width={400}
-                height={400}
+                fill
+                className="object-cover"
               />
+              {/* Resim Yükleme Overlay */}
+              <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-[#ffd207] cursor-pointer transition-all duration-200">
+                <FiCamera size={32} strokeWidth={2.5} />
+                <span className="text-[10px] font-bold uppercase mt-2">
+                  Change Cafe Photo
+                </span>
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                />
+              </label>
             </div>
 
             <div className="flex-1 p-6 flex flex-col justify-center space-y-4">
@@ -245,32 +263,13 @@ export default function CafeLocationComp({ onSelectCafe, initialValue }) {
                 <h3 className="text-xl font-bold text-gray-900">
                   {selectedCafe.name}
                 </h3>
-                <span className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full border border-green-200">
+                <span className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full border border-green-200 uppercase">
                   Google Verified
                 </span>
               </div>
-
               <div className="flex items-start gap-3 bg-white p-3 rounded-lg border border-gray-200">
                 <div className="mt-0.5 text-blue-500">
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                    ></path>
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                    ></path>
-                  </svg>
+                  <FiMapPin size={20} />
                 </div>
                 <div>
                   <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">
@@ -279,21 +278,99 @@ export default function CafeLocationComp({ onSelectCafe, initialValue }) {
                   <p className="text-sm text-gray-700 leading-snug">
                     {selectedCafe.address}
                   </p>
-                  {/* District ve City bilgisini göstermek isterseniz burayı kullanabilirsiniz */}
-                  {(selectedCafe.district || selectedCafe.city) && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      {selectedCafe.district
-                        ? selectedCafe.district + " / "
-                        : ""}{" "}
-                      {selectedCafe.city}
-                    </p>
-                  )}
                 </div>
               </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* --- TAM EKRAN (FULL-SCREEN) KIRPMA MODALI --- */}
+      {imageSrc && (
+        <div className="fixed inset-0 z-[9999] bg-black flex flex-col animate-in fade-in duration-300">
+          {/* Header */}
+          <div className="h-16 flex items-center justify-between px-6 bg-black border-b border-gray-800 shrink-0">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-6 bg-[#ffd207]" />
+              <h2 className="text-white font-bold uppercase tracking-widest text-sm">
+                Crop Cafe Photo
+              </h2>
+            </div>
+            <button
+              onClick={() => setImageSrc(null)}
+              className="text-white hover:text-red-500 transition-colors"
+            >
+              <FiX size={28} />
+            </button>
+          </div>
+
+          {/* Kırpma Alanı (Gövde) */}
+          <div className="flex-1 relative bg-black">
+            <Cropper
+              image={imageSrc}
+              crop={crop}
+              zoom={zoom}
+              aspect={1}
+              cropShape="rect"
+              showGrid={false}
+              onCropChange={setCrop}
+              onZoomChange={setZoom}
+              onCropComplete={onCropComplete}
+            />
+          </div>
+
+          {/* Footer (Kontroller) */}
+          <div className="h-32 bg-black border-t border-gray-800 flex flex-col items-center justify-center px-6 shrink-0 gap-4">
+            <div className="w-full max-w-xs flex items-center gap-4">
+              <FiMinimize className="text-gray-500" />
+              <input
+                type="range"
+                min={1}
+                max={3}
+                step={0.1}
+                value={zoom}
+                onChange={(e) => setZoom(e.target.value)}
+                className="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[#ffd207]"
+              />
+              <FiMaximize className="text-gray-500" />
+            </div>
+            <button
+              type="button" // 🔥 Bunu eklemezsen formu gönderir!
+              onClick={handleCropSave}
+              className="bg-[#ffd207] text-black px-12 py-3 font-bold uppercase text-sm hover:bg-white transition-all flex items-center gap-2"
+            >
+              <FiCheck size={20} strokeWidth={3} />
+              Save Photo
+            </button>
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+// Yardımcı İkon (Opsiyonel ama şıklık katar)
+function FiMapPin({ size = 20 }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+      />
+    </svg>
   );
 }

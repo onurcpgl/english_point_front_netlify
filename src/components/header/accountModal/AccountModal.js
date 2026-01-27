@@ -32,7 +32,7 @@ const AccountModal = ({
     { icon: User, label: "Profilim", href: "/account/profile" },
     { icon: Settings, label: "Ayarlar", href: "/account/settings" },
     { icon: Bell, label: "Mesajlar", href: "/account/message" },
-    { icon: Shield, label: "Gizlilik", href: "/account/privacy" },
+    { icon: Shield, label: "Gizlilik", href: "/kvkk" },
   ];
 
   const supportItems = [

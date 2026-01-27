@@ -7,7 +7,7 @@ export const getCroppedImg = (imageSrc, crop) => {
       const ctx = canvas.getContext("2d");
 
       // 400x400 olarak kırp
-      const size = 400;
+      const size = 800;
       canvas.width = size;
       canvas.height = size;
 
@@ -20,7 +20,7 @@ export const getCroppedImg = (imageSrc, crop) => {
         0,
         0,
         size,
-        size
+        size,
       );
 
       canvas.toBlob(
@@ -28,7 +28,7 @@ export const getCroppedImg = (imageSrc, crop) => {
           resolve(blob);
         },
         "image/jpeg",
-        1
+        1,
       );
     };
     image.onerror = reject;

@@ -496,11 +496,12 @@ const EducationCard = ({ data }) => {
                 {/* Kısayol için değişken tanımlama */}
                 {/* Kategori Etiketi */}
                 <div
+                  lang="en"
                   className={`
     absolute bottom-3 left-3 
     px-3 py-1 
     rounded-md 
-    text-xs font-bold tracking-wide uppercase 
+    text-md font-bold tracking-wide uppercase 
     shadow-lg backdrop-blur-sm border
     ${
       // Sadece 'daily' kontrolü, geri kalan her şey koyu mavi

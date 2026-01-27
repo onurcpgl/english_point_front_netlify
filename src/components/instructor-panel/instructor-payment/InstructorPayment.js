@@ -216,8 +216,8 @@ function InstructorPayment() {
         for tax regulations.
       </div>
       <div className="px-2 text-gray-500 text-[11px] leading-tight mt-2 italic mb-2">
-        ** To ensure seamless payment processing, please make sure your
-        **Citizen ID** and profile information are complete in your{" "}
+        ** To ensure seamless payment processing, please make sure your Citizen
+        ID, IBAN, and profile information are complete in your{" "}
         <a
           href="/instructor/settings"
           className="underline hover:text-gray-700 font-medium"

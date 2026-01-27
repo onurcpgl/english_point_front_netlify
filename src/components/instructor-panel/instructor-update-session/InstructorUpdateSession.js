@@ -18,8 +18,9 @@ export default function InstructorUpdateSessionModal({
 }) {
   const queryClient = useQueryClient();
   const currentLang = "en";
+
   // --- STATE YÖNETİMİ ---
-  const [isFormReady, setIsFormReady] = useState(false); // 🔥 Form verisi hazır mı?
+  const [isFormReady, setIsFormReady] = useState(false);
   const [successModal, setSuccessModal] = useState({
     open: false,
     message: "",
@@ -36,28 +37,28 @@ export default function InstructorUpdateSessionModal({
   });
 
   const categories = categoriesResponse?.data || [];
-
-  // 2. Aktif Programları Hesapla
-  const activePrograms = useMemo(() => {
-    if (!selectedCategoryId) return [];
-    const category = categories.find(
-      (cat) => cat.id === Number(selectedCategoryId)
-    );
-    return category ? category.programs : [];
-  }, [selectedCategoryId, categories]);
-
-  // 3. Formik Tanımı
   const formik = useFormik({
     initialValues: {
       course_session_id: sessionData?.id || "",
       program_id: "",
-      session_date: null, // 🔥 Başlangıçta null olsun
+      sub_category_id: "", // Yeni alan
+      session_date: null,
       language_level: "",
     },
     validationSchema: Yup.object({
       program_id: Yup.string().required("Program selection is required"),
       session_date: Yup.date().nullable().required("Date is required"),
       language_level: Yup.string().required("Level is required"),
+      sub_category_id: Yup.string().test(
+        "is-required-for-business",
+        "Please select a field",
+        function (value) {
+          if (Number(selectedCategoryId) === 2) {
+            return !!value;
+          }
+          return true;
+        },
+      ),
     }),
     onSubmit: async (values, { setSubmitting }) => {
       if (!selectedCafe) {
@@ -72,12 +73,14 @@ export default function InstructorUpdateSessionModal({
       const payload = {
         ...values,
         google_cafe: selectedCafe,
+        // Kategori 2 değilse sub_category_id'yi null gönder
+        sub_category_id:
+          Number(selectedCategoryId) === 2 ? values.sub_category_id : null,
       };
-      console.log("payla", payload);
+
       try {
-        const result = await instructorPanelService.updateCourseSession(
-          payload
-        );
+        const result =
+          await instructorPanelService.updateCourseSession(payload);
         if (result?.status) {
           setSuccessModal({
             open: true,
@@ -98,36 +101,85 @@ export default function InstructorUpdateSessionModal({
       }
     },
   });
+  // 1.1 Business alt konularını (Sub-Topics) hesapla
+  const subTopics = useMemo(() => {
+    const businessCategory = categories.find(
+      (cat) => cat.slug === "business" || cat.id === 2,
+    );
+    return businessCategory?.sub_categories || [];
+  }, [categories]);
 
-  // 4. Verileri Doldurma ve Loading Kontrolü
-  useEffect(() => {
-    // Modal açıldığında önce loading'e çekelim
-    if (isOpen) {
-      setIsFormReady(false);
+  // 2. Aktif Programları Hesapla (Create tarafındaki filtreleme mantığıyla aynı)
+  const activePrograms = useMemo(() => {
+    if (!selectedCategoryId) return [];
+
+    const selectedCategory = categories.find(
+      (cat) => cat.id === Number(selectedCategoryId),
+    );
+    if (!selectedCategory) return [];
+
+    let filteredPrograms = selectedCategory.programs || [];
+
+    // BUSINESS (ID: 2) seçiliyse alt kategoriye göre filtrele
+    if (Number(selectedCategoryId) === 2) {
+      const selectedSubId = Number(formik.values.sub_category_id);
+      if (selectedSubId) {
+        const selectedSubTopic = subTopics.find(
+          (sub) => sub.id === selectedSubId,
+        );
+        const targetSlug = selectedSubTopic?.slug;
+
+        if (targetSlug) {
+          filteredPrograms = filteredPrograms.filter(
+            (prog) => prog.business_slug === targetSlug,
+          );
+        }
+      }
     }
+    return filteredPrograms;
+  }, [
+    selectedCategoryId,
+    categories,
+    formik.values.sub_category_id,
+    subTopics,
+  ]);
+
+  // 3. Formik Tanımı
+
+  // 4. Verileri Doldurma ve Update Öncesi Hazırlık
+  useEffect(() => {
+    if (isOpen) setIsFormReady(false);
   }, [isOpen]);
 
   useEffect(() => {
     if (sessionData && isOpen && categories.length > 0) {
-      // A) Cafe Set Et
       setSelectedCafe(sessionData.google_cafe);
 
-      // B) Kategori Bul ve Set Et
+      // Kategori Bulma
       const targetProgramId = sessionData.program_id || sessionData.program?.id;
       const foundCategory = categories.find((cat) =>
-        cat.programs?.some((p) => p.id === Number(targetProgramId))
+        cat.programs?.some((p) => p.id === Number(targetProgramId)),
       );
 
       if (foundCategory) {
         setSelectedCategoryId(foundCategory.id);
       }
 
-      // C) Formik Inputlarını Doldur
-      // Tarih parse işlemi (Safari/Firefox uyumluluğu için " " -> "T" değişimi yapılabilir)
+      // Business ise doğru sub_category_id'yi bul (slug eşleşmesi ile)
+      let foundSubId = "";
+      if (
+        sessionData.program.business_slug &&
+        Number(foundCategory?.id) === 2
+      ) {
+        const sub = subTopics.find(
+          (s) => s.slug === sessionData.program.business_slug,
+        );
+        if (sub) foundSubId = sub.id.toString();
+      }
+
+      // Tarih parse
       let parsedDate = null;
       if (sessionData.session_date) {
-        // SQL Date formatı bazen "YYYY-MM-DD HH:mm:ss" gelir, JS bunu bazen sevmez.
-        // Güvenli hale getirmek için:
         const safeDateString = sessionData.session_date.replace(" ", "T");
         parsedDate = new Date(safeDateString);
       }
@@ -135,22 +187,19 @@ export default function InstructorUpdateSessionModal({
       formik.setValues({
         course_session_id: sessionData.id || "",
         program_id: targetProgramId?.toString() || "",
+        sub_category_id: foundSubId,
         session_date: parsedDate,
         language_level: sessionData.language_level || "",
       });
 
-      // 🔥 Veriler set edildi, artık formu gösterebiliriz
-      // Kısa bir timeout ekliyoruz ki UI render nefes alsın
-      setTimeout(() => {
-        setIsFormReady(true);
-      }, 100);
+      setTimeout(() => setIsFormReady(true), 150);
     }
-  }, [sessionData, isOpen, categories]);
+  }, [sessionData, isOpen, categories, subTopics]);
 
-  // 5. Seçili Program Detayı
+  // Seçili Program Detayı
   const selectedProgram = useMemo(() => {
     return activePrograms?.find(
-      (p) => p.id.toString() === formik.values.program_id?.toString()
+      (p) => p.id.toString() === formik.values.program_id?.toString(),
     );
   }, [activePrograms, formik.values.program_id]);
 
@@ -162,8 +211,6 @@ export default function InstructorUpdateSessionModal({
   };
 
   if (!isOpen) return null;
-
-  // 🔥 LOADING DURUMU: Kategoriler yükleniyorsa VEYA Form verileri henüz hazır değilse
   const isLoading = loadingCategories || !isFormReady;
 
   return (
@@ -188,10 +235,9 @@ export default function InstructorUpdateSessionModal({
           </button>
         </div>
 
-        {/* 🔥 İÇERİK: LOADING vs FORM */}
         {isLoading ? (
           <div className="flex flex-col items-center justify-center h-[400px] gap-4">
-            <FiRefreshCw className="animate-spin" />
+            <FiRefreshCw className="animate-spin text-[#FFD207]" size={32} />
             <p className="text-gray-500 font-medium animate-pulse">
               Loading session details...
             </p>
@@ -202,7 +248,7 @@ export default function InstructorUpdateSessionModal({
             className="p-6 space-y-8 animate-in fade-in duration-500"
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 px-4">
-              {/* Kategori */}
+              {/* Kategori Seçimi */}
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-gray-700">
                   Session Subject
@@ -212,8 +258,9 @@ export default function InstructorUpdateSessionModal({
                   onChange={(e) => {
                     setSelectedCategoryId(e.target.value);
                     formik.setFieldValue("program_id", "");
+                    formik.setFieldValue("sub_category_id", "");
                   }}
-                  className="w-full h-14 outline-none px-4 bg-white text-black border border-gray-300  cursor-pointer"
+                  className="w-full h-14 outline-none px-4 bg-white text-black border border-gray-300 cursor-pointer"
                 >
                   <option value="">Select Category</option>
                   {categories.map((cat) => (
@@ -224,46 +271,86 @@ export default function InstructorUpdateSessionModal({
                 </select>
               </div>
 
-              {/* Program */}
+              {/* Business Alanı Seçimi (Sadece ID: 2 ise) */}
+              {Number(selectedCategoryId) === 2 && (
+                <div className="space-y-2 animate-in slide-in-from-left-2">
+                  <label className="text-sm font-semibold text-gray-700">
+                    Session Field
+                  </label>
+                  <select
+                    {...formik.getFieldProps("sub_category_id")}
+                    className={`w-full h-14 outline-none px-4 bg-white text-black border cursor-pointer ${
+                      formik.touched.sub_category_id &&
+                      formik.errors.sub_category_id
+                        ? "border-red-500"
+                        : "border-gray-300"
+                    }`}
+                  >
+                    <option value="">Select a field</option>
+                    {subTopics.map((topic) => (
+                      <option key={topic.id} value={topic.id}>
+                        {topic.title}
+                      </option>
+                    ))}
+                  </select>
+                  {formik.touched.sub_category_id &&
+                    formik.errors.sub_category_id && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {formik.errors.sub_category_id}
+                      </p>
+                    )}
+                </div>
+              )}
+
+              {/* Program Seçimi */}
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-gray-700">
                   Program
                 </label>
                 <select
                   {...formik.getFieldProps("program_id")}
-                  disabled={!selectedCategoryId}
-                  className="w-full h-14 outline-none px-4 bg-white text-black border border-gray-300  disabled:bg-gray-100 cursor-pointer"
+                  disabled={!selectedCategoryId || activePrograms.length === 0}
+                  className="w-full h-14 outline-none px-4 bg-white text-black border border-gray-300 disabled:bg-gray-100 cursor-pointer"
                 >
-                  <option value="">Select Program</option>
+                  <option value="">
+                    {!selectedCategoryId
+                      ? "First select a subject"
+                      : activePrograms.length === 0
+                        ? "No programs found"
+                        : "Select Program"}
+                  </option>
                   {activePrograms.map((p) => (
                     <option key={p.id} value={p.id}>
                       {getLocalizedText(p.title)}
                     </option>
                   ))}
                 </select>
+                {formik.touched.program_id && formik.errors.program_id && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {formik.errors.program_id}
+                  </p>
+                )}
               </div>
             </div>
 
             {/* Program Detay Kartı */}
             <div className="px-4">
               {selectedProgram && (
-                <div className="bg-white border rounded-2xl p-4 shadow-sm">
+                <div className="bg-white border rounded-2xl p-4 shadow-sm animate-in fade-in duration-300">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-2 h-2 bg-green-500 rounded-full" />
                     <h4 className="font-bold text-gray-900">
                       {getLocalizedText(selectedProgram.title)}
                     </h4>
                   </div>
-                  <p className="text-sm text-gray-600 line-clamp-3">
+                  <p className="text-sm text-gray-600">
                     {getLocalizedText(selectedProgram.description)}
                   </p>
                 </div>
               )}
             </div>
 
-            {/* Tarih ve Seviye */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 px-4">
-              {/* DATE PICKER */}
               <div className="space-y-2">
                 <DatePickerComp formik={formik} />
               </div>
@@ -274,7 +361,7 @@ export default function InstructorUpdateSessionModal({
                 </label>
                 <select
                   {...formik.getFieldProps("language_level")}
-                  className="w-full h-14 outline-none px-4 bg-white text-black border border-gray-300  cursor-pointer"
+                  className="w-full h-14 outline-none px-4 bg-white text-black border border-gray-300 cursor-pointer"
                 >
                   <option value="">Select Level</option>
                   <option value="A2">A2</option>

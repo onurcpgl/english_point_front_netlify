@@ -49,7 +49,7 @@ const InstructorAccountPopup = ({
     {
       icon: Shield,
       label: "Privacy", // Gizlilik -> Privacy
-      href: "/instructor/privacy",
+      href: "/mentor-kvkk",
       status: false, // Disabled durumu
     },
   ];

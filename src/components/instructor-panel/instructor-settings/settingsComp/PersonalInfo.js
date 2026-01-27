@@ -8,11 +8,6 @@ import instructorPanelService from "../../../../utils/axios/instructorPanelServi
 import AlertMessage from "../../another-comp/AlertMessage";
 import { useQueryClient } from "@tanstack/react-query";
 
-async function fetchCountries() {
-  const res = await fetch("/countries.json", { cache: "no-store" });
-  if (!res.ok) throw new Error("Countries fetch failed");
-  return res.json();
-}
 function PersonalInfo() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["instructorProfile"],
@@ -25,8 +20,15 @@ function PersonalInfo() {
     error: countriesError,
   } = useQuery({
     queryKey: ["countries"],
-    queryFn: fetchCountries,
+    queryFn: async () => {
+      // 1. JSON dosyasını modül olarak içe aktar
+      const module = await import("../../../../utils/helpers/countries.json");
+
+      // 2. JSON içeriği genellikle 'default' export altında yer alır
+      return module.default;
+    },
   });
+
   const [alert, setAlert] = useState({
     visible: false,
     type: "",
@@ -63,10 +65,17 @@ function PersonalInfo() {
 
   const [photoPreview, setPhotoPreview] = useState(null);
 
+  const formatIBAN = (value) => {
+    if (!value) return "";
+    const cleanValue = value.replace(/\s/g, "").toUpperCase();
+    return cleanValue.match(/.{1,4}/g)?.join(" ") || cleanValue;
+  };
+
   const initialValues = {
     first_name: data?.user?.first_name || "",
     last_name: data?.user?.last_name || "",
     citizen_id: data?.user?.citizen_id || "",
+    iban: formatIBAN(data?.user?.iban) || "",
     country_birth: data?.user?.country_birth || "", // 🔹 eklendi
     current_location: data?.user?.current_location || "",
     current_city: data?.user?.current_city || "",
@@ -128,6 +137,7 @@ function PersonalInfo() {
       formData.append("first_name", values.first_name);
       formData.append("last_name", values.last_name);
       formData.append("citizen_id", values.citizen_id);
+      formData.append("iban", values.iban);
       formData.append("country_birth", values.country_birth);
       formData.append("current_location", values.current_location);
       formData.append("current_city", values.current_city);
@@ -184,8 +194,8 @@ function PersonalInfo() {
     }
   };
 
-  if (isLoading) return <p>Loading...</p>;
-  if (error) return <p>Error loading profile!</p>;
+  if (isLoading) return <p className="text-black">Loading...</p>;
+  if (error) return <p className="text-black">Error loading profile!</p>;
 
   return (
     <>
@@ -320,12 +330,54 @@ function PersonalInfo() {
                     />
                   </div>
                 </div>
+                <div className="flex-1 space-y-3" lang="en">
+                  <div className="flex-1">
+                    <label
+                      htmlFor="iban"
+                      className="text-gray-700 text-sm font-medium uppercase tracking-wide"
+                    >
+                      IBAN
+                    </label>
+                    <Field name="iban">
+                      {({ field, form }) => (
+                        <input
+                          {...field}
+                          id="iban"
+                          type="text"
+                          placeholder="TR00 0000 0000 0000 0000 0000 00"
+                          className="w-full h-14 focus:outline-0 px-4 placeholder:text-[#8e8e8e] bg-white font-light text-black shadow uppercase"
+                          maxLength={32} // Boşluklarla beraber toplam uzunluk
+                          onChange={(e) => {
+                            let value = e.target.value.toUpperCase();
+
+                            // 1. Sadece harf ve rakamları tut, diğer her şeyi temizle
+                            value = value.replace(/[^A-Z0-9]/g, "");
+
+                            // 2. Eğer TR ile başlamıyorsa başına TR ekle (Opsiyonel)
+                            if (value.length > 0 && !value.startsWith("TR")) {
+                              value = "TR" + value;
+                            }
+
+                            // 3. Her 4 karakterde bir boşluk ekle (Formatlama)
+                            // Örn: TR26 0006 2000 ...
+                            const formattedValue =
+                              value.match(/.{1,4}/g)?.join(" ") || "";
+
+                            // Formik değerini güncelle
+                            form.setFieldValue("iban", formattedValue);
+                          }}
+                        />
+                      )}
+                    </Field>
+                  </div>
+                </div>
                 <div className="relative w-full" ref={wrapperRefCountryBirth}>
                   <label className="text-gray-700 text-sm">Country Birth</label>
                   <input
                     className="w-full h-14 rotate-0 focus:rounded-0 outline-0 px-4 placeholder:text-[#8e8e8e] bg-white font-light text-black resize-none shadow"
                     value={isOpen ? search : values.country_birth}
                     placeholder="Select country"
+                    autoComplete="none"
                     onFocus={() => setIsOpen(true)}
                     onChange={(e) => setSearch(e.target.value)} // 🔹 sadece search için
                   />
@@ -384,6 +436,7 @@ function PersonalInfo() {
                     className="w-full h-14 rotate-0 focus:rounded-0 outline-0 px-4 placeholder:text-[#8e8e8e] bg-white font-light text-black resize-none shadow"
                     value={searchCountry || values.current_location || ""}
                     placeholder="Select country"
+                    autoComplete="none"
                     onFocus={() => {
                       setIsCountryOpen(true);
                       setSearchCountry(""); // focus olduğunda input boşalsın
@@ -441,7 +494,7 @@ function PersonalInfo() {
                     <div className="relative mt-4">
                       <label className="text-gray-700 text-sm">City</label>
                       <input
-                        autoComplete="off"
+                        autoComplete="none"
                         className="w-full h-14 rotate-0 focus:rounded-0 outline-0 px-4 placeholder:text-[#8e8e8e] bg-white font-light text-black resize-none shadow"
                         value={searchCity || values.current_city || ""}
                         placeholder="Select city"

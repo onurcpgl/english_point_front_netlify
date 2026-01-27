@@ -52,7 +52,7 @@ export default function InstructorRegister() {
   const filteredCountries =
     countries
       ?.filter((c) =>
-        c.name.toLowerCase().includes(searchCountry.toLowerCase())
+        c.name.toLowerCase().includes(searchCountry.toLowerCase()),
       )
       .sort((a, b) => a.name.localeCompare(b.name)) || [];
 
@@ -177,7 +177,7 @@ export default function InstructorRegister() {
     setFormData((prev) => ({
       ...prev,
       availability: prev.availability.map((item, i) =>
-        i === index ? { ...item, [field]: value } : item
+        i === index ? { ...item, [field]: value } : item,
       ),
     }));
   };
@@ -192,7 +192,7 @@ export default function InstructorRegister() {
 
   const currentIndex = useMemo(
     () => registerStepSection.findIndex((s) => s.id === selectedStepSection),
-    [selectedStepSection, registerStepSection]
+    [selectedStepSection, registerStepSection],
   );
 
   const updateField = (section, field, value) => {
@@ -289,7 +289,7 @@ export default function InstructorRegister() {
 
       const allowedCountries = countries.map((c) => c.name);
       const allowedSelectedCountyCitys = countries.filter(
-        (c) => c.name === current_location
+        (c) => c.name === current_location,
       );
 
       //Country of birth doğrulaması
@@ -312,7 +312,7 @@ export default function InstructorRegister() {
         stepErrors.current_city = "Current city is required";
       } else if (
         !allowedSelectedCountyCitys[0].stateProvinces.some(
-          (province) => province.name === current_city
+          (province) => province.name === current_city,
         )
       ) {
         stepErrors.current_city = "Please select a country city from the list";
@@ -447,7 +447,7 @@ export default function InstructorRegister() {
 
     // About
     Object.entries(formData.about).forEach(([k, v]) =>
-      fd.append(`about[${k}]`, v || "")
+      fd.append(`about[${k}]`, v || ""),
     );
 
     // Photo
@@ -697,7 +697,7 @@ export default function InstructorRegister() {
                         updateField(
                           "about",
                           "phone",
-                          formatPhone(e.target.value)
+                          formatPhone(e.target.value),
                         )
                       }
                     />
@@ -712,7 +712,7 @@ export default function InstructorRegister() {
                         className="w-full h-14 px-4 pr-10 outline-none placeholder:text-[#999] bg-white font-light"
                         value={formData.about.country_birth}
                         placeholder="Select country"
-                        autoComplete="off"
+                        autoComplete="none"
                         onFocus={() => setIsOpen(true)}
                         onChange={(e) => {
                           setSearch(e.target.value);
@@ -759,7 +759,7 @@ export default function InstructorRegister() {
                                 updateField(
                                   "about",
                                   "country_birth",
-                                  country.name
+                                  country.name,
                                 );
                                 setSearch("");
                                 setIsOpen(false);
@@ -799,13 +799,14 @@ export default function InstructorRegister() {
                         className="w-full h-14 px-4 pr-10 outline-none placeholder:text-[#999] bg-white font-light"
                         value={formData.about.current_location}
                         placeholder="Select country"
+                        autoComplete="none"
                         onFocus={() => setIsCountryOpen(true)}
                         onChange={(e) => {
                           setSearchCountry(e.target.value);
                           updateField(
                             "about",
                             "current_location",
-                            e.target.value
+                            e.target.value,
                           );
                         }}
                       />
@@ -851,7 +852,7 @@ export default function InstructorRegister() {
                                 updateField(
                                   "about",
                                   "current_location",
-                                  country.name
+                                  country.name,
                                 );
                                 setSelectedCountry(country);
                                 setSearchCountry("");
@@ -885,9 +886,9 @@ export default function InstructorRegister() {
                         <label className="block mb-1 font-medium">City</label>
                         <div className="relative">
                           <input
-                            autoComplete="off"
                             className="w-full h-14 px-4 pr-10 outline-none placeholder:text-[#999] bg-white font-light"
                             value={searchCity}
+                            autoComplete="none"
                             placeholder="Select city"
                             onFocus={() => setIsCityOpen(true)}
                             onChange={(e) => {
@@ -895,7 +896,7 @@ export default function InstructorRegister() {
                               updateField(
                                 "about",
                                 "current_city",
-                                e.target.value
+                                e.target.value,
                               );
                             }}
                           />
@@ -932,7 +933,7 @@ export default function InstructorRegister() {
                                     updateField(
                                       "about",
                                       "current_city",
-                                      city.name
+                                      city.name,
                                     );
                                     setIsCityOpen(false);
                                   }}
@@ -1116,7 +1117,7 @@ export default function InstructorRegister() {
                                   "certifications",
                                   idx,
                                   "name",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                             />
@@ -1135,7 +1136,7 @@ export default function InstructorRegister() {
                                   "certifications",
                                   idx,
                                   "issuer",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                             />
@@ -1158,7 +1159,7 @@ export default function InstructorRegister() {
                                       "certifications",
                                       idx,
                                       "year",
-                                      e.target.value
+                                      e.target.value,
                                     );
                                     setIsYearOpen(false);
                                   }}
@@ -1170,7 +1171,7 @@ export default function InstructorRegister() {
                                       length:
                                         new Date().getFullYear() - 1920 + 1,
                                     },
-                                    (_, i) => new Date().getFullYear() - i
+                                    (_, i) => new Date().getFullYear() - i,
                                   ).map((year) => (
                                     <option key={year} value={year}>
                                       {year}
@@ -1219,7 +1220,7 @@ export default function InstructorRegister() {
                                       "certifications",
                                       idx,
                                       "uploadCertificate",
-                                      e.target.files?.[0] || null
+                                      e.target.files?.[0] || null,
                                     )
                                   }
                                 />
@@ -1348,7 +1349,7 @@ export default function InstructorRegister() {
                                   "educations",
                                   idx,
                                   "university",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                             />
@@ -1366,7 +1367,7 @@ export default function InstructorRegister() {
                                   "educations",
                                   idx,
                                   "degree",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                             />
@@ -1385,7 +1386,7 @@ export default function InstructorRegister() {
                                   "educations",
                                   idx,
                                   "specialization",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                             />
@@ -1408,7 +1409,7 @@ export default function InstructorRegister() {
                                       "educations",
                                       idx,
                                       "graduationYear",
-                                      e.target.value
+                                      e.target.value,
                                     );
                                     setIsEduYearOpen(false);
                                   }}
@@ -1420,7 +1421,7 @@ export default function InstructorRegister() {
                                       length:
                                         new Date().getFullYear() - 1920 + 1,
                                     },
-                                    (_, i) => new Date().getFullYear() - i
+                                    (_, i) => new Date().getFullYear() - i,
                                   ).map((year) => (
                                     <option key={year} value={year}>
                                       {year}
@@ -1468,7 +1469,7 @@ export default function InstructorRegister() {
                                       "educations",
                                       idx,
                                       "uploadDegree",
-                                      e.target.files?.[0] || null
+                                      e.target.files?.[0] || null,
                                     )
                                   }
                                 />
@@ -1605,7 +1606,7 @@ export default function InstructorRegister() {
                                   updateAvailability(
                                     index,
                                     "timeFrom",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                               />
@@ -1622,7 +1623,7 @@ export default function InstructorRegister() {
                                   updateAvailability(
                                     index,
                                     "timeTo",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                               />

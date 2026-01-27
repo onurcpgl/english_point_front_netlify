@@ -61,7 +61,6 @@ export default function InstructorCreateSession() {
     );
     return businessCategory?.sub_categories || [];
   }, [categories]);
-  console.log("subTopics", subTopics);
   const [initialValues, setInitialValues] = useState({
     //session_title: "",
     //description: "",
@@ -138,44 +137,74 @@ export default function InstructorCreateSession() {
       // ),
     }),
 
-    onSubmit: async (values, { resetForm, setSubmitting }) => {
-      // selectedCafe state'in varsa bunu values içine ekle
+    onSubmit: async (values, { setSubmitting }) => {
       if (!selectedCafe) {
-        setMessage({ type: "error", text: "Please select a cafe." });
-        setSubmitting(false); // Yükleniyor durumunu kapat
-        return; // İşlemi durdur
-      }
-      const payload = {
-        ...values,
-        google_cafe: selectedCafe,
-        sub_category_id:
-          selectedCategoryId == 2 ? values.sub_category_id : null,
-      };
-
-      const result = await instructorPanelService.saveCourseSession(payload);
-
-      // Başarılı mesaj
-      //
-      if (result?.status) {
-        queryClient.invalidateQueries(["myCourses"]);
-        setMessage({
-          type: "success",
-          text: "Session completed successfully!",
-        });
-        resetForm();
-        setSelectedCafe("");
-        resetForm();
-        setSubmitting(false);
-      } else {
-        setMessage({
-          type: "error",
-          text: result.message || "Session could not be created.",
+        setErrorModal({
+          open: true,
+          message: "Please select a cafe location.",
         });
         setSubmitting(false);
+        return;
       }
-      // Formu sıfırla
-      //resetForm();
-      //setSelectedCafe("");
+
+      // 1. FormData Oluştur
+      const formData = new FormData();
+
+      // 2. Ana Alanları Ekle
+      formData.append("course_session_id", values.course_session_id);
+      formData.append("program_id", values.program_id);
+      formData.append("session_date", values.session_date);
+      formData.append("language_level", values.language_level);
+
+      const subCatId =
+        Number(selectedCategoryId) === 2 ? values.sub_category_id : "";
+      formData.append("sub_category_id", subCatId);
+
+      // 3. Google Cafe Bilgilerini Laravel'in array olarak okuyacağı şekilde ekle
+      formData.append(
+        "google_cafe[google_place_id]",
+        selectedCafe.google_place_id,
+      );
+      formData.append("google_cafe[name]", selectedCafe.name);
+      formData.append("google_cafe[district]", selectedCafe.district || "");
+      formData.append("google_cafe[city]", selectedCafe.city || "");
+      formData.append("google_cafe[latitude]", selectedCafe.latitude);
+      formData.append("google_cafe[longitude]", selectedCafe.longitude);
+      formData.append("google_cafe[address]", selectedCafe.address || "");
+      formData.append("google_cafe[map_url]", selectedCafe.map_url || "");
+
+      // 4. RESİM: Eğer yeni bir resim kırpıldıysa ekle
+      // imageFile objesinin dolu olduğundan emin ol
+      if (selectedCafe.imageFile) {
+        formData.append("image", selectedCafe.imageFile);
+      }
+
+      try {
+        // Rota POST olduğu için direkt gönderiyoruz
+        const result = await instructorPanelService.saveCourseSession(formData);
+
+        if (result?.status) {
+          queryClient.invalidateQueries(["myCourses"]);
+          setMessage({
+            type: "success",
+            text: "Session completed successfully!",
+          });
+          resetForm();
+          setSelectedCafe("");
+          resetForm();
+          setSubmitting(false);
+        } else {
+          setMessage({
+            type: "error",
+            text: result.message || "Session could not be created.",
+          });
+          setSubmitting(false);
+        }
+      } catch (err) {
+        setErrorModal({ open: true, message: "A server error occurred." });
+      } finally {
+        setSubmitting(false);
+      }
     },
   });
   const activePrograms = useMemo(() => {
@@ -227,7 +256,6 @@ export default function InstructorCreateSession() {
     );
   }, [programs, formik.values.program_id]);
 
-  console.log("Session Material", selectedProgram);
   // Bu fonksiyonu component'in içine ekle (return'den önce)
   // Amacı: Formik error objesinden ilk hata mesajını yakalamak
   const getFirstErrorMessage = () => {

@@ -21,14 +21,14 @@ function InstructorSettings() {
   };
 
   return (
-    <div className="w-full h-auto bg-[#F5F5F5] rounded-3xl p-3">
+    <div className="w-full h-auto bg-[#F5F5F5] rounded-3xl p-3 max-md:p-0">
       <div className="w-full bg-white rounded-full p-3 mb-4">
         <p className="text-black font-semibold text-xl ml-2">Profile</p>
       </div>
 
-      <div className="w-full rounded-3xl bg-[#FAFAFA] py-5 px-3 flex flex-col gap-5">
+      <div className="w-full rounded-3xl bg-[#FAFAFA] py-5 px-3 max-md:px-1 flex flex-col gap-5">
         {sections.map((section, index) => (
-          <div key={index} className="px-3 w-full rounded-2xl">
+          <div key={index} className="px-3 max-md:px-0 w-full rounded-2xl">
             <div
               onClick={() => toggleMenu(index)}
               className={`flex justify-between items-center cursor-pointer ${
@@ -50,7 +50,7 @@ function InstructorSettings() {
                   transition={{ duration: 0.4, ease: "easeInOut" }}
                   className="overflow-hidden"
                 >
-                  <div className="rounded-xl shadow-md  py-4 px-3 space-y-6">
+                  <div className="rounded-xl shadow-md  py-4 px-3 max-md:px-0 space-y-6">
                     {section === "Personal Information" && <PersonalInfo />}
 
                     {section === "Contact Information" && <ContactInfo />}

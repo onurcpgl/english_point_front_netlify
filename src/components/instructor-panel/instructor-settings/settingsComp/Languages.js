@@ -146,7 +146,8 @@ function Languages() {
     { value: "Native", label: "Native" },
   ];
 
-  if (!initialValues) return <p className="p-10">Loading languages info...</p>;
+  if (!initialValues)
+    return <p className="p-10 text-black">Loading languages info...</p>;
 
   return (
     <Formik
