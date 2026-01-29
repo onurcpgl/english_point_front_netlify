@@ -183,8 +183,7 @@ function Profile() {
                     Profilini Tamamla
                   </h4>
                   <p className="text-gray-600 text-xs font-medium leading-relaxed">
-                    Ödemelerinizin aksamaması için eksik bilgileri doldurmanız
-                    gerekmektedir.
+                    Lütfen eksik bilgilerininizi tamamlayınız!
                   </p>
                 </div>
               </div>

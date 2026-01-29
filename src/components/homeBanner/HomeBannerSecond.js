@@ -2,9 +2,9 @@ import Link from "next/link";
 import React from "react";
 function HomeBannerSecond() {
   return (
-    <div className="w-full h-[800px] bg-[#FFD207]">
+    <div className="w-full h-[800px] bg-[#FFD207] max-lg:h-auto max-lg:py-20">
       <div className="w-full h-full flex flex-col justify-center items-start">
-        <div className="container mx-auto px-5 md:px-0 text-black text-4xl md:text-6xl leading-snug   ">
+        <div className="container mx-auto px-5 md:px-0 text-black text-3xl md:text-6xl  leading-snug   ">
           <p className="font-light">
             Native Speaker ya da İngilizce öğretmeni eşliğinde
           </p>

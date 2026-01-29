@@ -12,8 +12,8 @@ function InstructorsComp() {
     <div className="">
       {/* Hero Section */}
       <div className="flex flex-col gap-6">
-        <div className="w-full min-h-[600px]   bg-[#FFD207] relative flex flex-col justify-between">
-          <div className="container mx-auto mt-30 px-4 md:px-6 flex flex-col md:flex-row justify-between items-start pt-8 md:pt-20">
+        <div className="w-full min-h-[600px] bg-[#FFD207] px-4 relative flex flex-col justify-between">
+          <div className="container mx-auto mt-30 px-4 md:px-6 flex  flex-col md:flex-row justify-between items-start pt-8 md:pt-20">
             {/* Text Content */}
             <div className="flex flex-col gap-2 w-full md:w-4/6 md:pr-20">
               <p className="font-bold text-black text-2xl md:text-[40px]">
@@ -31,7 +31,14 @@ function InstructorsComp() {
                 offers a flexible and interactive speaking environment.
               </p>
             </div>
-
+            <Link
+              href="instructor-register"
+              className="col-span-full hidden max-md:flex  items-center justify-center max-xl:mt-10 bg-black text-white p-4 rounded-3xl md:rounded-4xl hover:scale-105 transition-all cursor-pointer w-full md:w-auto"
+            >
+              <p className="whitespace-nowrap text-sm md:text-base">
+                Create a session & start earning!
+              </p>
+            </Link>
             {/* Image */}
             <div className="w-full md:w-2/6 flex justify-center md:justify-end mt-6 md:mt-0">
               <div className="w-64 md:w-[500px] h-64 md:h-auto  rounded-lg flex items-center justify-center">
@@ -115,7 +122,7 @@ function InstructorsComp() {
           {/* CTA Button */}
           <Link
             href="instructor-register"
-            className="col-span-full flex items-center justify-center max-xl:mt-10 bg-black text-white p-4 rounded-3xl md:rounded-4xl hover:scale-105 transition-all cursor-pointer w-full md:w-auto"
+            className="col-span-full max-md:hidden flex items-center justify-center max-xl:mt-10 bg-black text-white p-4 rounded-3xl md:rounded-4xl hover:scale-105 transition-all cursor-pointer w-full md:w-auto"
           >
             <p className="whitespace-nowrap text-sm md:text-base">
               Create a session & start earning!
@@ -148,12 +155,12 @@ function InstructorsComp() {
           <div className="text-black flex flex-col font-bold text-lg md:text-2xl">
             {/* Quote Top */}
             <div className="bg-black w-full text-white flex justify-start pl-6 md:pl-10 items-center py-4 md:py-5 relative md:-right-5">
-              <p>&quot;English Point makes teaching</p>
+              <p>&quot;English Point makes teaching possible </p>
               <MdArrowDropDown className="hidden md:block text-black text-[10rem] absolute -bottom-2 rotate-180 right-0" />
             </div>
             {/* Quote Bottom */}
-            <div className="bg-[#FFD207] text-black flex justify-start pl-8 md:pl-20 items-center py-4 md:py-5 relative md:-left-5">
-              <p>possible through socializing&quot;</p>
+            <div className="bg-[#FFD207] text-white flex justify-start pl-8 md:pl-20 items-center py-4 md:py-5 relative md:-left-5">
+              <p>through socializing&quot;</p>
               <MdArrowDropDown className="hidden md:block text-[#FFD207] text-[10rem] absolute -top-2 left-0" />
             </div>
           </div>

@@ -1941,7 +1941,7 @@ export default function InstructorRegister() {
         `}</style>
       </div>
       {finalStep && (
-        <div className="w-full bg-[#FFD207] h-screen overflow-hidden flex justify-center items-center">
+        <div className="w-full bg-[#FFD207] h-auto overflow-hidden flex justify-center items-center">
           <div className="container mx-auto px-10 max-w-4xl py-20 flex flex-col justify-center items-center">
             <Image src={FınalImage} alt="English Point" />
             <p className="font-bold text-black text-[40px] text-center">
