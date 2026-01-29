@@ -32,7 +32,7 @@ export default async function InstructorLayout({ children }) {
 
   return (
     <InstructorSessionProvider>
-      <div className="main-layout">
+      <div lang="en" className="main-layout">
         <InstroctorHeader />
         <div className="container mx-auto max-lg:flex-col flex gap-2 max-xl:max-w-full max-xl:px-0">
           <div className="">

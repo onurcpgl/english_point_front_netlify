@@ -283,7 +283,10 @@ export default function CafeLocationComp({ onSelectCafe, initialValue }) {
                 className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-[#ffd207] cursor-pointer transition-all duration-200"
               >
                 <FiCamera size={32} strokeWidth={2.5} />
-                <span className="text-[10px] font-bold uppercase mt-2">
+                <span
+                  lang="en"
+                  className="text-[10px] font-bold uppercase mt-2"
+                >
                   Change Photo
                 </span>
               </div>
@@ -296,7 +299,10 @@ export default function CafeLocationComp({ onSelectCafe, initialValue }) {
                 <h3 className="text-xl font-bold text-gray-900">
                   {selectedCafe.name}
                 </h3>
-                <span className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full border border-green-200 uppercase">
+                <span
+                  lang="en"
+                  className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full border border-green-200 uppercase"
+                >
                   Google Verified
                 </span>
               </div>
@@ -307,7 +313,10 @@ export default function CafeLocationComp({ onSelectCafe, initialValue }) {
                   <FiMapPin size={20} />
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">
+                  <h4
+                    lang="en"
+                    className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1"
+                  >
                     Location / Address
                   </h4>
                   <p className="text-sm text-gray-700 leading-snug">
@@ -331,8 +340,8 @@ export default function CafeLocationComp({ onSelectCafe, initialValue }) {
                       Do you have a better photo?
                     </h4>
                     <p className="text-xs text-gray-600 leading-relaxed">
-                      If you have a better shot of this location, click here to
-                      upload it and contribute to our community.
+                      Please upload a photo of the cafe. It will appear on your
+                      session announcement. You can simply find it on Google.
                     </p>
                   </div>
                 </div>
@@ -352,7 +361,10 @@ export default function CafeLocationComp({ onSelectCafe, initialValue }) {
           <div className="h-16 flex items-center justify-between px-6 bg-black border-b border-gray-800 shrink-0">
             <div className="flex items-center gap-2">
               <div className="w-2 h-6 bg-[#ffd207]" />
-              <h2 className="text-white font-bold uppercase tracking-widest text-sm">
+              <h2
+                lang="en"
+                className="text-white font-bold uppercase tracking-widest text-sm"
+              >
                 Crop Cafe Photo
               </h2>
             </div>
@@ -394,6 +406,7 @@ export default function CafeLocationComp({ onSelectCafe, initialValue }) {
             </div>
             <button
               type="button"
+              lang="en"
               onClick={handleCropSave}
               className="bg-[#ffd207] text-black px-12 py-3 font-bold uppercase text-sm hover:bg-white transition-all flex items-center gap-2"
             >

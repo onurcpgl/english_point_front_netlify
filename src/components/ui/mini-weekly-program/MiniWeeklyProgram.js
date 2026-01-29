@@ -178,10 +178,10 @@ function MiniWeeklyProgram({ id, lang = "tr" }) {
                   "flex flex-col items-center justify-center w-10 h-14 rounded-2xl transition-all duration-200 gap-1",
                   isSelected
                     ? "bg-black text-[#ffd207] shadow-lg transform -translate-y-1"
-                    : "text-black/60 hover:bg-black/5"
+                    : "text-black/60 hover:bg-black/5",
                 )}
               >
-                <span className="text-[10px] font-bold uppercase">
+                <span lang="en" className="text-[10px] font-bold uppercase">
                   {/* Gün İsimleri: Dinamik Locale */}
                   {format(day, "EEE", { locale: currentLocale })}
                 </span>
@@ -190,7 +190,7 @@ function MiniWeeklyProgram({ id, lang = "tr" }) {
                     "text-sm font-bold",
                     isToday &&
                       !isSelected &&
-                      "underline decoration-2 underline-offset-2"
+                      "underline decoration-2 underline-offset-2",
                   )}
                 >
                   {format(day, "d")}
@@ -203,7 +203,10 @@ function MiniWeeklyProgram({ id, lang = "tr" }) {
 
       {/* --- İÇERİK --- */}
       <div className="p-5 min-h-[300px] bg-gray-50/50">
-        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 pl-1">
+        <h3
+          lang="en"
+          className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 pl-1"
+        >
           {isSameDay(selectedDate, new Date())
             ? t.todayHeader
             : format(selectedDate, "EEEE, d MMM", { locale: currentLocale })}

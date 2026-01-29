@@ -103,7 +103,10 @@ function CertificateInfo() {
         <div className="flex justify-between items-end max-md:items-start border-b pb-6 flex-row max-md:flex-col gap-6">
           {/* Yazı Alanı */}
           <div className="flex-1 min-w-0">
-            <h2 className="text-black font-bold text-3xl max-md:text-2xl tracking-tight uppercase">
+            <h2
+              lang="en"
+              className="text-black font-bold text-3xl max-md:text-2xl tracking-tight uppercase"
+            >
               Certificates
             </h2>
             <p className="text-gray-500 mt-1 text-sm leading-relaxed">
@@ -230,7 +233,10 @@ function CertificateInfo() {
 
                         {/* Certificate File Section */}
                         <div className="space-y-3">
-                          <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">
+                          <label
+                            lang="en"
+                            className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1"
+                          >
                             Certificate File
                           </label>
                           <div
@@ -361,7 +367,10 @@ function CertificateInfo() {
                     </div>
 
                     <div className="space-y-3">
-                      <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">
+                      <label
+                        lang="en"
+                        className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1"
+                      >
                         Certificate Attachment
                       </label>
                       <div
@@ -433,7 +442,10 @@ function CertificateInfo() {
 // Yardımcı Input Bileşeni
 const CustomInputField = ({ label, ...props }) => (
   <div className="space-y-1">
-    <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">
+    <label
+      lang="en"
+      className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1"
+    >
       {label}
     </label>
     <Field

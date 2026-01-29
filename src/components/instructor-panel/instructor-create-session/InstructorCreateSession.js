@@ -430,7 +430,10 @@ export default function InstructorCreateSession() {
                 <div className="p-6 space-y-6">
                   {/* EĞİTİM İÇERİĞİ (Description) */}
                   <div>
-                    <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
+                    <h4
+                      lang="en"
+                      className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3"
+                    >
                       Training Content & Program
                     </h4>
                     <div className="bg-white p-4 rounded-lg border border-gray-200 text-gray-700 text-sm leading-relaxed shadow-sm">
@@ -443,7 +446,10 @@ export default function InstructorCreateSession() {
                     selectedProgram.voice_path ||
                     selectedProgram.document_path) && (
                     <div>
-                      <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
+                      <h4
+                        lang="en"
+                        className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3"
+                      >
                         Educational Materials
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

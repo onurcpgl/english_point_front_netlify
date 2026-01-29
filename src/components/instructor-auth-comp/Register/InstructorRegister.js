@@ -1586,7 +1586,7 @@ export default function InstructorRegister() {
                               }
                             >
                               {days.map((day) => (
-                                <option key={day} value={day}>
+                                <option lang="en" key={day} value={day}>
                                   {day.toUpperCase()}
                                 </option>
                               ))}

@@ -333,6 +333,7 @@ function PersonalInfo() {
                 <div className="flex-1 space-y-3" lang="en">
                   <div className="flex-1">
                     <label
+                      lang="en"
                       htmlFor="iban"
                       className="text-gray-700 text-sm font-medium uppercase tracking-wide"
                     >

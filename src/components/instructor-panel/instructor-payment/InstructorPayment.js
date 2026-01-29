@@ -235,7 +235,10 @@ function InstructorPayment() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
+              <tr
+                lang="en"
+                className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider"
+              >
                 <th className="p-4 font-medium">Date</th>
                 <th className="p-4 font-medium">Description</th>
                 <th className="p-4 font-medium text-right">Amount</th>

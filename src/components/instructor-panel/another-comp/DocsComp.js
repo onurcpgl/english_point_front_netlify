@@ -25,10 +25,16 @@ const DocumentPopup = ({ isOpen, onClose, content }) => {
               <FiFileText className="text-green-600 text-xl" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-gray-900 leading-none">
+              <h3
+                lang="en"
+                className="text-lg font-bold text-gray-900 leading-none"
+              >
                 {content.title}
               </h3>
-              <p className="text-xs text-gray-500 mt-1 uppercase tracking-wider font-semibold">
+              <p
+                lang="en"
+                className="text-xs text-gray-500 mt-1 uppercase tracking-wider font-semibold"
+              >
                 Program Materials
               </p>
             </div>

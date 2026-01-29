@@ -165,14 +165,15 @@ function WeeklyProgram() {
                       className={cn(
                         "py-4 flex flex-col items-center justify-center border-r border-gray-50 last:border-r-0 transition-colors",
                         // BUGÜNÜN SÜTUN RENGİ: ÇOK HAFİF SARI
-                        isToday ? "bg-[#ffd207]/10" : ""
+                        isToday ? "bg-[#ffd207]/10" : "",
                       )}
                     >
                       <span
+                        lang="en"
                         className={cn(
                           "text-xs font-bold uppercase tracking-widest mb-1",
                           // BUGÜN YAZISI: KOYU SİYAH
-                          isToday ? "text-black" : "text-gray-700"
+                          isToday ? "text-black" : "text-gray-700",
                         )}
                       >
                         {format(day, "EEE", { locale: enUS })}
@@ -183,7 +184,7 @@ function WeeklyProgram() {
                           isToday
                             ? // AKTİF GÜN YUVARLAĞI: SARI ZEMİN, SİYAH YAZI
                               "bg-[#ffd207] text-black shadow-md shadow-yellow-500/20"
-                            : "bg-white text-slate-700 border border-gray-100"
+                            : "bg-white text-slate-700 border border-gray-100",
                         )}
                       >
                         {format(day, "d")}
@@ -216,7 +217,7 @@ function WeeklyProgram() {
                           className={cn(
                             "relative border-r border-gray-50 p-1.5 transition-all last:border-r-0",
                             isToday && !session && "bg-[#ffd207]/5", // Bugün boşsa çok hafif sarı
-                            !session && "hover:bg-gray-50/80"
+                            !session && "hover:bg-gray-50/80",
                           )}
                         >
                           {session ? (

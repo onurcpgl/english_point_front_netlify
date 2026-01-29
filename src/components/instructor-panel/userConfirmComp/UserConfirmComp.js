@@ -41,7 +41,8 @@ function UserConfirmComp({
 
       if (response.status) {
         setSuccessMessage(
-          response.message || "Kullanıcı başarıyla doğrulandı ve kursa eklendi."
+          response.message ||
+            "Kullanıcı başarıyla doğrulandı ve kursa eklendi.",
         );
         setSuccessModalOpen(true);
         getSessionUsers(openCourseInfo);
@@ -86,7 +87,7 @@ function UserConfirmComp({
         if (response.status) {
           setSuccessMessage(
             response.message ||
-              "Kullanıcı başarıyla doğrulandı ve kursa eklendi."
+              "Kullanıcı başarıyla doğrulandı ve kursa eklendi.",
           );
 
           setSuccessModalOpen(true);
@@ -146,7 +147,10 @@ function UserConfirmComp({
           {/* User Info */}
           <div className="p-5 bg-blue-50 border-b border-blue-100">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-lg shadow-sm">
+              <div
+                lang="en"
+                className="w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-lg shadow-sm"
+              >
                 {userConfirmSelectedUser?.name?.charAt(0).toUpperCase() || "U"}
               </div>
               <div>

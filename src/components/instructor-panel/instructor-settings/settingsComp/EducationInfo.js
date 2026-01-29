@@ -103,7 +103,10 @@ function EducationInfo() {
         <div className="flex justify-between items-end max-md:items-start border-b pb-6 flex-row max-md:flex-col gap-6">
           {/* Yazı Alanı */}
           <div className="flex-1 min-w-0">
-            <h2 className="text-black font-bold text-3xl max-md:text-2xl tracking-tight uppercase">
+            <h2
+              lang="en"
+              className="text-black font-bold text-3xl max-md:text-2xl tracking-tight uppercase"
+            >
               Education
             </h2>
             <p className="text-gray-500 mt-1 text-sm leading-relaxed">
@@ -178,7 +181,10 @@ function EducationInfo() {
 
                       {/* Metin Alanı: min-w-0 flex-1 sayesinde başlık uzasa da yanındakileri itmez */}
                       <div className="min-w-0 flex-1">
-                        <h3 className="font-bold text-black text-lg max-md:text-base leading-tight break-words line-clamp-2 uppercase tracking-tight">
+                        <h3
+                          lang="en"
+                          className="font-bold text-black text-lg max-md:text-base leading-tight break-words line-clamp-2 uppercase tracking-tight"
+                        >
                           {edu.university || "University Name"}
                         </h3>
                         <p className="text-sm text-gray-500 font-medium mt-1 truncate">
@@ -247,7 +253,10 @@ function EducationInfo() {
 
                         {/* Diploma Section */}
                         <div className="space-y-3">
-                          <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">
+                          <label
+                            lang="en"
+                            className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1"
+                          >
                             Diploma Document
                           </label>
                           {/* 🔹 Upload alanı hover rengi güncellendi */}
@@ -395,7 +404,10 @@ function EducationInfo() {
                     </div>
 
                     <div className="space-y-3">
-                      <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">
+                      <label
+                        lang="en"
+                        className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1"
+                      >
                         Diploma Attachment
                       </label>
                       {/* 🔹 Upload alanı hover rengi güncellendi */}
@@ -466,7 +478,10 @@ function EducationInfo() {
 // Yardımcı Input Bileşeni
 const CustomInputField = ({ label, ...props }) => (
   <div className="space-y-1">
-    <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">
+    <label
+      lang="en"
+      className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1"
+    >
       {label}
     </label>
     <Field
