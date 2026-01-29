@@ -183,13 +183,13 @@ const Login = () => {
   // Social login handlers
   const handleGoogleLogin = () => {
     // Backend: /api/auth/google/redirect
-    window.location.href = `${API_URL}api/auth/google/redirect`;
+    window.location.href = `${API_URL}/api/auth/google/redirect`;
   };
 
   // Facebook Login
   const handleFacebookLogin = () => {
     // Backend: /api/auth/facebook/redirect
-    window.location.href = `${API_URL}api/auth/facebook/redirect`;
+    window.location.href = `${API_URL}/api/auth/facebook/redirect`;
   };
 
   // Custom input component
