@@ -14,6 +14,7 @@ import { AlertCircle, AlertTriangle, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 async function fetchCountries() {
   const res = await fetch("/countries.json", { cache: "no-store" });
   if (!res.ok) throw new Error("Countries fetch failed");
@@ -29,7 +30,7 @@ export default function InstructorRegister() {
     queryKey: ["countries"],
     queryFn: fetchCountries,
   });
-
+  const router = useRouter();
   const wrapperRefCountryBirth = useRef(null);
   const wrapperRefCurrentLocation = useRef(null);
   const [loadingBtn, setLoadingBtn] = useState(false);
@@ -456,7 +457,11 @@ export default function InstructorRegister() {
     const ERROR_MSG = "Uploaded images or documents must not exceed 3MB.";
 
     // A) Profil Fotoğrafı Kontrolü
-    if (formData.photo.file && formData.photo.file.size > MAX_BYTES) {
+    if (
+      formData.photo.file &&
+      formData.photo.file instanceof File &&
+      formData.photo.file.size > MAX_BYTES
+    ) {
       setErrors((prev) => ({
         ...prev,
         finalError: ERROR_MSG,
@@ -466,10 +471,19 @@ export default function InstructorRegister() {
     }
 
     // B) Sertifikalar Kontrolü
+    // B) Sertifikalar Kontrolü
     if (certificateToggle && formData.certifications) {
       for (let i = 0; i < formData.certifications.length; i++) {
         const file = formData.certifications[i].uploadCertificate;
-        if (file instanceof File && file.size > MAX_BYTES) {
+
+        // 1. KONTROL: Dosya yoksa (null/undefined) VEYA Dosya objesi değilse (string vb.)
+        // Döngünün bu adımını atla (continue), hata verme.
+        if (!file || !(file instanceof File)) {
+          continue;
+        }
+
+        // 2. KONTROL: Dosya var, şimdi boyutuna bak
+        if (file.size > MAX_BYTES) {
           setErrors((prev) => ({
             ...prev,
             finalError: ERROR_MSG,
@@ -484,7 +498,14 @@ export default function InstructorRegister() {
     if (educationToggle && formData.educations) {
       for (let i = 0; i < formData.educations.length; i++) {
         const file = formData.educations[i].uploadDegree;
-        if (file instanceof File && file.size > MAX_BYTES) {
+
+        // 1. KONTROL: Dosya yoksa veya geçerli bir dosya değilse pas geç
+        if (!file || !(file instanceof File)) {
+          continue;
+        }
+
+        // 2. KONTROL: Dosya var, şimdi boyutuna bak
+        if (file.size > MAX_BYTES) {
           setErrors((prev) => ({
             ...prev,
             finalError: ERROR_MSG,
@@ -499,7 +520,7 @@ export default function InstructorRegister() {
     // ============================================================
 
     const fd = new FormData();
-
+    console.log("profil foto hatası", errors);
     // About
     Object.entries(formData.about).forEach(([k, v]) =>
       fd.append(`about[${k}]`, v || ""),
@@ -555,7 +576,7 @@ export default function InstructorRegister() {
       const res = await generalService.registerInstructor(fd);
 
       if (res.status === "success") {
-        setFinalStep(true);
+        router.push("/instructor-register-complete");
       } else {
         if (res.status === "error") {
           const errorMsg = Array.isArray(res.errors)
@@ -1859,28 +1880,63 @@ export default function InstructorRegister() {
                 <div className="mt-8 flex items-center justify-between flex-col">
                   <div className="w-full">
                     <AnimatePresence>
-                      {Object.keys(errors).length > 0 && (
-                        <motion.div
-                          key="errorBox"
-                          className="bg-white border border-gray-100 text-black px-4 py-3 mb-4 flex items-start gap-2"
-                          initial={{ opacity: 0, y: -10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                          transition={{ duration: 0.3 }}
-                        >
-                          <AlertCircle className="text-red-500 w-5 h-5 mt-0.5 flex-shrink-0" />
-                          <div className="flex flex-col">
-                            {Object.values(errors).map((err, idx) => (
-                              <p
-                                key={idx}
-                                className="text-sm font-medium  whitespace-pre-line"
+                      {(() => {
+                        // 1. ADIM: Hataları temizle.
+                        // Sadece "string" (yazı) olanları ve içi boş olmayanları al.
+                        // {} (obje), null, undefined veya "" (boş yazı) buraya GİREMEZ.
+                        const realErrors = Object.values(errors).filter(
+                          (err) =>
+                            typeof err === "string" && err.trim().length > 0,
+                        );
+
+                        // 2. ADIM: Eğer elimizde hiç gerçek hata yoksa, ekrana HİÇBİR ŞEY basma.
+                        if (realErrors.length === 0) {
+                          return null;
+                        }
+
+                        // 3. ADIM: Gerçek hata varsa kutuyu çiz.
+                        return (
+                          <motion.div
+                            key="errorBox"
+                            className="bg-white border border-red-500 text-black px-4 py-3 mb-4 flex items-start gap-2 "
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            {/* İkon */}
+                            <div className="text-red-500 mt-0.5 flex-shrink-0">
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
                               >
-                                {err}
-                              </p>
-                            ))}
-                          </div>
-                        </motion.div>
-                      )}
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                              </svg>
+                            </div>
+
+                            {/* Yazılar */}
+                            <div className="flex flex-col">
+                              {realErrors.map((err, idx) => (
+                                <p
+                                  key={idx}
+                                  className="text-sm font-medium whitespace-pre-line text-red-600"
+                                >
+                                  {err}
+                                </p>
+                              ))}
+                            </div>
+                          </motion.div>
+                        );
+                      })()}
                     </AnimatePresence>
                   </div>
                   <div className="flex items-center gap-3 w-full justify-between">

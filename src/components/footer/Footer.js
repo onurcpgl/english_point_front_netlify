@@ -5,6 +5,8 @@ import {
   MapPin,
   Instagram,
   Linkedin,
+  Facebook, // Yeni eklenen
+  Youtube, // Yeni eklenen
   MessageCircle,
 } from "lucide-react";
 // Logoyu svg olarak component içinde tuttuğunuz için importu kaldırdım,
@@ -96,13 +98,13 @@ function Footer() {
           <div className="text-sm text-gray-400 space-y-2">
             <p className="flex items-center gap-2">
               <a
-                href="https://wa.me/905367161558"
+                href="https://wa.me/905454308089"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 hover:text-white transition-colors"
               >
                 <MessageCircle className="w-4 h-4 text-white" />
-                0536 716 15 58
+                0545 430 80 89
               </a>
             </p>
             <p className="flex items-center gap-2">
@@ -135,17 +137,44 @@ function Footer() {
 
           {/* Social Icons */}
           <div className="flex gap-4 mt-4 md:mt-0">
+            {/* Instagram */}
             <a
-              href="#"
+              href="https://www.instagram.com/englishpointtr/"
+              target="_blank"
+              rel="noopener noreferrer"
               className="border border-gray-500 rounded-full p-2 hover:border-white hover:text-white transition-colors"
             >
               <Instagram className="w-4 h-4" />
             </a>
+
+            {/* LinkedIn */}
             <a
-              href="#"
+              href="https://tr.linkedin.com/company/englishpointtr"
+              target="_blank"
+              rel="noopener noreferrer"
               className="border border-gray-500 rounded-full p-2 hover:border-white hover:text-white transition-colors"
             >
               <Linkedin className="w-4 h-4" />
+            </a>
+
+            {/* Facebook - YENİ */}
+            <a
+              href="https://www.facebook.com/profile.php?id=61586792731563"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="border border-gray-500 rounded-full p-2 hover:border-white hover:text-white transition-colors"
+            >
+              <Facebook className="w-4 h-4" />
+            </a>
+
+            {/* YouTube - YENİ */}
+            <a
+              href="https://www.youtube.com/@englishpoint-tr"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="border border-gray-500 rounded-full p-2 hover:border-white hover:text-white transition-colors"
+            >
+              <Youtube className="w-4 h-4" />
             </a>
           </div>
         </div>

@@ -2,14 +2,20 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Loader2, ArrowRight, Mail } from "lucide-react"; // Mail ikonu eklendi
-import { FcGoogle } from "react-icons/fc"; // Google ikonu
-import { FaFacebookF } from "react-icons/fa"; // Facebook ikonu
+import { useRouter } from "next/navigation";
+import {
+  Loader2,
+  ArrowRight,
+  Mail,
+  Eye, // Eklendi: Göz açık ikonu
+  EyeOff, // Eklendi: Göz kapalı ikonu
+} from "lucide-react";
+import { FcGoogle } from "react-icons/fc";
+import { FaFacebookF } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import { Formik, Form, Field } from "formik";
 import * as Yup from "yup";
 import generalService from "../../../utils/axios/generalService";
-import SuccesMessageComp from "../../ui/SuccesModal/SuccesMessageComp";
 import ErrorModal from "../../ui/ErrorModal/ErrorModal";
 
 // Formik Validation Schema
@@ -25,6 +31,8 @@ const RegisterSchema = Yup.object().shape({
 });
 
 export default function RegisterPage() {
+  const router = useRouter();
+
   const initialValues = {
     name: "",
     email: "",
@@ -32,22 +40,21 @@ export default function RegisterPage() {
     confirmPassword: "",
   };
 
-  const [openModal, setOpenModal] = useState(false);
-  const [modalMessage, setModalMessage] = useState("");
   const [errorModalOpen, setErrorModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-
-  // E-posta formunun görünüp görünmeyeceğini kontrol eden state
   const [showEmailForm, setShowEmailForm] = useState(false);
+
+  // --- Şifre Göster/Gizle State'leri ---
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const API_URL =
     process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.englishpoint.com.tr";
 
-  // --- GOOGLE ---
   const handleGoogleLogin = () => {
     window.location.href = `${API_URL}api/auth/google/redirect`;
   };
 
-  // --- FACEBOOK ---
   const handleFacebookLogin = () => {
     window.location.href = `${API_URL}api/auth/facebook/redirect`;
   };
@@ -57,12 +64,11 @@ export default function RegisterPage() {
       const response = await generalService.register(values);
 
       if (response && response.status) {
-        setOpenModal(true);
-        setModalMessage("Kayıt başarılı! Giriş yapabilirsiniz.");
         resetForm();
+        router.push("/register-complete");
       } else {
         setErrorMessage(
-          response.message || "Kayıt başarısız oldu. Lütfen tekrar deneyin."
+          response.message || "Kayıt başarısız oldu. Lütfen tekrar deneyin.",
         );
         setErrorModalOpen(true);
       }
@@ -84,8 +90,7 @@ export default function RegisterPage() {
               Hesabını oluştur, sana özel eğitimlere hemen katıl!
             </p>
 
-            {/* Sosyal Medya Butonları - Her zaman görünür veya form açılınca gizlenebilir. 
-                Tasarım isteğine göre burayı da AnimatePresence içine alabilirsin ama genelde üstte sabit kalır. */}
+            {/* Sosyal Medya Butonları */}
             <div className="space-y-3 mb-4">
               <button
                 onClick={handleGoogleLogin}
@@ -110,11 +115,10 @@ export default function RegisterPage() {
               </button>
             </div>
 
-            {/* E-posta ile Kayıt Ol Butonu ve Form Alanı */}
+            {/* E-posta Alanı */}
             <div className="mt-3">
               <AnimatePresence mode="wait">
                 {!showEmailForm ? (
-                  /* Form Kapalıyken Gözükecek Buton */
                   <motion.div
                     key="email-button"
                     initial={{ opacity: 0, y: 10 }}
@@ -134,7 +138,6 @@ export default function RegisterPage() {
                     </button>
                   </motion.div>
                 ) : (
-                  /* Form Açıldığında Gözükecek Alan */
                   <motion.div
                     key="register-form"
                     initial={{ opacity: 0, height: 0 }}
@@ -143,15 +146,15 @@ export default function RegisterPage() {
                     transition={{ duration: 0.5 }}
                     className="overflow-hidden"
                   >
-                    {/* Formik Başlangıcı */}
                     <Formik
                       initialValues={initialValues}
                       validationSchema={RegisterSchema}
                       onSubmit={handleSubmit}
                     >
                       {({ isSubmitting, errors, touched }) => (
-                        <Form className="flex flex-col my-4">
-                          {/* Geri Dön Butonu (Opsiyonel - Kullanıcı vazgeçerse) */}
+                        <Form className="flex flex-col my-4" autoComplete="off">
+                          {/* autoComplete="off" form geneline eklendi */}
+
                           <div className="mb-4 text-right">
                             <button
                               type="button"
@@ -170,6 +173,7 @@ export default function RegisterPage() {
                             <Field
                               name="name"
                               type="text"
+                              autoComplete="off" // Otomatik doldurma kapalı
                               className="w-full h-14 outline-0 px-4 placeholder:text-[#999] bg-white font-light"
                               placeholder="Ad Soyad"
                             />
@@ -183,6 +187,7 @@ export default function RegisterPage() {
                             <Field
                               name="email"
                               type="email"
+                              autoComplete="off" // Chrome bazen inat eder ama standart budur
                               className="w-full h-14 outline-0 px-4 placeholder:text-[#999] bg-white font-light"
                               placeholder="E-posta"
                             />
@@ -193,12 +198,28 @@ export default function RegisterPage() {
                             label="Şifre"
                             error={touched.password && errors.password}
                           >
-                            <Field
-                              name="password"
-                              type="password"
-                              className="w-full h-14 outline-0 px-4 placeholder:text-[#999] bg-white font-light"
-                              placeholder="Şifre"
-                            />
+                            <div className="relative">
+                              <Field
+                                name="password"
+                                // State'e göre tipi değiştiriyoruz
+                                type={showPassword ? "text" : "password"}
+                                autoComplete="new-password" // Kayıt formlarında bu kullanılır
+                                className="w-full h-14 outline-0 px-4 pr-12 placeholder:text-[#999] bg-white font-light"
+                                placeholder="Şifre"
+                              />
+                              {/* Göz İkonu Butonu */}
+                              <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black transition-colors"
+                              >
+                                {showPassword ? (
+                                  <EyeOff size={20} />
+                                ) : (
+                                  <Eye size={20} />
+                                )}
+                              </button>
+                            </div>
                           </FormField>
 
                           {/* Şifre Tekrar */}
@@ -208,15 +229,31 @@ export default function RegisterPage() {
                               touched.confirmPassword && errors.confirmPassword
                             }
                           >
-                            <Field
-                              name="confirmPassword"
-                              type="password"
-                              className="w-full h-14 outline-0 px-4 placeholder:text-[#999] bg-white font-light"
-                              placeholder="Şifre Tekrar"
-                            />
+                            <div className="relative">
+                              <Field
+                                name="confirmPassword"
+                                type={showConfirmPassword ? "text" : "password"}
+                                autoComplete="new-password"
+                                className="w-full h-14 outline-0 px-4 pr-12 placeholder:text-[#999] bg-white font-light"
+                                placeholder="Şifre Tekrar"
+                              />
+                              {/* Göz İkonu Butonu */}
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setShowConfirmPassword(!showConfirmPassword)
+                                }
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black transition-colors"
+                              >
+                                {showConfirmPassword ? (
+                                  <EyeOff size={20} />
+                                ) : (
+                                  <Eye size={20} />
+                                )}
+                              </button>
+                            </div>
                           </FormField>
 
-                          {/* Submit Button */}
                           <button
                             type="submit"
                             disabled={isSubmitting}
@@ -275,14 +312,6 @@ export default function RegisterPage() {
           </div>
         </div>
       </div>
-
-      {/* Success Modal */}
-      <SuccesMessageComp
-        open={openModal}
-        message={modalMessage}
-        onClose={() => setOpenModal(false)}
-      />
-      {/* Error Modal */}
       <ErrorModal
         open={errorModalOpen}
         message={errorMessage}
