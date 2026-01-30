@@ -73,7 +73,7 @@ function InstructorDashboard() {
       </div>
     );
   }
-  console.log("myCourses?.phone", myCourses?.phone);
+
   return (
     <div className="flex flex-col md:flex-row gap-6">
       <div className="w-full md:w-1/2 flex flex-col gap-6">
@@ -97,7 +97,7 @@ function InstructorDashboard() {
           return (
             <div
               lang="en"
-              className="mb-6 p-5 bg-white border border-amber-100 rounded-[32px] shadow-lg shadow-amber-900/10 flex flex-col gap-4 relative overflow-hidden "
+              className={`mb-6 p-5 bg-white border border-amber-100 rounded-[32px] shadow-lg shadow-amber-900/10 flex flex-col gap-4 relative overflow-hidden ${myCoursesLoading ? "hidden" : ""}`}
             >
               <div className="flex items-start gap-4 relative z-10">
                 <div className="bg-amber-500 p-3 rounded-2xl shadow-md shadow-amber-200 relative shrink-0">
