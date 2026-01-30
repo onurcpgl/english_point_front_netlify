@@ -31,7 +31,7 @@ export const metadata = {
 };
 export default function Home() {
   return (
-    <div className="bg-white max-lg:px-4">
+    <div className="bg-white">
       <HomeBannerSecond />
       <Talking />
       <HowItWorks />

@@ -166,7 +166,7 @@ const GuestModal = ({ setMenuOpen, menuOpen }) => {
 
           <div className="my-6 border-t border-gray-100" />
 
-          <div className="flex flex-col gap-1">
+          {/* <div className="flex flex-col gap-1">
             <span className="text-xs font-semibold text-gray-400 px-4 mb-2 uppercase tracking-wider">
               Destek
             </span>
@@ -177,7 +177,7 @@ const GuestModal = ({ setMenuOpen, menuOpen }) => {
                 onClick={() => handleMenuClick(item.href)}
               />
             ))}
-          </div>
+          </div> */}
         </div>
 
         {/* FOOTER: Giriş Yap Butonu */}

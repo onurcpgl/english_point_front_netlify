@@ -15,12 +15,7 @@
   padding-left: 15px;
   padding-right: 15px;
 }
-@media (max-width: 768px) {
-  .container {
-    padding-left: 5px;
-    padding-right: 5px;
-  }
-}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
