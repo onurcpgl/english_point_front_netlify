@@ -441,7 +441,62 @@ export default function InstructorRegister() {
 
   const handleFinalSubmit = async () => {
     setLoadingBtn(true);
-    if (!validateCurrent()) return;
+
+    // 1. Validasyon kontrolü
+    if (!validateCurrent()) {
+      setLoadingBtn(false);
+      return;
+    }
+
+    // ============================================================
+    // 🛑 1. DOSYA BOYUTU KONTROLÜ (3MB - English Messages)
+    // ============================================================
+    const MAX_MB = 3;
+    const MAX_BYTES = MAX_MB * 1024 * 1024; // 3MB
+    const ERROR_MSG = "Uploaded images or documents must not exceed 3MB.";
+
+    // A) Profil Fotoğrafı Kontrolü
+    if (formData.photo.file && formData.photo.file.size > MAX_BYTES) {
+      setErrors((prev) => ({
+        ...prev,
+        finalError: ERROR_MSG,
+      }));
+      setLoadingBtn(false);
+      return;
+    }
+
+    // B) Sertifikalar Kontrolü
+    if (certificateToggle && formData.certifications) {
+      for (let i = 0; i < formData.certifications.length; i++) {
+        const file = formData.certifications[i].uploadCertificate;
+        if (file instanceof File && file.size > MAX_BYTES) {
+          setErrors((prev) => ({
+            ...prev,
+            finalError: ERROR_MSG,
+          }));
+          setLoadingBtn(false);
+          return;
+        }
+      }
+    }
+
+    // C) Eğitim/Diploma Kontrolü
+    if (educationToggle && formData.educations) {
+      for (let i = 0; i < formData.educations.length; i++) {
+        const file = formData.educations[i].uploadDegree;
+        if (file instanceof File && file.size > MAX_BYTES) {
+          setErrors((prev) => ({
+            ...prev,
+            finalError: ERROR_MSG,
+          }));
+          setLoadingBtn(false);
+          return;
+        }
+      }
+    }
+    // ============================================================
+    // 🛑 KONTROL BİTİŞ
+    // ============================================================
 
     const fd = new FormData();
 
@@ -456,7 +511,6 @@ export default function InstructorRegister() {
     }
 
     // Certifications
-
     if (certificateToggle) {
       formData.certifications.forEach((cert, idx) => {
         Object.entries(cert).forEach(([k, v]) => {
@@ -467,9 +521,8 @@ export default function InstructorRegister() {
           }
         });
       });
-    } else {
-      formData.certifications = null;
     }
+
     // Education
     if (educationToggle) {
       formData.educations.forEach((edu, idx) => {
@@ -481,46 +534,46 @@ export default function InstructorRegister() {
           }
         });
       });
-    } else {
-      formData.educations = null;
     }
 
     // Description
-
-    // Availability
     fd.append("description[bio]", formData.description.bio || "");
 
+    // Availability
     if (availabilityToggle) {
       formData.availability.forEach((item, index) => {
         fd.append(`availability[${index}][day]`, item.day);
         fd.append(`availability[${index}][timeFrom]`, item.timeFrom || "");
         fd.append(`availability[${index}][timeTo]`, item.timeTo || "");
       });
-    } else {
-      formData.availability = null;
     }
 
     try {
+      // Önceki hataları temizle
+      setErrors((prev) => ({ ...prev, finalError: null }));
+
       const res = await generalService.registerInstructor(fd);
+
       if (res.status === "success") {
-        //setSelectedStepSection(selectedStepSection + 1);
         setFinalStep(true);
-        setLoadingBtn(false);
       } else {
         if (res.status === "error") {
+          const errorMsg = Array.isArray(res.errors)
+            ? res.errors.join("\n")
+            : res.message || "An error occurred during registration.";
+
           setErrors((prev) => ({
             ...prev,
-            finalError: res.errors.join("\n"), // \n ile ayır
+            finalError: errorMsg,
           }));
         }
-        throw new Error("Kayıt başarısız");
-        setLoadingBtn(false);
       }
-      // alert("Eğitmen kaydı başarıyla gönderildi!");
     } catch (e) {
-      //console.error(e);
-      //alert("Gönderimde bir hata oluştu. Konsolu kontrol edin.");
-      setLoadingBtn(false);
+      console.error(e);
+      setErrors((prev) => ({
+        ...prev,
+        finalError: "Connection error or unexpected problem occurred.",
+      }));
     } finally {
       setLoadingBtn(false);
     }
@@ -1033,6 +1086,9 @@ export default function InstructorRegister() {
                         <p className="text-md font-light">
                           Speaks English (Native), English (B2)
                         </p>
+                        <p className="text-md font-light">
+                          The image must be a maximum of 2MB.
+                        </p>
                         <div className="w-full flex justify-start mt-2">
                           <ProfilePhotoCropperRegister
                             onCropDone={(blob) =>
@@ -1248,7 +1304,7 @@ export default function InstructorRegister() {
                                 </div>
 
                                 <p className="font-bold text-center text-sm">
-                                  JPG or PNG format; maximum size of 20MB.
+                                  JPG or PNG format; maximum size of 3MB.
                                 </p>
                               </div>
                             </div>
@@ -1498,7 +1554,7 @@ export default function InstructorRegister() {
                                 </div>
 
                                 <p className="font-bold text-center text-sm">
-                                  JPG or PNG format; maximum size of 20MB.
+                                  JPG or PNG format; maximum size of 3MB.
                                 </p>
                               </div>
                             </div>
@@ -1886,6 +1942,9 @@ export default function InstructorRegister() {
                 What your photo needs
               </p>
               <ul className="text-black mt-5 font-light">
+                <li className="flex justify-start items-center gap-2">
+                  <FaCheck className="text-2xl" /> You should be facing forward
+                </li>
                 <li className="flex justify-start items-center gap-2">
                   <FaCheck className="text-2xl" /> You should be facing forward
                 </li>
