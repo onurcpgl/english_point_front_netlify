@@ -243,11 +243,11 @@ const SepetComp = () => {
       const popupName = "Vakifbank3DSecureWindow";
 
       // Boş bir pencere aç
-      const popup = window.open(
-        "about:blank",
-        popupName,
-        `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`,
-      );
+      // const popup = window.open(
+      //   "about:blank",
+      //   popupName,
+      //   `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`,
+      // );
 
       // --- DİNAMİK FORM OLUŞTURMA VE POST ETME ---
       const form = document.createElement("form");

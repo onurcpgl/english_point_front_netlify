@@ -3,8 +3,13 @@ import Link from "next/link";
 import PaymentError from "../../assets/payment/payment-error.png";
 import Logo from "../../assets/logo/logo.png";
 import Image from "next/image";
+// 1. useRouter hook'unu import ediyoruz
+import { useRouter } from "next/navigation";
 
 export default function PaymentErrorPage() {
+  // 2. Router'ı tanımlıyoruz
+  const router = useRouter();
+
   return (
     <div className="min-h-screen bg-white flex items-center justify-center px-4">
       <div className="max-w-md w-full text-center">
@@ -32,12 +37,12 @@ export default function PaymentErrorPage() {
         </p>
 
         {/* Aksiyon Butonları */}
-
         <button
-          onClick={() => window.close()}
-          className="block mt-8 text-sm font-semibold text-gray-400 hover:text-black"
+          // 3. Tıklandığında /sepet sayfasına yönlendiriyoruz
+          onClick={() => router.push("/sepet")}
+          className="block mt-8 text-sm font-semibold text-gray-400 hover:text-black w-full"
         >
-          Kapat
+          Sepete Dön
         </button>
       </div>
     </div>
