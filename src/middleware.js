@@ -62,5 +62,5 @@ export default withAuth(
 
 export const config = {
   // matcher'da statik dosyaları hariç tutuyoruz, bu doğru.
-  matcher: ["/((?!_next|images|favicon.ico).*)"],
+  matcher: ["/((?!_next|images|favicon.svg|favicon.ico).*)"],
 };

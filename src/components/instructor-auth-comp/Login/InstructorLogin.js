@@ -62,7 +62,7 @@ const InstructorLogin = () => {
     } catch (error) {
       console.error("Login error:", error);
       setStatus(
-        "Giriş yapılırken beklenmedik bir hata oluştu. Lütfen daha sonra tekrar deneyin."
+        "Giriş yapılırken beklenmedik bir hata oluştu. Lütfen daha sonra tekrar deneyin.",
       );
     } finally {
       setSubmitting(false);
@@ -71,12 +71,12 @@ const InstructorLogin = () => {
 
   const handleForgotPasswordSubmit = async (
     values,
-    { setSubmitting, setStatus }
+    { setSubmitting, setStatus },
   ) => {
     setSubmitting(true);
     try {
       const result = await instructorPanelService.resetInstructorPassword(
-        values.email
+        values.email,
       );
 
       // status tipini de gönderiyoruz
@@ -380,15 +380,18 @@ const InstructorLogin = () => {
               </Link>
             </p>
           </div>
-          {/* Terms */}
+
           <div className="text-center mt-6">
             <p className="text-xs text-gray-800">
               By logging in, you agree to our{" "}
-              <Link href="/terms" className="text-black transition-colors">
+              <Link
+                href="/kullanici-sozlesmesi"
+                className="text-black transition-colors"
+              >
                 Terms of Service
               </Link>{" "}
               and{" "}
-              <Link href="/privacy" className="text-black transition-colors">
+              <Link href="/kvkk" className="text-black transition-colors">
                 Privacy Policy
               </Link>
               .

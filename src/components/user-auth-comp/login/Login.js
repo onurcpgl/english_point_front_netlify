@@ -527,7 +527,6 @@ const Login = () => {
                   </Link>
                 </p>
               </div>
-              {/* Terms */}
               <div className="text-center mt-6">
                 <p className="text-xs text-gray-800">
                   Giriş yaparak{" "}
