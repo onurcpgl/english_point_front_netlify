@@ -17,9 +17,6 @@ const jost = Jost({
 export const metadata = {
   title: "English Point - İngilizce Öğrenme Platformu",
   description: "İngilizce öğrenmek hiç bu kadar kolay olmamıştı!",
-  icons: {
-    icon: "./favicon.svg", // SVG ikonunuzun yolu (public klasöründe olmalı)
-  },
 };
 
 export default function RootLayout({ children }) {
