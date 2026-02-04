@@ -27,6 +27,7 @@ function CourseContent() {
       router.replace("/course-sessions");
     }
   }, [session, status, router]);
+  // CourseComp.js içindeki CourseContent'e ekle
 
   useEffect(() => {
     const checkAndFetchSession = async () => {
@@ -67,6 +68,48 @@ function CourseContent() {
     setSessionDetailData(null);
   };
 
+  // SEO ve Meta Tag Manipülasyonu
+  useEffect(() => {
+    if (sessionDetailCompModal && sessionDetailData?.data) {
+      const session = sessionDetailData.data;
+      const cafeName = session.google_cafe?.name || "English Point";
+      const instructorName = `${session.instructor?.first_name || ""} ${session.instructor?.last_name || ""}`;
+      const titleText = `${session.session_title} | English Point`;
+      const descriptionText = `${cafeName} - Eğitmen: ${instructorName}`;
+      const imageUrl = session.google_cafe?.image;
+
+      // 1. Tarayıcı Sekme Başlığı
+      document.title = titleText;
+
+      // 2. Meta Açıklama
+      let metaDesc = document.querySelector('meta[name="description"]');
+      if (!metaDesc) {
+        metaDesc = document.createElement("meta");
+        metaDesc.name = "description";
+        document.head.appendChild(metaDesc);
+      }
+      metaDesc.setAttribute("content", descriptionText);
+
+      // 3. OpenGraph (WhatsApp/Insta Paylaşım Resmi)
+      const updateMeta = (property, content) => {
+        let el = document.querySelector(`meta[property="${property}"]`);
+        if (!el) {
+          el = document.createElement("meta");
+          el.setAttribute("property", property);
+          document.head.appendChild(el);
+        }
+        el.setAttribute("content", content);
+      };
+
+      updateMeta("og:title", titleText);
+      updateMeta("og:description", descriptionText);
+      if (imageUrl) {
+        updateMeta("og:image", imageUrl);
+        updateMeta("og:image:width", "1200");
+        updateMeta("og:image:height", "630");
+      }
+    }
+  }, [sessionDetailCompModal, sessionDetailData]);
   if (status === "loading") {
     return <Loading />;
   }

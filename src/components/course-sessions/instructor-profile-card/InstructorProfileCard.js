@@ -21,7 +21,7 @@ function InstructorModal({ selectedInstructor, onClose }) {
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl p-6 relative border border-gray-200 max-h-[90vh] overflow-y-auto">
-        <div className="w-full flex flex-col-reverse md:flex-row gap-6">
+        <div className="w-full flex flex-col-reverse md:flex-row gap-6 items-start">
           <div className="w-full md:2/4">
             <div className="w-full flex justify-center items-start gap-2">
               <Image

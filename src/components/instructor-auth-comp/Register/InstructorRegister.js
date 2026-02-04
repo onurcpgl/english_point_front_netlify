@@ -520,7 +520,7 @@ export default function InstructorRegister() {
     // ============================================================
 
     const fd = new FormData();
-    console.log("profil foto hatası", errors);
+
     // About
     Object.entries(formData.about).forEach(([k, v]) =>
       fd.append(`about[${k}]`, v || ""),

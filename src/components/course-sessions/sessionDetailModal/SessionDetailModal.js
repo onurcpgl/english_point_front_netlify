@@ -7,7 +7,7 @@ import {
   FiCalendar,
   FiClock,
   FiUser,
-  FiAlertCircle, // Uyarı ikonu eklendi
+  FiAlertCircle,
 } from "react-icons/fi";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -20,6 +20,58 @@ const SessionDetailModal = ({
   user,
 }) => {
   const router = useRouter();
+
+  // --- 1. YENİ EKLENEN KISIM: SEO & METADATA GÜNCELLEME ---
+  useEffect(() => {
+    // Sadece modal açıksa ve session verisi varsa çalışır
+    if (isOpen && session) {
+      const prevTitle = document.title; // Eski başlığı sakla
+
+      // 1. Tarayıcı Sekme Başlığı
+      document.title = `${session.session_title} | English Point`;
+
+      // Meta Etiketlerini Güncelleme Fonksiyonu
+      const updateMeta = (attribute, key, content) => {
+        if (!content) return;
+        let element = document.querySelector(`meta[${attribute}="${key}"]`);
+        if (!element) {
+          element = document.createElement("meta");
+          element.setAttribute(attribute, key);
+          document.head.appendChild(element);
+        }
+        element.setAttribute("content", content);
+      };
+
+      // 2. Meta Etiketlerini Basıyoruz
+      const description = `${session.google_cafe?.name || "Kafe"} - Eğitmen: ${
+        session.instructor?.first_name
+      } ${session.instructor?.last_name}`;
+      const currentUrl =
+        typeof window !== "undefined" ? window.location.href : "";
+      const imageUrl = session.google_cafe?.image;
+
+      // Standart Description
+      updateMeta("name", "description", description);
+
+      // Open Graph (Facebook/WhatsApp)
+      updateMeta("property", "og:title", session.session_title);
+      updateMeta("property", "og:description", description);
+      updateMeta("property", "og:image", imageUrl);
+      updateMeta("property", "og:type", "website"); // EKLENDİ
+      updateMeta("property", "og:url", currentUrl);
+
+      // Twitter
+      updateMeta("name", "twitter:title", session.session_title);
+      updateMeta("name", "twitter:description", description);
+      updateMeta("name", "twitter:image", imageUrl);
+
+      // Cleanup: Modal kapanınca başlığı eski haline getir
+      return () => {
+        document.title = prevTitle;
+      };
+    }
+  }, [isOpen, session]);
+  // -------------------------------------------------------
 
   // Scroll kilitleme efekti
   useEffect(() => {
@@ -34,7 +86,7 @@ const SessionDetailModal = ({
   // 1. ADIM: Sadece modal kapalıysa hiçbir şey render etme.
   if (!isOpen) return null;
 
-  // 2. ADIM: Modal açık ama session verisi YOKSA (null/undefined) uyarı göster.
+  // 2. ADIM: Modal açık ama session verisi YOKSA
   if (!session) {
     return (
       <div
@@ -45,29 +97,21 @@ const SessionDetailModal = ({
           className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl relative flex flex-col items-center text-center"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Kapatma Butonu */}
           <button
             onClick={onClose}
             className="absolute top-3 right-3 bg-gray-100 hover:bg-gray-200 p-2 rounded-full transition-colors"
           >
             <FiX size={20} className="text-gray-600" />
           </button>
-
-          {/* Uyarı İkonu */}
           <div className="bg-yellow-100 p-4 rounded-full mb-4">
             <FiAlertCircle className="w-10 h-10 text-yellow-600" />
           </div>
-
-          {/* Mesaj */}
           <h3 className="text-xl font-bold text-gray-900 mb-2">
             Eğitim Bulunamadı
           </h3>
           <p className="text-gray-600 mb-6 leading-relaxed">
             Aradığınız eğitimin süresi geçmiş ya da iptal edilmiş olabilir.
-            Lütfen güncel eğitimlerimize göz atın.
           </p>
-
-          {/* Aksiyon Butonu */}
           <button
             onClick={onClose}
             className="bg-[#FFD207] hover:bg-[#e6bd06] text-black font-bold py-3 px-8 rounded-full transition-transform active:scale-95 w-full"
@@ -79,9 +123,7 @@ const SessionDetailModal = ({
     );
   }
 
-  // --- Buradan aşağısı session verisi VARSA çalışır ---
-
-  // Tarih Formatlama
+  // --- Session verisi VARSA ---
   const sessionDate = session?.session_date
     ? new Date(session.session_date)
     : null;
@@ -94,7 +136,6 @@ const SessionDetailModal = ({
         minute: "2-digit",
       })
     : "-";
-
   const currentUsers = session.users_count || 0;
   const quota = session.quota || 0;
 
@@ -107,7 +148,6 @@ const SessionDetailModal = ({
         className="bg-white rounded-xl w-full max-w-5xl shadow-2xl relative overflow-hidden flex flex-col md:flex-row"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Kapatma Butonu */}
         <button
           onClick={onClose}
           className="absolute top-2 right-2 z-50 bg-gray-100 hover:bg-gray-200 p-2 rounded-full transition-colors"
@@ -118,11 +158,12 @@ const SessionDetailModal = ({
         {/* SOL TARAF: Görsel */}
         <div className="w-full md:w-[350px] h-64 md:h-auto relative bg-gray-200 shrink-0">
           <Image
+            width={400}
+            height={300}
             src={
               session?.google_cafe?.image || "https://via.placeholder.com/500"
             }
             alt={session?.google_cafe?.name || "Session Image"}
-            fill
             className="object-cover"
           />
           <div className="absolute top-4 right-4 bg-black/80 text-[#FFD207] font-bold px-3 py-1 rounded text-sm">
@@ -134,12 +175,12 @@ const SessionDetailModal = ({
         <div className="flex-1 p-6 flex flex-col justify-between">
           <div className="flex flex-col md:flex-row justify-between gap-4">
             <div className="flex-1 pr-4">
-              <h2 className="text-2xl font-bold text-gray-900 leading-tight mb-2">
+              <h1 className="text-2xl font-bold text-gray-900 leading-tight mb-2">
                 {session?.session_title}
-              </h2>
-              <h3 className="text-lg font-bold text-gray-800 mb-1">
+              </h1>
+              <h2 className="text-lg font-bold text-gray-800 mb-1">
                 {session?.google_cafe?.name}
-              </h3>
+              </h2>
               <p className="text-sm text-gray-500 leading-relaxed">
                 {session?.google_cafe?.address}
               </p>
@@ -225,7 +266,7 @@ const SessionDetailModal = ({
               <button
                 onClick={() => {
                   router.push(
-                    `/login?callbackUrl=/course-sessions/${session.id}`
+                    `/login?callbackUrl=/course-sessions/${session.id}`,
                   );
                 }}
                 className="w-full md:w-auto bg-[#FFD207] cursor-pointer hover:bg-[#e6bd06] text-black font-bold text-sm px-10 py-3 rounded-full shadow-md transition-all active:scale-95"

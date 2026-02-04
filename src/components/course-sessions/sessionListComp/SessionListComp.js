@@ -113,7 +113,7 @@ function CourseContentList({ mappedData, loading }) {
         return (
           <IoPersonOutline
             key={index}
-            className="text-2xl  max-md:text-lg text-gray-400"
+            className="text-xl  max-md:text-lg text-gray-400"
           />
         );
       }
@@ -305,7 +305,7 @@ function CourseContentList({ mappedData, loading }) {
               className="w-full bg-white border border-gray-300 shadow-2xl p-4 lg:p-5 flex flex-col lg:flex-row justify-between items-center lg:items-start gap-3 lg:gap-2"
             >
               {/* SOL KISIM */}
-              <div className="flex flex-col md:flex-row gap-6 lg:gap-10 w-full lg:w-4/6">
+              <div className="flex flex-col md:flex-row gap-6 lg:gap-10 w-full lg:w-3/6">
                 <div className="relative w-full md:w-auto flex justify-center md:block">
                   <Image
                     alt="Cafe Image"
@@ -313,7 +313,7 @@ function CourseContentList({ mappedData, loading }) {
                     width={300}
                     height={200}
                     priority
-                    className="object-cover w-full h-auto md:w-[300px] md:h-[200px]"
+                    className="object-cover w-full h-auto md:w-[400px]"
                   />
                 </div>
 
@@ -329,7 +329,7 @@ function CourseContentList({ mappedData, loading }) {
                     </p>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mt-2 sm:mt-0">
+                  <div className="flex flex-col  gap-4 sm:gap-6 mt-2 sm:mt-0">
                     <div className="flex justify-start items-center">
                       <FaLocationDot className="inline-block mr-2" />
                       <span
@@ -343,7 +343,7 @@ function CourseContentList({ mappedData, loading }) {
                     </div>
 
                     <div className="flex justify-start items-center gap-1 h-8">
-                      <span className="font-bold pr-2 max-md:pr-0 max-md:text-sm">
+                      <span className="font-bold text-md pr-2 max-md:pr-0 max-md:text-sm">
                         Kontenjan:
                       </span>
                       {quotaLoading ? (
@@ -380,9 +380,15 @@ function CourseContentList({ mappedData, loading }) {
       İki kutuyu saran tek bir div oluşturduk. 
       absolute özelliği SADECE bu kapsayıcı div'de var. 
       İçeridekiler flex ile yan yana duruyor.
-  */}
+  */}{" "}
                 <div className="flex flex-col lg:flex-row gap-2 w-full lg:w-auto lg:absolute lg:-top-[1.3rem]">
                   {/* Kategori Kutusu */}
+                  <div
+                    lang="en"
+                    className="bg-black uppercase text-white text-center  p-4 flex justify-center items-center flex-col font-bold leading-[1] rounded-lg lg:rounded-none w-full lg:w-auto shadow-sm"
+                  >
+                    <span>{item?.program?.business_slug}</span>
+                  </div>
                   <div
                     className={`
         p-4 flex justify-center items-center flex-col 

@@ -197,7 +197,7 @@ function Profile() {
             </div>
           )}
           <div className="rounded-3xl p-4 md:p-6 w-full bg-[#F5F5F5] shadow-sm h-auto">
-            <CardHeader title="Profile" />
+            <CardHeader title="Profil" />
 
             <div className="flex flex-col items-center text-center mt-6">
               <div className="relative w-36 h-36 mb-4">
