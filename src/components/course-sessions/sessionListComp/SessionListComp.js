@@ -383,12 +383,15 @@ function CourseContentList({ mappedData, loading }) {
   */}{" "}
                 <div className="flex flex-col lg:flex-row gap-2 w-full lg:w-auto lg:absolute lg:-top-[1.3rem]">
                   {/* Kategori Kutusu */}
-                  <div
-                    lang="en"
-                    className="bg-black uppercase text-white text-center  p-4 flex justify-center items-center flex-col font-bold leading-[1] rounded-lg lg:rounded-none w-full lg:w-auto shadow-sm"
-                  >
-                    <span>{item?.program?.business_slug}</span>
-                  </div>
+                  {/* item.program.business_slug değeri varsa div render edilir, yoksa edilmez */}
+                  {item?.program?.business_slug && (
+                    <div
+                      lang="en"
+                      className="bg-black uppercase text-white text-center p-4 flex justify-center items-center flex-col font-bold leading-[1] rounded-lg lg:rounded-none w-full lg:w-auto shadow-sm"
+                    >
+                      <span>{item.program.business_slug}</span>
+                    </div>
+                  )}
                   <div
                     className={`
         p-4 flex justify-center items-center flex-col 
