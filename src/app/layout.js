@@ -7,7 +7,7 @@ import Providers from "../utils/providers";
 import { CartProvider } from "../context/CartContext";
 import "react-calendar/dist/Calendar.css";
 import TransitionProvider from "../components/transitionProvider/TransitionProvider";
-
+import CookieBanner from "../components/cookie/CookieBanner";
 const jost = Jost({
   subsets: ["latin"],
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
@@ -17,14 +17,15 @@ const jost = Jost({
 export const metadata = {
   title: "English Point - İngilizce Öğrenme Platformu",
   description: "İngilizce öğrenmek hiç bu kadar kolay olmamıştı!",
-  themeColor: "#ffd207",
   icons: {
     icon: "/icon.svg?v=2", // Standart favicon
     shortcut: "/icon.svg?v=2", // Kısayol ikonu
     apple: "/icon.svg?v=2", // Apple cihazlar için
   },
 };
-
+export const viewport = {
+  themeColor: "#ffd207", // BURAYA EKLEYİN
+};
 export default function RootLayout({ children }) {
   return (
     <html lang="tr">
@@ -53,6 +54,7 @@ export default function RootLayout({ children }) {
 
         <TransitionProvider>
           <Providers>
+            <CookieBanner />
             <CartProvider> {children}</CartProvider>
           </Providers>
         </TransitionProvider>

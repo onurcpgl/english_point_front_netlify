@@ -2,7 +2,7 @@
 import CredentialsProvider from "next-auth/providers/credentials";
 
 export const authOptions = {
-  debug: true,
+  debug: false,
   providers: [
     // 1. MEVCUT EMAIL/PASSWORD GİRİŞİ
     CredentialsProvider({

@@ -1,44 +1,36 @@
 import React from "react";
-// Import yolunu senin klasör yapına göre ayarladım
+// Import yollarını kontrol et
 import SessionDetailModal from "../../../components/course-sessions/sessionDetailModal/SessionDetailModal";
+import generalService from "../../../utils/axios/generalService";
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-const baseUrl = process.env.NEXTAUTH_URL;
+const FALLBACK_IMAGE =
+  "https://api.englishpoint.com.tr/public/google_cafe/google_cafe_image.jpg";
 
 /**
  * 1. SERVER SIDE METADATA
- * Hata veren 'await params' kısmını kaldırdık.
+ * Next.js 15+ uyumlu: params bir Promise olduğu için await ediyoruz.
  */
-export async function generateMetadata({ params }) {
-  // DÜZELTME: await params KALDIRILDI.
-  // params.id dizisini güvenli bir şekilde alıyoruz.
-  const idParam = params?.id;
-  const id = Array.isArray(idParam) ? idParam[0] : idParam;
+export async function generateMetadata(props) {
+  // DÜZELTME BURADA: params'ı await ile çözüyoruz
+  const params = await props.params;
 
-  if (!id) {
-    return {
-      title: "English Point",
-      description: "İngilizce Konuşma Kulübü",
-    };
-  }
+  // Route yapın [[...id]] olduğu için id dizi gelir (örn: ['123']). İlkini alıyoruz.
+  const idArray = params?.id;
+  const id = Array.isArray(idArray) ? idArray[0] : idArray;
+
+  if (!id) return { title: "English Point" };
 
   try {
-    const res = await fetch(`${apiUrl}api/course-sessions/${id}`, {
-      cache: "no-store",
-    });
-    const result = await res.json();
-    const session = result.data;
+    const result = await generalService.getCourseSessionSingle(id);
+    const session = result?.data;
 
     if (!session) return { title: "English Point" };
 
-    const title = session.session_title;
-    const instructorName = `${session.instructor?.first_name || ""} ${session.instructor?.last_name || ""}`;
+    const title = session.session_title || "English Point Session";
     const cafeName = session.google_cafe?.name || "English Point";
+    const instructorName = `${session.instructor?.first_name || ""} ${session.instructor?.last_name || ""}`;
     const description = `${cafeName} - Eğitmen: ${instructorName}`;
-    const imageUrl = session.google_cafe?.image;
-
-    // Paylaşım Linki
-    const shareUrl = `${baseUrl}/share-course/${id}`;
+    const imageUrl = session.google_cafe?.image || FALLBACK_IMAGE;
 
     return {
       title: title,
@@ -46,56 +38,44 @@ export async function generateMetadata({ params }) {
       openGraph: {
         title: title,
         description: description,
-        url: shareUrl,
-        images: [
-          {
-            url: imageUrl,
-            width: 1200,
-            height: 630,
-            alt: title,
-          },
-        ],
-        type: "website",
+        images: [{ url: imageUrl }],
       },
     };
   } catch (error) {
-    console.error("Metadata hatası:", error);
-    return { title: "English Point" };
+    return { title: "English Point", openGraph: { images: [FALLBACK_IMAGE] } };
   }
 }
 
 /**
  * 2. SERVER SIDE PAGE
+ * Next.js 15+ uyumlu: params bir Promise olduğu için await ediyoruz.
  */
-export default async function ShareCoursePage({ params }) {
-  // DÜZELTME: Burada da await kaldırıldı
-  const idParam = params?.id;
-  const id = Array.isArray(idParam) ? idParam[0] : idParam;
+export default async function ShareCoursePage(props) {
+  // DÜZELTME BURADA: params'ı await ile çözüyoruz
+  const params = await props.params;
+
+  // Route yapın [[...id]] olduğu için id dizi gelir. İlkini alıyoruz.
+  const idArray = params?.id;
+  const id = Array.isArray(idArray) ? idArray[0] : idArray;
 
   let sessionData = null;
 
   if (id) {
     try {
-      const res = await fetch(`${apiUrl}api/course-sessions/${id}`, {
-        cache: "no-store",
-      });
-      if (res.ok) {
-        const result = await res.json();
-        sessionData = result.data;
-      }
-    } catch (error) {
-      console.error("Sayfa veri hatası:", error);
+      const result = await generalService.getCourseSessionSingle(id);
+      sessionData = result?.data;
+    } catch (e) {
+      console.error(e);
     }
   }
-  console.log("sessionData", sessionData);
+
   return (
     <div className="relative w-full min-h-screen bg-[#FFD207] flex items-center justify-center">
-      {/* Veri gelene kadar basit bir yükleniyor yazısı, sonra Modal açılır */}
-      {!sessionData && (
+      {sessionData ? (
+        <SessionDetailModal isOpen={true} session={sessionData} user={false} />
+      ) : (
         <div className="text-black font-bold animate-pulse">Yükleniyor...</div>
       )}
-
-      <SessionDetailModal isOpen={true} session={sessionData} user={false} />
     </div>
   );
 }
