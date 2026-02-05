@@ -17,6 +17,12 @@ const jost = Jost({
 export const metadata = {
   title: "English Point - İngilizce Öğrenme Platformu",
   description: "İngilizce öğrenmek hiç bu kadar kolay olmamıştı!",
+  themeColor: "#ffd207",
+  icons: {
+    icon: "/icon.svg?v=2", // Standart favicon
+    shortcut: "/icon.svg?v=2", // Kısayol ikonu
+    apple: "/icon.svg?v=2", // Apple cihazlar için
+  },
 };
 
 export default function RootLayout({ children }) {
