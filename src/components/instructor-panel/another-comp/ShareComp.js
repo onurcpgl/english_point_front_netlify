@@ -10,20 +10,18 @@ import {
 } from "react-share";
 import { FiShare2, FiCopy, FiCheck } from "react-icons/fi";
 import { useState } from "react";
-// X (Twitter) Logosu için Custom SVG Bileşeni - DÜZELTİLMİŞ VERSİYON
+
+// X (Twitter) Logosu
 const XLogoIcon = ({ size = 48, className }) => (
   <div
     style={{ width: size, height: size }}
-    // p-2.5 ekleyerek logonun daire kenarlarına yapışmasını engelledik ama yeterince büyük tuttuk.
     className={`bg-black rounded-full flex items-center justify-center text-white p-2.5 ${className}`}
   >
     <svg
       viewBox="0 0 24 24"
       aria-hidden="true"
-      // w-full h-full diyerek padding'in izin verdiği alanı tamamen kaplamasını sağladık.
       className="w-full h-full fill-current"
     >
-      {/* BU PATH ORİJİNAL, NET X LOGOSUDUR */}
       <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
     </svg>
   </div>
@@ -33,7 +31,7 @@ const ShareComp = ({
   isOpen,
   onClose,
   shareUrl,
-  title,
+  title, // Örn: "Professional English - 18G Espresso"
   imageUrl,
   description,
 }) => {
@@ -82,7 +80,7 @@ const ShareComp = ({
         </div>
 
         <div className="p-6">
-          {/* Görsel Önizleme Alanı */}
+          {/* Görsel Önizleme (Opsiyonel - Sadece modal içinde kullanıcıya ne paylaştığını göstermek için) */}
           {imageUrl && (
             <div className="mb-6 rounded-xl overflow-hidden border border-gray-200 shadow-sm relative group">
               <img
@@ -105,10 +103,10 @@ const ShareComp = ({
 
           {/* Sosyal Medya Butonları */}
           <div className="flex justify-center gap-4 mb-6">
-            <WhatsappShareButton
-              url={shareUrl}
-              title={`${title} - ${description || ""}`}
-            >
+            {/* WhatsApp: Title'ı kaldırdım veya sadeleştirdim. 
+                WhatsApp link önizlemesini (OG Tags) kendisi çekecektir. 
+                Sadece link gitmesi en temizidir. */}
+            <WhatsappShareButton url={shareUrl} separator=" - ">
               <div className="flex flex-col items-center gap-1 group">
                 <WhatsappIcon
                   size={50}
@@ -121,7 +119,8 @@ const ShareComp = ({
               </div>
             </WhatsappShareButton>
 
-            <FacebookShareButton url={shareUrl} quote={title}>
+            {/* Facebook: Genelde sadece URL alır, içeriği siteden çeker */}
+            <FacebookShareButton url={shareUrl}>
               <div className="flex flex-col items-center gap-1 group">
                 <FacebookIcon
                   size={50}
@@ -134,13 +133,13 @@ const ShareComp = ({
               </div>
             </FacebookShareButton>
 
+            {/* Twitter: Başlık ve Hashtag kullanılabilir */}
             <TwitterShareButton
               url={shareUrl}
               title={title}
-              hashtags={["EnglishPoint", "Speaking"]}
+              hashtags={["EnglishPoint", "SpeakingClub"]}
             >
               <div className="flex flex-col items-center gap-1 group">
-                {/* Özel X Logosu */}
                 <XLogoIcon
                   size={48}
                   className="group-hover:scale-110 transition-transform shadow-lg"
@@ -151,6 +150,7 @@ const ShareComp = ({
               </div>
             </TwitterShareButton>
 
+            {/* LinkedIn: Summary ve Source önemlidir */}
             <LinkedinShareButton
               url={shareUrl}
               title={title}

@@ -55,7 +55,7 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
     message: "",
     onConfirm: () => {},
   });
-  console.log("status", status);
+
   const [successModal, setSuccessModal] = useState({
     open: false,
     message: "",
@@ -122,13 +122,20 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
   };
   const handleShareClick = (e, session) => {
     e.stopPropagation();
+
+    // 1. Site adresini al (örn: https://englishpoint.com.tr)
     const origin = typeof window !== "undefined" ? window.location.origin : "";
-    const url = `${origin}/course-sessions/${session.uniq_id}`;
+
+    // 2. Senin oluşturduğun özel SEO sayfasına giden linki oluştur
+    // Bu link paylaşıldığında senin ShareCoursePage'deki generateMetadata çalışacak
+    const url = `${origin}/share-course/${session.uniq_id}`;
 
     setShareModalData({
       open: true,
       url: url,
-      title: `Join my session: ${session.session_title} at ${session.google_cafe.name}`,
+      // 3. "Join my session" yazılarını kaldırdık.
+      // Sadece Eğitim Başlığı - Kafe Adı şeklinde sadeleştirdik.
+      title: `${session.session_title} - ${session.google_cafe.name}`,
     });
   };
   useEffect(() => {
