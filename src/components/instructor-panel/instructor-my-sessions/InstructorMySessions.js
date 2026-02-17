@@ -42,7 +42,11 @@ function InstructorMySessions() {
 
         setSessionCounts({
           all: sessions.length,
-          active: sessions.filter((s) => s.status === "active").length,
+          // Active satırını güncelledik:
+          active: sessions.filter(
+            (s) =>
+              s.status === "active" || s.status === "cancellation_requested",
+          ).length,
           completed: sessions.filter((s) => s.status === "completed").length,
           cancelled: sessions.filter((s) => s.status === "cancelled").length,
           awaiting: sessions.filter((s) => s.status === "awaiting").length,

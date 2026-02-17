@@ -210,7 +210,20 @@ const googleCafeImageCheck = async (googlePlaceId) => {
   });
   return response.data;
 };
+const cancelSession = async (values) => {
+  const response = await axiosInstance.post("/api/session/cancel", values);
+  return response.data;
+};
+const cancelSessionWithdraw = async (values) => {
+  const response = await axiosInstance.post(
+    "/api/session/withdraw-cancel",
+    values,
+  );
+  return response.data;
+};
 const instructorService = {
+  cancelSession,
+  cancelSessionWithdraw,
   getPaymentsStats,
   googleCafeImageCheck,
   getProgramCategories,

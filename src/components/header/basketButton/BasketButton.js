@@ -23,7 +23,7 @@ export default function BasketButton() {
       {/* Sepet Butonu */}
       <button
         onClick={() => setOpen(!open)}
-        className="relative text-black hover:text-gray-700 transition-all transform hover:scale-110 cursor-pointer flex justify-center items-center"
+        className="relative text-black -top-0.5 hover:text-gray-700 transition-all transform hover:scale-110 cursor-pointer flex justify-center items-center"
       >
         <ShoppingCart className="w-7 h-7 max-lg:w-5 max-lg:h-5" />
         {sessions?.basket && (
@@ -63,7 +63,7 @@ export default function BasketButton() {
                   {getTime(sessions?.basket?.course_session.session_date)}
                 </span>
                 <hr className="border w-full my-2" />
-                <span className="text-gray-500 text-xs">200₺</span>
+                <span className="text-gray-500 text-xs">298.80₺</span>
               </div>
             </div>
           ) : (

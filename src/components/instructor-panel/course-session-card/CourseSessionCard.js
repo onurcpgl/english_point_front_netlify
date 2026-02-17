@@ -8,6 +8,7 @@ import {
   FiRefreshCw,
   FiEdit,
   FiTrash2,
+  FiXCircle,
   FiCheck,
   FiBell,
   FiUser,
@@ -34,6 +35,7 @@ import { toast } from "react-toastify";
 import {
   enFormatDate,
   enFormatTime,
+  formatDate,
   formatTime,
 } from "../../../utils/helpers/formatters";
 import ConfirmModal from "../../ui/ConfirmModal/ConfirmModal";
@@ -80,7 +82,15 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
   const [usersLoading, setUsersLoading] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedSessionForEdit, setSelectedSessionForEdit] = useState(null);
-
+  const [cancelModal, setCancelModal] = useState({ open: false, data: null });
+  const [withdrawModal, setWithdrawModal] = useState({
+    isOpen: false,
+    sessionId: null,
+  });
+  // API isteği sırasında butonu kilitlemek için loading durumu
+  const [withdrawLoading, setWithdrawLoading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
   // 🔥 SPAM KORUMASI: Buton basılabilir mi? (Başlangıçta true)
   const [canRefresh, setCanRefresh] = useState(true);
 
@@ -89,6 +99,7 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
   const [selectedParticipant, setSelectedParticipant] = useState(null);
   const [dismissedSessionIds, setDismissedSessionIds] = useState([]);
   const openCourseRef = useRef(null);
+  const [cancelReason, setCancelReason] = useState("");
   const [sessionList, setSessionList] = useState([]);
   const [quotaLoading, setQuotaLoading] = useState(true);
   // 1. Props'tan gelen veriyi state'e atıyoruz
@@ -159,7 +170,67 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
       echo.leave("course_sessions");
     };
   }, []);
+  const onConfirmWithdraw = async () => {
+    if (!showWithdrawModal.sessionId) return;
 
+    setIsProcessing(true);
+    try {
+      const payload = { session_id: showWithdrawModal.sessionId };
+      // Servis adını generalService ya da instructorPanelService olarak kontrol et
+      const res = await instructorPanelService.cancelSessionWithdraw(payload);
+
+      if (res.status) {
+        toast.success(res.message || "Request withdrawn successfully");
+        setShowWithdrawModal({ isOpen: false, sessionId: null });
+        if (refetch) refetch(); // Sayfayı yenilemek için kullandığın props
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error(error.response?.data?.message || "Failed to withdraw.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+  const handleConfirmWithdraw = async () => {
+    // 1. Session ID var mı kontrol et
+    if (!withdrawModal.sessionId) return;
+
+    setWithdrawLoading(true);
+    try {
+      const payload = { session_id: withdrawModal.sessionId };
+
+      // 2. API İsteği (Servis adını kendi projene göre kontrol et)
+      const res = await instructorPanelService.cancelSessionWithdraw(payload);
+
+      if (res.status) {
+        toast.success(res.message || "İptal talebi geri çekildi.");
+
+        // 3. Modalı Kapat
+        setWithdrawModal({ isOpen: false, sessionId: null });
+
+        // 4. Listeyi Yenile (Refetch varsa kullan, yoksa manuel state güncelle)
+        if (refetch) {
+          refetch();
+        } else {
+          // Listeyi manuel güncelleme (Refetch yoksa)
+          setSessionList((prev) =>
+            prev.map((item) =>
+              item.id === withdrawModal.sessionId
+                ? { ...item, status: "active" } // Statüyü active yap
+                : item,
+            ),
+          );
+        }
+      } else {
+        toast.error(res.message || "İşlem başarısız.");
+      }
+    } catch (error) {
+      console.error("Withdraw Error:", error);
+      toast.error(error.response?.data?.message || "Bir hata oluştu.");
+    } finally {
+      setWithdrawLoading(false);
+    }
+  };
   const updateSessionList = (updates) => {
     setSessionList((prevSessions) => {
       return prevSessions.map((session) => {
@@ -175,7 +246,39 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
       });
     });
   };
+  const handleWithdraw = async (sessionId) => {
+    // Modern bir onay kutusu (SweetAlert veya benzeri varsa onu kullanabilirsin)
+    if (
+      !window.confirm(
+        "Do you want to withdraw your cancellation request and keep this session active?",
+      )
+    )
+      return;
 
+    setIsWithdrawing(true);
+    try {
+      const payload = { session_id: sessionId };
+      const res = await instructorPanelService.cancelSessionWithdraw(payload);
+
+      if (res.status) {
+        // Başarılı mesajı (Toast kullanmanı öneririm)
+        alert(res.message);
+        // Listeyi yenilemek için kullandığın fonksiyonu çağır (Örn: fetchSessions)
+        if (typeof fetchSessions === "function") fetchSessions();
+      } else {
+        alert(res.message || "Something went wrong.");
+      }
+    } catch (error) {
+      console.error("Withdraw error:", error);
+      // Admin onaylamış olabilir (400 Hatası dönerse)
+      alert(
+        error.response?.data?.message ||
+          "Action failed. Admin might have already approved it.",
+      );
+    } finally {
+      setIsWithdrawing(false);
+    }
+  };
   // 🔥 KULLANICILARI GETİREN FONKSİYON
   const getSessionUsers = async (sessionId) => {
     setUsersLoading(true); // Yükleme başlasın
@@ -194,6 +297,131 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
       setSelectedSessionUsers([]);
     } finally {
       setUsersLoading(false); // Yükleme bitsin
+    }
+  };
+  // 🔥 İPTAL BUTONUNA TIKLANINCA ÇALIŞAN FONKSİYON
+  const handleCancelClick = (e, session) => {
+    e.stopPropagation();
+
+    const sessionDate = new Date(session.session_date);
+    const now = new Date();
+    const diffInMs = sessionDate - now;
+    const diffInMinutes = diffInMs / (1000 * 60);
+
+    let cancelType = "";
+    let message = "";
+    let modalTitle = "";
+
+    // --- 1 SAAT KONTROLÜ (YASAK) ---
+    if (diffInMinutes < 60) {
+      cancelType = "forbidden";
+      modalTitle = "Action Not Allowed";
+      message =
+        "Cancellation is no longer possible as there is less than 1 hour left until the session starts.";
+    } else {
+      // --- SENİN MEVCUT MANTIK AĞACIN ---
+      const hoursLeft = Math.floor(diffInMs / (1000 * 60 * 60));
+      const studentCount = session.users_count || 0;
+
+      if (hoursLeft >= 12) {
+        if (studentCount > 0) {
+          cancelType = "standard_with_students";
+          modalTitle = "Session Cancellation";
+          message = `There are ${studentCount} students registered for this session. If you cancel, their payments/rights will be refunded. No penalty will be applied. Do you confirm?`;
+        } else {
+          cancelType = "standard";
+          modalTitle = "Session Cancellation";
+          message =
+            "You are about to cancel this session. This action cannot be undone. Do you confirm?";
+        }
+      } else {
+        if (studentCount > 0) {
+          cancelType = "penalty";
+          modalTitle = "Penalty Warning";
+          message = `WARNING! Only ${hoursLeft} hours left and there are ${studentCount} registered students. If you cancel now, a 100 TL PENALTY will be deducted from your earnings.`;
+        } else {
+          cancelType = "admin_approval";
+          modalTitle = "Admin Approval Required";
+          message = `Less than 12 hours left (${hoursLeft} hours). No penalty will be applied, but your request will be submitted for admin approval.`;
+        }
+      }
+    }
+
+    // Modal'ı her durumda açıyoruz
+    setCancelModal({
+      open: true,
+      data: {
+        session_id: session.id,
+        cancelType,
+        modalTitle,
+        message,
+      },
+    });
+  };
+
+  // 🔥 İPTALİ ONAYLAMA (API İSTEĞİ)
+  // --- CONFIRM CANCEL FONKSİYONU ---
+  const confirmCancel = async () => {
+    if (!cancelModal.data) return;
+
+    // 12 SAAT KURALI KONTROLÜ:
+    // Eğer cezalı iptal (penalty) ise ve sebep girilmemişse durdur
+    if (cancelModal.data.cancelType === "penalty" && !cancelReason.trim()) {
+      setErrorModal({
+        open: true,
+        message:
+          "Please provide a reason for cancellation (Required for late cancellations).",
+      });
+      return;
+    }
+
+    setCancelLoading(true);
+    try {
+      // API'ye 'reason' parametresini de ekleyerek gönderiyoruz
+      const response = await instructorPanelService.cancelSession({
+        session_id: cancelModal.data.session_id,
+        cancel_type: cancelModal.data.cancelType,
+        reason: cancelReason, // SEBEP BURADA GÖNDERİLİYOR
+      });
+
+      if (response.status === true || response.status === "success") {
+        setSuccessModal({
+          open: true,
+          message: response.message || "Session cancelled successfully.",
+        });
+
+        const newStatus = response.data?.new_status;
+
+        if (newStatus === "cancellation_requested") {
+          if (refetch) refetch();
+        } else {
+          if (refetch) {
+            refetch();
+          } else {
+            setSessionList((prev) =>
+              prev.filter((item) => item.id !== cancelModal.data.session_id),
+            );
+          }
+        }
+
+        // Başarılı işlem sonrası modalı kapat ve sebebi temizle
+        setCancelModal({ open: false, data: null });
+        setCancelReason("");
+      } else {
+        setErrorModal({
+          open: true,
+          message: response.message || "Failed to cancel session.",
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      setErrorModal({
+        open: true,
+        message:
+          error.response?.data?.message || "An unexpected error occurred.",
+      });
+    } finally {
+      setCancelLoading(false);
     }
   };
 
@@ -492,6 +720,103 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
           You can delete or edit your sessions that are in awaiting status.
         </p>
       )}
+      {cancelModal.open && cancelModal.data && (
+        <div className="fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center gap-3 text-red-600 mb-4 border-b border-gray-100 pb-3">
+              <div className="bg-red-100 p-2.5 rounded-full">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="w-6 h-6"
+                >
+                  <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+                  <path d="M12 9v4"></path>
+                  <path d="M12 17h.01"></path>
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900">
+                {cancelModal.data.modalTitle}
+              </h3>
+            </div>
+
+            <div className="mb-6">
+              <p className="text-gray-600 text-sm leading-relaxed">
+                {cancelModal.data.message}
+              </p>
+
+              {/* EĞER 12 SAATTEN AZ KALDIYSA (Penalty durumu) SEBEP ALANINI GÖSTER */}
+              {cancelModal.data.cancelType === "penalty" && (
+                <div className="space-y-4">
+                  <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-3 flex justify-between items-center">
+                    <span className="text-red-700 font-medium text-sm">
+                      Penalty Amount:
+                    </span>
+                    <span className="text-red-700 font-bold text-lg">
+                      -100.00 TL
+                    </span>
+                  </div>
+
+                  {/* SEBEP TEXTAREA ALANI */}
+                  <div className="mt-4">
+                    <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+                      Reason for Cancellation{" "}
+                      <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      value={cancelReason}
+                      onChange={(e) => setCancelReason(e.target.value)}
+                      placeholder="Explain why you need to cancel this session..."
+                      className="w-full bg-gray-50 border text-black border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-red-500 focus:bg-white outline-none transition-all resize-none min-h-[100px]"
+                      rows="3"
+                    />
+                    <p className="text-[10px] text-gray-400 mt-1">
+                      Since there is less than 12 hours left, a reason is
+                      mandatory.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setCancelModal({ open: false, data: null });
+                  setCancelReason(""); // Modal kapanınca içeriği temizle
+                }}
+                className="px-5 py-2.5 text-gray-600 font-medium bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors text-sm"
+                disabled={cancelLoading}
+              >
+                {cancelModal.data.cancelType === "forbidden"
+                  ? "Close"
+                  : "Cancel"}
+              </button>
+
+              {cancelModal.data.cancelType !== "forbidden" && (
+                <button
+                  onClick={confirmCancel}
+                  disabled={cancelLoading}
+                  className="px-5 py-2.5 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-colors flex items-center gap-2 text-sm shadow-lg shadow-red-200"
+                >
+                  {cancelLoading ? (
+                    <>
+                      <FiRefreshCw className="animate-spin" /> Processing...
+                    </>
+                  ) : (
+                    "Confirm Cancellation"
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       <ShareComp
         isOpen={shareModalData.open}
         onClose={() => setShareModalData({ ...shareModalData, open: false })}
@@ -504,12 +829,118 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
         title={docModalData.title}
         content={docModalData.content}
       />
-      {sessionList.map(
-        (item, i) =>
-          item.status === status && (
+      {sessionList.map((item, i) => {
+        // Eğer dışarıdan gelen status 'active' ise, hem 'active' hem 'cancellation_requested' olanları göster.
+        // Diğer durumlarda (awaiting, completed vb.) sadece birebir eşleşenleri göster.
+        const isVisible =
+          status === "active"
+            ? item.status === "active" ||
+              item.status === "cancellation_requested"
+            : item.status === status;
+
+        return (
+          isVisible && (
             <div key={item.id || i} className="space-y-4 relative my-2">
               <article className="session-card-trigger relative bg-white shadow-md overflow-hidden flex flex-col md:flex-row p-4 md:p-5 rounded-2xl border border-gray-100">
-                {/* --- ÜST KATMANLAR (Overlay & Bell) - Mevcut Mantığın Tamamen Aynı --- */}
+                {item.status === "cancellation_requested" && (
+                  <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/60 backdrop-grayscale-[0.8] backdrop-blur-[1px] transition-all duration-300">
+                    {/* Ortadaki Uyarı Kartı */}
+                    <div className="bg-white/95 border border-orange-200 shadow-2xl rounded-xl p-5 flex flex-col items-center text-center max-w-[260px] animate-in zoom-in-95 duration-200">
+                      <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center mb-3 relative">
+                        <div className="absolute inset-0 bg-orange-400 rounded-full opacity-20 animate-ping"></div>
+                        <FiClock className="text-orange-500 text-2xl" />
+                      </div>
+
+                      <h4 className="text-gray-900 font-bold text-sm uppercase tracking-tight">
+                        Cancellation Pending
+                      </h4>
+
+                      <p className="text-gray-500 text-[11px] mt-1 leading-snug px-2">
+                        Admin is reviewing your request. You can still withdraw
+                        it.
+                      </p>
+
+                      {/* --- YENI: GERİ ÇEKME BUTONU --- */}
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault(); // Sayfa yenilemeyi önler
+                          e.stopPropagation(); // KARTIN TIKLANMASINI ÖNLER (404 Çözümü)
+                          setWithdrawModal({
+                            isOpen: true,
+                            sessionId: item.id,
+                          }); // Modalı açar
+                        }}
+                        className="mt-4 w-full py-2 bg-gray-900 hover:bg-black text-white text-[10px] font-bold rounded-lg transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg"
+                      >
+                        <FiXCircle size={14} /> WITHDRAW REQUEST
+                      </button>
+                      <div className="mt-3 px-3 py-1 bg-gray-100 rounded-full text-[9px] text-gray-400 font-mono tracking-widest">
+                        LOCKED
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {/* --- WITHDRAW MODAL (GLOBAL OLARAK SAYFANIN EN ALTINDA DURMALI) --- */}
+                {/* --- WITHDRAW MODAL (GLOBAL POSITIONED AT BOTTOM) --- */}
+                {withdrawModal.isOpen && (
+                  <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div
+                      className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center animate-in zoom-in-95 duration-200"
+                      onClick={(e) => e.stopPropagation()} // Prevent modal close on click inside
+                    >
+                      {/* İkon: Sarı/Yellow Tonlarında */}
+                      <div className="w-16 h-16 bg-yellow-50 text-yellow-600 border border-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <FiRefreshCw size={32} />
+                      </div>
+
+                      <h3 className="text-xl font-bold text-gray-900">
+                        Are you sure?
+                      </h3>
+                      <p className="text-gray-500 text-sm mt-2 leading-relaxed">
+                        You are about to withdraw your cancellation request.
+                        Your session will become <b>Active</b> again.
+                      </p>
+
+                      <div className="mt-8 flex flex-col gap-3">
+                        {/* ONAY BUTONU: Siyah/Black (Marka Rengi) */}
+                        <button
+                          disabled={withdrawLoading}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleConfirmWithdraw();
+                          }}
+                          className="w-full py-3 bg-black hover:bg-gray-800 text-white rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg"
+                        >
+                          {withdrawLoading ? (
+                            <span className="flex items-center gap-2">
+                              <FiRefreshCw className="animate-spin" />{" "}
+                              Processing...
+                            </span>
+                          ) : (
+                            <>
+                              <FiCheck /> Yes, Withdraw It
+                            </>
+                          )}
+                        </button>
+
+                        {/* VAZGEÇ BUTONU: Gri/Gray */}
+                        <button
+                          disabled={withdrawLoading}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setWithdrawModal({
+                              isOpen: false,
+                              sessionId: null,
+                            });
+                          }}
+                          className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-xl font-bold text-sm transition-all"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 {isSessionCompleted(item) &&
                   !dismissedSessionIds.includes(item.id) && (
                     <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/60 backdrop-blur-[3px] rounded-2xl animate-in fade-in duration-500">
@@ -706,7 +1137,7 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
                   <div className="flex flex-col items-end md:items-center text-[11px] md:text-sm text-gray-700 font-medium">
                     <div className="flex items-center gap-1.5">
                       <FiCalendar className="text-[#fdd207]" />
-                      <span>{enFormatDate(item.session_date, "short")}</span>
+                      <span>{formatDate(item.session_date, "short")}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <FiClock className="text-[#fdd207]" />
@@ -734,6 +1165,47 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
                       </button>
                     </div>
                   )}
+                  {status === "active" &&
+                    (() => {
+                      // Zaman kontrolü: session_date ile şu an arasındaki farkı hesapla
+                      const sessionTime = new Date(item.session_date).getTime();
+                      const now = new Date().getTime();
+                      const diffInHours =
+                        (sessionTime - now) / (1000 * 60 * 60);
+
+                      // Eğer derse 1 saatten fazla varsa butonu göster
+                      if (diffInHours > 1) {
+                        return (
+                          <button
+                            onClick={(e) => {
+                              if (item.status === "cancellation_requested")
+                                return;
+                              handleCancelClick(e, item);
+                            }}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-bold border transition-colors
+          ${
+            item.status === "cancellation_requested"
+              ? "bg-orange-50 text-orange-600 border-orange-100 cursor-default"
+              : "bg-red-50 text-red-600 border-red-100 hover:bg-red-100 cursor-pointer"
+          }
+        `}
+                          >
+                            {item.status === "cancellation_requested" ? (
+                              <>
+                                <FiClock size={14} /> Pending
+                              </>
+                            ) : (
+                              <>
+                                <FiXCircle size={14} /> Cancel
+                              </>
+                            )}
+                          </button>
+                        );
+                      }
+
+                      // 1 saatten az kaldıysa hiçbir şey dönme (buton gizlenir)
+                      return null;
+                    })()}
                 </div>
               </article>
               {openCourseInfo?.id === item.id && (
@@ -888,8 +1360,9 @@ const CourseSessionCard = ({ data, status, setSessionCounts, refetch }) => {
                 </div>
               )}
             </div>
-          ),
-      )}
+          )
+        );
+      })}
     </div>
   );
 };

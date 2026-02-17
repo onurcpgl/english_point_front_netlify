@@ -15,6 +15,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import InstructorContractModal from "../instructor-contract-modal/InstructorContractModal";
 async function fetchCountries() {
   const res = await fetch("/countries.json", { cache: "no-store" });
   if (!res.ok) throw new Error("Countries fetch failed");
@@ -45,6 +46,8 @@ export default function InstructorRegister() {
   const [isYearOpen, setIsYearOpen] = useState(false);
   const [isEduYearOpen, setIsEduYearOpen] = useState(false);
   const [existsingEmail, setExistingEmail] = useState(false);
+  const [isAgreed, setIsAgreed] = useState(false);
+  const [isContractOpen, setIsContractOpen] = useState(false);
   const filtered =
     countries
       ?.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
@@ -441,14 +444,17 @@ export default function InstructorRegister() {
   };
 
   const handleFinalSubmit = async () => {
-    setLoadingBtn(true);
-
     // 1. Validasyon kontrolü
     if (!validateCurrent()) {
       setLoadingBtn(false);
       return;
     }
-
+    // 2. SÖZLEŞME ONAY KONTROLÜ (YENİ EKLEME)
+    if (!isAgreed) {
+      setIsContractOpen(true); // Sözleşme onaylı değilse modalı aç
+      return; // Fonksiyonun devamını (API isteğini) çalıştırma
+    }
+    setLoadingBtn(true);
     // ============================================================
     // 🛑 1. DOSYA BOYUTU KONTROLÜ (3MB - English Messages)
     // ============================================================
@@ -627,6 +633,16 @@ export default function InstructorRegister() {
 
   return (
     <div className="w-full  min-h-screen bg-[#FFD207] relative">
+      <InstructorContractModal
+        isOpen={isContractOpen}
+        onClose={() => setIsContractOpen(false)}
+        onConfirm={() => {
+          setIsAgreed(true);
+          setIsContractOpen(false);
+          // İstersen burada handleFinalSubmit() diyerek otomatik devam ettirebilirsin
+          // ama "kullanıcı kendi bassın" dediğin için sadece onaylıyoruz.
+        }}
+      />
       <div className="w-full h-20 bg-white flex justify-center items-center">
         <div className=" container mx-auto max-lg:px-6">
           <Link href={"/"}>
@@ -1325,7 +1341,8 @@ export default function InstructorRegister() {
                                 </div>
 
                                 <p className="font-bold text-center text-sm">
-                                  JPG or PNG format; maximum size of 3MB.
+                                  JPG, PNG, or PDF format; maximum file size is
+                                  3MB.
                                 </p>
                               </div>
                             </div>
@@ -1575,7 +1592,8 @@ export default function InstructorRegister() {
                                 </div>
 
                                 <p className="font-bold text-center text-sm">
-                                  JPG or PNG format; maximum size of 3MB.
+                                  JPG, PNG, or PDF format; maximum file size is
+                                  3MB.
                                 </p>
                               </div>
                             </div>
@@ -1753,20 +1771,12 @@ export default function InstructorRegister() {
                     <div className="w-1/2 max-lg:w-full bg-white  p-8">
                       <table className="w-full">
                         <tbody className="text-sm">
-                          <tr className="">
-                            <td className="py-2 font-semibold text-[#686464]">
-                              1 student
-                            </td>
-                            <td className="py-2 text-right font-bold">
-                              200 TL
-                            </td>
-                          </tr>
                           <tr className=" border-gray-100">
                             <td className="py-2 font-semibold text-[#686464]">
                               2 students
                             </td>
                             <td className="py-2 text-right font-bold">
-                              250 TL
+                              333 TL
                             </td>
                           </tr>
                           <tr className=" border-gray-100">
@@ -1774,7 +1784,7 @@ export default function InstructorRegister() {
                               3 students
                             </td>
                             <td className="py-2 text-right font-bold">
-                              300 TL
+                              444 TL
                             </td>
                           </tr>
                           <tr className=" border-gray-100">
@@ -1782,7 +1792,7 @@ export default function InstructorRegister() {
                               4 students
                             </td>
                             <td className="py-2 text-right font-bold">
-                              400 TL
+                              555 TL
                             </td>
                           </tr>
                           <tr className=" border-gray-100">
@@ -1790,7 +1800,7 @@ export default function InstructorRegister() {
                               5 students
                             </td>
                             <td className=" py-2 text-right font-bold">
-                              500 TL
+                              666 TL
                             </td>
                           </tr>
                           <tr>
@@ -1798,7 +1808,7 @@ export default function InstructorRegister() {
                               6 students
                             </td>
                             <td className="py-2 text-right font-bold">
-                              600 TL
+                              777 TL
                             </td>
                           </tr>
                         </tbody>
@@ -1985,6 +1995,13 @@ export default function InstructorRegister() {
                       )}
                     </div>
                   </div>
+
+                  {isAgreed &&
+                    currentIndex === registerStepSection.length - 1 && (
+                      <p className="text-[10px] text-green-700 font-bold mt-2 text-right">
+                        ✓ Agreement Signed
+                      </p>
+                    )}
                 </div>
               )}
             </div>

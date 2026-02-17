@@ -14,6 +14,7 @@ import {
   IoPersonOutline,
   IoMapOutline,
   IoSchoolOutline,
+  IoTicketOutline,
   IoMailOutline,
   IoSettingsOutline,
   IoLogOutOutline,
@@ -48,8 +49,9 @@ export default function AccountSidebar() {
   // Menü Elemanlarına İkon Eklendi
   const navigationItems = [
     { name: "Profil", slug: "profile", icon: IoPersonOutline },
-    { name: "Adreslerim", slug: "my-addresses", icon: IoMapOutline },
     { name: "Eğitimlerim", slug: "my-educations", icon: IoSchoolOutline },
+    { name: "Adreslerim", slug: "my-addresses", icon: IoMapOutline },
+    { name: "Kuponlarım", slug: "my-coupons", icon: IoTicketOutline },
     { name: "Mesajlar", slug: "message", icon: IoMailOutline },
     { name: "Ayarlar", slug: "settings", icon: IoSettingsOutline },
   ];

@@ -1,10 +1,11 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useCart } from "../../context/CartContext";
-import { useRouter, useSearchParams } from "next/navigation"; // URL parametrelerini okumak için eklendi
+import { useRouter, useSearchParams } from "next/navigation";
 import generalService from "../../utils/axios/generalService";
 import ErrorModal from "../ui/ErrorModal/ErrorModal";
 import PaymentSucces from "../../assets/payment/payment-success.png";
+import { formatTime } from "../../utils/helpers/formatters";
 import {
   ShoppingCart,
   Trash2,
@@ -15,6 +16,7 @@ import {
   Clock,
   Users,
   BookOpen,
+  Ticket, // Yeni eklenen ikon
 } from "lucide-react";
 import Image from "next/image";
 
@@ -26,6 +28,11 @@ const SepetComp = () => {
   const [loadingSendBtn, setLoadingSendBtn] = useState(false);
   const [sozlesmeChecked, setSozlesmeChecked] = useState(false);
 
+  // --- YENİ EKLENEN STATE'LER ---
+  const [paymentMethod, setPaymentMethod] = useState("card"); // 'card' veya 'coupon'
+  const [couponCode, setCouponCode] = useState("");
+  // ------------------------------
+
   // URL Parametrelerini ve Router'ı al
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -35,7 +42,7 @@ const SepetComp = () => {
 
   // Sabit Değerler (Dinamik hale getirilebilir)
   const toplamFiyat = 249;
-  const toplamIndirim = 250; // Örnek indirim
+  const toplamIndirim = 250;
   const USER_ERRORS = {
     // Kart Bilgileri
     2029: "Kart numarası geçersiz. Lütfen kontrol edin.",
@@ -65,13 +72,9 @@ const SepetComp = () => {
 
   // Hata yönetim fonksiyonun
   const getFriendlyMessage = (errorCode) => {
-    // Eğer hata kodu bizim listemizde varsa kullanıcıya özel mesajı göster
     if (USER_ERRORS[errorCode]) {
       return USER_ERRORS[errorCode];
     }
-
-    // Eğer hata kodu listede yoksa (Teknik bir hataysa: IP, tutar, XML vb.)
-    // Kullanıcıya teknik detay verme, genel bir mesaj göster.
     return "İşleminiz şu an gerçekleştirilemiyor. Lütfen birazdan tekrar deneyin.";
   };
 
@@ -98,34 +101,26 @@ const SepetComp = () => {
     return () => window.removeEventListener("message", handleMessage);
   }, [clearCart]);
 
-  // ============================================================
-  // 1. URL KONTROLÜ (BANKADAN DÖNÜŞ İÇİN)
-  // ============================================================
+  // URL KONTROLÜ
   useEffect(() => {
     const status = searchParams.get("payment_status");
     const msg = searchParams.get("msg");
 
     if (status === "success") {
-      // Ödeme Başarılıysa
       setCurrentStep("basarili");
-      clearCart(); // Sepeti temizle (Context)
-      // URL'i temizle ki F5 atınca tekrar işlem yapmaya çalışmasın
+      clearCart();
       router.replace(window.location.pathname);
     } else if (status === "error") {
-      // Ödeme Başarısızsa
       setErrorMessage(
         decodeURIComponent(msg) || "Ödeme işlemi başarısız oldu.",
       );
       setErrorModalOpen(true);
       setLoadingSendBtn(false);
-      // Hata durumunda da URL'i temizle
       router.replace(window.location.pathname);
     }
   }, [searchParams, clearCart, router]);
 
-  // ============================================================
-  // 2. SEPET FONKSİYONLARI
-  // ============================================================
+  // SEPET SİLME FONKSİYONLARI
   const handleRemoveClick = () => setShowConfirm(true);
 
   const handleConfirmYes = async () => {
@@ -141,9 +136,7 @@ const SepetComp = () => {
 
   const handleConfirmNo = () => setShowConfirm(false);
 
-  // ============================================================
-  // 3. ÖDEME FORMU İŞLEMLERİ
-  // ============================================================
+  // ÖDEME FORMU İŞLEMLERİ
   const [odemeForm, setOdemeForm] = useState({
     kartNo: "",
     kartIsim: "",
@@ -175,9 +168,67 @@ const SepetComp = () => {
     }
   };
 
-  // ============================================================
-  // 4. ÖDEMEYİ BAŞLATMA (VAKIFBANK ENTEGRASYONU)
-  // ============================================================
+  // --- KUPON KODU INPUT HANDLER ---
+  const handleCouponChange = (e) => {
+    // Sadece harf ve sayı, max 6 karakter, hepsini büyük harf yap
+    const val = e.target.value
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, "")
+      .slice(0, 6);
+    setCouponCode(val);
+  };
+
+  // --- KUPON İLE ÖDEME FONKSİYONU ---
+  const kuponIleOde = async () => {
+    setLoadingSendBtn(true);
+
+    // 1. Sözleşme Kontrolü
+    if (sozlesmeChecked === false) {
+      setErrorMessage("Lütfen hizmet sözleşmesini kabul ediniz.");
+      setErrorModalOpen(true);
+      setLoadingSendBtn(false);
+      return;
+    }
+
+    // 2. Kod Format Kontrolü (Boş mu kontrolü)
+    if (!couponCode || couponCode.length < 3) {
+      setErrorMessage("Lütfen geçerli bir kupon kodu giriniz.");
+      setErrorModalOpen(true);
+      setLoadingSendBtn(false);
+      return;
+    }
+
+    try {
+      const payload = {
+        basket_id: sessions.basket.id,
+        coupon_code: couponCode,
+      };
+
+      // Api İsteği
+      const result = await generalService.paymentWithCoupon(payload);
+
+      // Backend yanıtına göre kontrol (result.status true veya "success" olabilir, backend'e göre ayarla)
+      if (result.status === true || result.status === "success") {
+        // Önce sepeti temizle (Context veya Redux)
+
+        // SONRA YÖNLENDİRME YAP
+        router.push("/payment-success");
+      } else {
+        // Başarısız ise hata mesajı göster
+        setErrorMessage(result.message || "Kupon kodu geçersiz.");
+        setErrorModalOpen(true);
+      }
+    } catch (e) {
+      console.error(e);
+      const msg =
+        e.response?.data?.message || "İşlem sırasında bir hata oluştu.";
+      setErrorMessage(msg);
+      setErrorModalOpen(true);
+    } finally {
+      setLoadingSendBtn(false);
+    }
+  };
+  // --- KART İLE ÖDEME (VAKIFBANK) ---
   const odemeYap = async () => {
     setLoadingSendBtn(true);
 
@@ -188,7 +239,6 @@ const SepetComp = () => {
       return;
     }
     try {
-      // 1. Tarih Formatını Ayıkla (AA/YY formatından)
       const [month, year] = odemeForm.sonKullanma.split("/");
 
       if (!month || !year || month > 12 || month < 1) {
@@ -200,29 +250,25 @@ const SepetComp = () => {
         return;
       }
 
-      // 2. Backend'e gidecek veri paketini hazırla
       const paymentPayload = {
         basket_id: sessions.basket.id,
         card_holder: odemeForm.kartIsim,
-        card_number: odemeForm.kartNo.replace(/\s/g, ""), // Boşlukları temizle
+        card_number: odemeForm.kartNo.replace(/\s/g, ""),
         expiry_month: month,
-        expiry_year: "20" + year, // 25 -> 2025 yapar
+        expiry_year: "20" + year,
         cvv: odemeForm.cvv,
-        amount: "1.00", // KRİTİK: 'Invalid Amount' hatasını önlemek için
+        amount: "1.00",
       };
 
-      // 3. Backend'den 3D bilgilerini iste
       const result = await generalService.initPayment(paymentPayload);
 
-      // 4. Hata Kontrolü
       if (result.status === "error" || result.error) {
-        // Teknik mesaj yerine çevrilmiş mesajı gösteriyoruz
         const userMessage = getFriendlyMessage(result.error_code);
         setErrorMessage(userMessage);
 
         setErrorModalOpen(true);
         setLoadingSendBtn(false);
-        return; // Akışı burada kesiyoruz
+        return;
       }
       const { url, fields } = result;
 
@@ -233,29 +279,11 @@ const SepetComp = () => {
         return;
       }
 
-      // --- POP-UP PENCERE AYARLARI ---
-      const width = 600;
-      const height = 700;
-      // Pencereyi ekranın tam ortasına konumlandır
-      const left = window.screenX + (window.outerWidth - width) / 2;
-      const top = window.screenY + (window.outerHeight - height) / 2;
-
-      const popupName = "Vakifbank3DSecureWindow";
-
-      // Boş bir pencere aç
-      // const popup = window.open(
-      //   "about:blank",
-      //   popupName,
-      //   `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`,
-      // );
-
-      // --- DİNAMİK FORM OLUŞTURMA VE POST ETME ---
       const form = document.createElement("form");
       form.method = "POST";
       form.action = url;
-      form.target = "_self"; // KRİTİK: Formu az önce açtığımız pop-up ismine gönderiyoruz
+      form.target = "_self";
 
-      // PaReq, TermUrl ve MD alanlarını formun içine göm
       Object.keys(fields).forEach((key) => {
         const input = document.createElement("input");
         input.type = "hidden";
@@ -265,20 +293,16 @@ const SepetComp = () => {
       });
 
       document.body.appendChild(form);
-      form.submit(); // Formu gönder ve pop-up'ı banka sayfasına yönlendir
-      document.body.removeChild(form); // İşi biten formu DOM'dan temizle
+      form.submit();
+      document.body.removeChild(form);
 
-      // Buton loading durumunu kapat
       setLoadingSendBtn(false);
     } catch (e) {
-      // Axios hatasından (400) gelen data içindeki hata kodunu alıyoruz
       const errorResponse = e.response?.data;
-
       let userFriendlyMsg =
         "Sunucuyla bağlantı kurulamadı. Lütfen tekrar deneyin.";
 
       if (errorResponse) {
-        // Eğer bankadan gelen teknik bir hata verisi varsa çeviriyoruz
         userFriendlyMsg = getFriendlyMessage(errorResponse.error_code);
       }
 
@@ -288,14 +312,13 @@ const SepetComp = () => {
     }
   };
 
-  // Yardımcı Fonksiyonlar
   function getDate(dateTimeString) {
     const date = new Date(dateTimeString);
     return date.toLocaleDateString("tr-TR");
   }
 
   // ============================================================
-  // 5. RENDER (GÖRÜNÜM)
+  // RENDER (GÖRÜNÜM)
   // ============================================================
 
   // --- BAŞARI EKRANI ---
@@ -308,7 +331,7 @@ const SepetComp = () => {
           </div>
 
           <h1 className="text-3xl font-bold text-gray-900 mb-4">
-            Ödeme Başarılı!
+            İşlem Başarılı!
           </h1>
           <div className="flex justify-center items-center">
             <Image
@@ -368,13 +391,13 @@ const SepetComp = () => {
         {/* HEADER & STEPS */}
         <div className="bg-white rounded-2xl shadow-sm p-4 md:p-6 mb-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            {/* Başlık Bölümü - Mobilde ortalanır */}
+            {/* Başlık Bölümü */}
             <h1 className="text-2xl md:text-3xl font-bold text-gray-800 flex items-center gap-3 justify-center md:justify-start">
               <ShoppingCart className="w-6 h-6 md:w-8 md:h-8 text-black" />
               Sepetim
             </h1>
 
-            {/* Adımlar Bölümü - Mobilde daha kompakt */}
+            {/* Adımlar Bölümü */}
             <div className="flex items-center justify-center gap-3 md:gap-4 border-t md:border-none pt-3 md:pt-0">
               {/* 1. Adım */}
               <div
@@ -451,10 +474,10 @@ const SepetComp = () => {
               {sessions?.basket ? (
                 <div className="bg-white rounded-2xl shadow-sm p-4 md:p-6 hover:shadow-lg transition-shadow duration-300">
                   <div className="flex flex-col md:flex-row gap-4 md:gap-6">
-                    {/* Görsel Alanı - Mobilde tam genişlik, Desktopta sabit genişlik */}
-                    <div className="w-full md:w-48 h-48 md:h-32 flex-shrink-0">
+                    {/* Görsel Alanı */}
+                    <div className="w-full md:w-48 h-full ">
                       <Image
-                        width={500} // Mobilde net görünmesi için yüksek çözünürlük desteği
+                        width={500}
                         height={300}
                         src={sessions?.basket.course_session.cafe.image}
                         alt={sessions?.basket.course_session.cafe.name}
@@ -469,6 +492,13 @@ const SepetComp = () => {
                           <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-1 md:mb-2">
                             {sessions.basket.course_session.session_title}
                           </h3>
+                          <p className="text-sm md:text-base text-gray-800 mb-2 md:mb-3">
+                            {sessions.basket.course_session.google_cafe.name}
+                          </p>
+                          <p className="text-sm md:text-base text-gray-800 mb-2 md:mb-3">
+                            Adres:{" "}
+                            {sessions.basket.course_session.google_cafe.address}
+                          </p>
                           <p className="text-sm md:text-base text-gray-800 mb-2 md:mb-3">
                             Eğitmen:{" "}
                             {
@@ -486,6 +516,10 @@ const SepetComp = () => {
                               {getDate(
                                 sessions.basket.course_session.session_date,
                               )}
+                              {" - "}
+                              {formatTime(
+                                sessions.basket.course_session.session_date,
+                              )}
                             </span>
                             <span className="flex items-center gap-1">
                               <Users className="w-3.5 h-3.5 md:w-4 md:h-4" />{" "}
@@ -493,7 +527,7 @@ const SepetComp = () => {
                             </span>
                           </div>
                         </div>
-                        {/* Çöp Kutusu - Mobilde sağ üstte kalmaya devam eder */}
+                        {/* Çöp Kutusu */}
                         <button
                           onClick={handleRemoveClick}
                           className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors flex-shrink-0"
@@ -533,7 +567,6 @@ const SepetComp = () => {
                     className="mt-4 text-gray-600 cursor-pointer font-semibold hover:underline group relative inline-flex items-center"
                   >
                     Eğitimleri Keşfet
-                    {/* Bounce Efektli Tıklama İkonu */}
                     <div className="absolute -right-6 -bottom-2 animate-bounce">
                       <MousePointerClick className="w-5 h-5 text-gray-400" />
                     </div>
@@ -551,7 +584,6 @@ const SepetComp = () => {
                       Sipariş Özeti
                     </h2>
                     <div className="space-y-3 mb-6">
-                      {/* İndirimsiz Ham Fiyat */}
                       <div className="flex justify-between">
                         <span className="text-gray-700">Ara Toplam</span>
                         <span className="font-semibold text-gray-700">
@@ -559,7 +591,6 @@ const SepetComp = () => {
                         </span>
                       </div>
 
-                      {/* Uygulanan İndirim */}
                       <div className="flex justify-between text-green-600">
                         <span>İndirim</span>
                         <span className="font-semibold">
@@ -567,7 +598,6 @@ const SepetComp = () => {
                         </span>
                       </div>
 
-                      {/* KDV Satırı (%20) */}
                       <div className="flex justify-between text-gray-700">
                         <span>KDV (%20)</span>
                         <span className="font-semibold">
@@ -575,7 +605,6 @@ const SepetComp = () => {
                         </span>
                       </div>
 
-                      {/* KDV Dahil Genel Toplam */}
                       <div className="border-t pt-3 flex justify-between">
                         <span className="text-lg font-semibold text-black">
                           Genel Toplam
@@ -608,12 +637,38 @@ const SepetComp = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
               <div className="bg-white rounded-2xl shadow-sm p-8">
-                <h2 className="text-2xl font-bold text-gray-800 mb-6">
-                  Ödeme Bilgileri
-                </h2>
+                {/* --- TAB SEÇİM ALANI (YENİ) --- */}
+                <div className="flex gap-4 mb-8 border-b border-gray-100 pb-2">
+                  <button
+                    onClick={() => setPaymentMethod("card")}
+                    className={`pb-4 px-2 font-semibold text-lg transition-all relative ${paymentMethod === "card" ? "text-black" : "text-gray-400"}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <CreditCard className="w-5 h-5" />
+                      Kredi Kartı
+                    </div>
+                    {paymentMethod === "card" && (
+                      <div className="absolute bottom-[-1px] left-0 w-full h-1 bg-[#ffd103] rounded-t-lg"></div>
+                    )}
+                  </button>
 
-                <div className="space-y-6">
-                  <div className="border-t pt-6">
+                  <button
+                    onClick={() => setPaymentMethod("coupon")}
+                    className={`pb-4 px-2 font-semibold text-lg transition-all relative ${paymentMethod === "coupon" ? "text-black" : "text-gray-400"}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Ticket className="w-5 h-5" />
+                      Erişim Kodu
+                    </div>
+                    {paymentMethod === "coupon" && (
+                      <div className="absolute bottom-[-1px] left-0 w-full h-1 bg-[#ffd103] rounded-t-lg"></div>
+                    )}
+                  </button>
+                </div>
+
+                {paymentMethod === "card" ? (
+                  // --- KREDİ KARTI FORMU ---
+                  <div className="space-y-6 animate-fadeIn">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">
                       Kart Bilgileri
                     </h3>
@@ -676,28 +731,57 @@ const SepetComp = () => {
                       </div>
                     </div>
                   </div>
+                ) : (
+                  // --- KUPON KODU FORMU (YENİ) ---
+                  <div className="space-y-6 animate-fadeIn py-4">
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex gap-3 items-start">
+                      <Ticket className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-1" />
+                      <div>
+                        <h4 className="font-semibold text-yellow-800">
+                          Erişim Kodunuz var mı?
+                        </h4>
+                        <p className="text-sm text-yellow-700 mt-1">
+                          Size verilen 6 haneli özel kodu aşağıya girerek ödeme
+                          yapmadan eğitiminize kaydolabilirsiniz.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        6 Haneli Erişim Kodu
+                      </label>
+                      <input
+                        type="text"
+                        value={couponCode}
+                        onChange={handleCouponChange}
+                        placeholder="Örn: X9Y2Z1"
+                        maxLength={6}
+                        className="w-full px-4 py-4 text-center text-2xl tracking-[0.5em] font-mono border text-black border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-300 focus:outline-none uppercase"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* --- ORTAK ALAN: SÖZLEŞME VE BUTON --- */}
+                <div className="mt-8 space-y-6">
+                  {/* Sözleşme Checkbox */}
                   <div className="flex items-center gap-2">
                     <input
                       type="checkbox"
                       id="sozlesme"
-                      required
-                      // 1. State'i checkbox'a bağladık
                       checked={sozlesmeChecked}
-                      // 2. Tıklandığında true/false olarak güncellemesini sağladık
                       onChange={(e) => setSozlesmeChecked(e.target.checked)}
                       className="w-4 h-4 text-black rounded cursor-pointer"
                     />
-
                     <label
-                      htmlFor="sozlesme" // Checkbox id'si ile aynı olmalı
+                      htmlFor="sozlesme"
                       className="text-sm text-gray-600 select-none cursor-pointer"
                     >
                       <a
                         href="/kullanici-sozlesmesi"
                         target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-black underline cursor-pointer"
-                        onClick={(e) => e.stopPropagation()}
+                        className="text-black underline"
                       >
                         Kullanım koşullarını
                       </a>{" "}
@@ -705,9 +789,7 @@ const SepetComp = () => {
                       <a
                         href="/kvkk"
                         target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-black underline cursor-pointer"
-                        onClick={(e) => e.stopPropagation()}
+                        className="text-black underline"
                       >
                         gizlilik politikasını
                       </a>{" "}
@@ -715,23 +797,29 @@ const SepetComp = () => {
                     </label>
                   </div>
 
-                  {/* ÖDEMEYİ TAMAMLA BUTONU */}
+                  {/* Dinamik Buton */}
                   <button
-                    onClick={odemeYap}
+                    onClick={paymentMethod === "card" ? odemeYap : kuponIleOde}
                     disabled={loadingSendBtn}
                     className={`w-full py-4 px-6 font-semibold flex justify-center items-center gap-2 border-2 border-transparent transition-all duration-300 cursor-pointer
-                      ${
-                        loadingSendBtn
-                          ? "bg-gray-300 text-gray-700 cursor-not-allowed"
-                          : "bg-black text-white hover:bg-white hover:text-black hover:border-black"
-                      }`}
+                        ${
+                          loadingSendBtn
+                            ? "bg-gray-300 text-gray-700 cursor-not-allowed"
+                            : "bg-black text-white hover:bg-white hover:text-black hover:border-black"
+                        }`}
                   >
                     {loadingSendBtn ? (
                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                     ) : (
                       <>
-                        <CreditCard className="w-5 h-5" />
-                        Güvenli Ödeme Yap (3D Secure)
+                        {paymentMethod === "card" ? (
+                          <CreditCard className="w-5 h-5" />
+                        ) : (
+                          <Ticket className="w-5 h-5" />
+                        )}
+                        {paymentMethod === "card"
+                          ? "Güvenli Ödeme Yap (3D Secure)"
+                          : "Kodu Kullanarak Kaydol"}
                       </>
                     )}
                   </button>
@@ -739,66 +827,100 @@ const SepetComp = () => {
               </div>
             </div>
 
-            {/* Ödeme Özeti */}
+            {/* Sağ Taraftaki Özet */}
             <div className="lg:col-span-1">
               <div className="bg-white rounded-2xl shadow-sm p-6 sticky top-4">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                  Ödenecek Tutar
-                </h3>
+                {paymentMethod === "card" ? (
+                  // Kart ile ödeme özeti (Fiyatlı)
+                  <>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                      Ödenecek Tutar
+                    </h3>
 
-                {/* Sepet küçük önizleme */}
-                {sessions?.basket && (
-                  <div className="flex items-start gap-3 pb-3 border-b mb-4">
-                    <Image
-                      width={50}
-                      height={50}
-                      src={sessions.basket.course_session.cafe.image}
-                      alt="Kurs"
-                      className="w-16 h-16 object-cover rounded-lg"
-                    />
-                    <div className="flex-1">
-                      <h4 className="text-sm font-semibold text-gray-800 line-clamp-1">
-                        {sessions.basket.course_session.session_title}
-                      </h4>
-                      <span className="text-sm font-bold text-black">
-                        ₺{toplamFiyat}
+                    {/* Sepet küçük önizleme */}
+                    {sessions?.basket && (
+                      <div className="flex items-start gap-3 pb-3 border-b mb-4">
+                        <Image
+                          width={50}
+                          height={50}
+                          src={sessions.basket.course_session.cafe.image}
+                          alt="Kurs"
+                          className="w-16 h-16 object-cover rounded-lg"
+                        />
+                        <div className="flex-1">
+                          <h4 className="text-sm font-semibold text-gray-800 line-clamp-1">
+                            {sessions.basket.course_session.session_title}
+                          </h4>
+                          <span className="text-sm font-bold text-black">
+                            ₺{toplamFiyat}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="space-y-2 mb-4">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-800">Ara Toplam</span>
+                        <span className="text-gray-800">
+                          ₺{(toplamFiyat + toplamIndirim).toFixed(2)}
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between text-sm text-green-600">
+                        <span>İndirim</span>
+                        <span>-₺{toplamIndirim.toFixed(2)}</span>
+                      </div>
+
+                      <div className="flex justify-between text-sm text-gray-700">
+                        <span>KDV (%20)</span>
+                        <span>₺{(toplamFiyat * 0.2).toFixed(2)}</span>
+                      </div>
+
+                      <div className="border-t pt-2 flex justify-between">
+                        <span className="font-semibold">Toplam</span>
+                        <span className="text-xl font-bold text-black">
+                          ₺{(toplamFiyat * 1.2).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  // Kupon ile ödeme özeti (Ücretsiz)
+                  <>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                      İşlem Özeti
+                    </h3>
+                    {/* Sepet küçük önizleme */}
+                    {sessions?.basket && (
+                      <div className="flex items-start gap-3 pb-3 border-b mb-4">
+                        <Image
+                          width={50}
+                          height={50}
+                          src={sessions.basket.course_session.cafe.image}
+                          alt="Kurs"
+                          className="w-16 h-16 object-cover rounded-lg"
+                        />
+                        <div className="flex-1">
+                          <h4 className="text-sm font-semibold text-gray-800 line-clamp-1">
+                            {sessions.basket.course_session.session_title}
+                          </h4>
+                        </div>
+                      </div>
+                    )}
+                    <div className="bg-gray-50 p-4 rounded-xl text-center border border-dashed border-gray-300">
+                      <p className="text-gray-600 text-sm mb-2">
+                        Erişim kodu ile
+                      </p>
+                      <span className="text-xl font-bold text-green-600">
+                        Ücretsiz Katılım
                       </span>
                     </div>
-                  </div>
+                  </>
                 )}
-                <div className="space-y-2 mb-4">
-                  {/* İndirimsiz Tutar */}
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-800">Ara Toplam</span>
-                    <span className="text-gray-800">
-                      ₺{(toplamFiyat + toplamIndirim).toFixed(2)}
-                    </span>
-                  </div>
-
-                  {/* Uygulanan İndirim */}
-                  <div className="flex justify-between text-sm text-green-600">
-                    <span>İndirim</span>
-                    <span>-₺{toplamIndirim.toFixed(2)}</span>
-                  </div>
-
-                  {/* KDV Satırı (%20) */}
-                  <div className="flex justify-between text-sm text-gray-700">
-                    <span>KDV (%20)</span>
-                    <span>₺{(toplamFiyat * 0.2).toFixed(2)}</span>
-                  </div>
-
-                  {/* KDV Dahil Genel Toplam */}
-                  <div className="border-t pt-2 flex justify-between">
-                    <span className="font-semibold">Toplam</span>
-                    <span className="text-xl font-bold text-black">
-                      ₺{(toplamFiyat * 1.2).toFixed(2)}
-                    </span>
-                  </div>
-                </div>
 
                 <button
                   onClick={() => setCurrentStep("sepet")}
-                  className="w-full bg-gray-100 text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+                  className="w-full mt-4 bg-gray-100 text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-200 transition-colors"
                 >
                   Bilgileri Düzenle / Geri Dön
                 </button>

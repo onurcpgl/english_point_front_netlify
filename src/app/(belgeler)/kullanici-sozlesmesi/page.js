@@ -266,7 +266,7 @@ function page() {
               destek@englishpoint.com.tr
             </a>
           </p>
-          <p style={{ margin: "5px 0" }}>Telefon: iletişim numarası</p>
+          <p style={{ margin: "5px 0" }}>Telefon: 0545 430 80 89</p>
         </address>
       </div>
     </div>

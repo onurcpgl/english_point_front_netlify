@@ -846,7 +846,7 @@ function FilterComp({
   );
   const renderSkeletonLoader = () => {
     // Tahmini olarak 4-5 tane filtre geleceğini varsayarak array oluşturuyoruz
-    return Array(8)
+    return Array(3)
       .fill(0)
       .map((_, index) => (
         <div

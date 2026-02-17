@@ -1,16 +1,27 @@
 "use client";
 import Logo from "../../assets/logo/logodisi.png";
 import Image from "next/image";
+import { useCart } from "../../context/CartContext";
 import { useRouter } from "next/navigation"; // Next.js yönlendirme için
+import { useEffect } from "react";
 
 export default function PaymentSuccessPage() {
   const router = useRouter();
-
+  const { clearCart } = useCart();
   const handleGoToEducations = () => {
     // Kullanıcıyı eğitimlerim sayfasına yönlendirir
     router.push("/account/my-educations");
   };
 
+  useEffect(() => {
+    // Sayfa yüklendiğinde sepeti temizle
+    // Bu işlem asenkron olsa bile kullanıcı zaten başarı sayfasında olduğu için sorun olmaz.
+    const sepetiTemizle = async () => {
+      await clearCart();
+    };
+
+    sepetiTemizle();
+  }, []);
   return (
     <div className="flex min-h-screen text-black flex-col justify-center items-center gap-6 bg-[#fdd207] px-4">
       {/* Logo ve Pulse Efekti */}

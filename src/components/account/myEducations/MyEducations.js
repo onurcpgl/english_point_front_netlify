@@ -58,6 +58,8 @@ function MyEducations() {
         STATUS_GROUPS.cancelled.includes(item.attendance_status),
       ).length;
 
+      console.log("iptal olan", sessions);
+
       setSessionCounts({ all, active, completed, cancelled });
     }
   }, [myCourses]);

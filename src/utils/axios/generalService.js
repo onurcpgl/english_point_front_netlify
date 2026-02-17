@@ -252,7 +252,14 @@ const initPayment = async (paymentData) => {
   const response = await axiosInstance.post("/api/payment/init", paymentData);
   return response.data;
 };
-
+const paymentWithCoupon = async (payload) => {
+  // Payload: { basket_id: 1, coupon_code: "XYZ123" }
+  const response = await axiosInstance.post(
+    "/api/payment-with-coupon",
+    payload,
+  );
+  return response.data;
+};
 const getSurveyQuestions = async (educationId) => {
   // educationId boş gelirse hata vermemesi için basit bir kontrol
   if (!educationId) {
@@ -270,7 +277,26 @@ const postSurveyAnswers = async (surveyData) => {
   const response = await axiosInstance.post("/api/survey/store", surveyData);
   return response.data;
 };
+
+const getCoupons = async () => {
+  const response = await axiosInstance.get("/api/coupons");
+  return response.data;
+};
+
+const getCouponById = async (id) => {
+  const response = await axiosInstance.get(`/api/coupons/${id}`);
+  return response.data;
+};
+
+const verifyCoupon = async (code) => {
+  // Backend { code: "..." } bekliyor
+  const response = await axiosInstance.post("/api/coupons-verify", { code });
+  return response.data;
+};
 const generalService = {
+  getCoupons,
+  getCouponById,
+  verifyCoupon,
   getSurveyQuestions,
   postSurveyAnswers,
   checkCancelStatus,
@@ -287,6 +313,7 @@ const generalService = {
   updatedBasket,
   clearBasket,
   removeFromBasket,
+  paymentWithCoupon,
   getCafes,
   storeAdresses,
   getMyAdresses,

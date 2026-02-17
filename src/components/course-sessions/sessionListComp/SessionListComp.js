@@ -104,10 +104,7 @@ function CourseContentList({ mappedData, loading }) {
     return Array.from({ length: totalQuota }).map((_, index) => {
       if (index < filledCount) {
         return (
-          <IoPerson
-            key={index}
-            className="text-2xl max-md:text-lg text-black"
-          />
+          <IoPerson key={index} className="text-xl max-md:text-lg text-black" />
         );
       } else {
         return (
@@ -299,6 +296,21 @@ function CourseContentList({ mappedData, loading }) {
           // Şu an bu butona mı basıldı kontrolü
           const isProcessing = processingSessionId === item.id;
 
+          const userCount = item.users_count || 0;
+          let statusText = "";
+          let statusColor = "";
+
+          if (userCount === 0) {
+            statusText = "Henüz katılım yok";
+            statusColor = "bg-gray-400";
+          } else if (userCount === 1) {
+            statusText = "Eğitimin açılması için +1 katılımcı gerekli";
+            statusColor = "bg-orange-500 animate-pulse"; // Dikkat çekmesi için hafif pulse
+          } else {
+            statusText = "Eğitim kesinleşti";
+            statusColor = "bg-green-600";
+          }
+
           return (
             <div
               key={item.id || i}
@@ -329,7 +341,7 @@ function CourseContentList({ mappedData, loading }) {
                     </p>
                   </div>
 
-                  <div className="flex flex-col  gap-4 sm:gap-6 mt-2 sm:mt-0">
+                  <div className="flex flex-col  gap-4 sm:gap-2 mt-2 sm:mt-0">
                     <div className="flex justify-start items-center">
                       <FaLocationDot className="inline-block mr-2" />
                       <span
@@ -341,7 +353,14 @@ function CourseContentList({ mappedData, loading }) {
                         Konumu Gör
                       </span>
                     </div>
-
+                    <div className="flex items-center gap-2 mt-1">
+                      <div
+                        className={`w-3 h-3 rounded-full ${statusColor}`}
+                      ></div>
+                      <span className="text-xs font-semibold uppercase tracking-wider text-gray-700">
+                        {statusText}
+                      </span>
+                    </div>
                     <div className="flex justify-start items-center gap-1 h-8">
                       <span className="font-bold text-md pr-2 max-md:pr-0 max-md:text-sm">
                         Kontenjan:
@@ -369,29 +388,21 @@ function CourseContentList({ mappedData, loading }) {
                         </>
                       )}
                     </div>
+                    {/* Durum İbaresi - Kontenjan kısmının altına ekleyebilirsin */}
                   </div>
                 </div>
               </div>
 
-              {/* ORTA KISIM */}
-              {/* ORTA KISIM */}
               <div className="relative flex justify-center items-center w-full lg:w-auto my-4 max-md:my-1 lg:my-0">
-                {/* YENİ DÜZENLEME: 
-      İki kutuyu saran tek bir div oluşturduk. 
-      absolute özelliği SADECE bu kapsayıcı div'de var. 
-      İçeridekiler flex ile yan yana duruyor.
-  */}{" "}
+                {" "}
                 <div className="flex flex-col lg:flex-row gap-2 w-full lg:w-auto lg:absolute lg:-top-[1.3rem]">
                   {/* Kategori Kutusu */}
-                  {/* item.program.business_slug değeri varsa div render edilir, yoksa edilmez */}
-                  {item?.program?.business_slug && (
-                    <div
-                      lang="en"
-                      className="bg-black uppercase text-white text-center p-4 flex justify-center items-center flex-col font-bold leading-[1] rounded-lg lg:rounded-none w-full lg:w-auto shadow-sm"
-                    >
-                      <span>{item.program.business_slug}</span>
-                    </div>
-                  )}
+                  <div
+                    lang="en"
+                    className="bg-black uppercase text-white text-center  p-4 flex justify-center items-center flex-col font-bold leading-[1] rounded-lg lg:rounded-none w-full lg:w-auto shadow-sm"
+                  >
+                    <span>{item?.program?.business_slug}</span>
+                  </div>
                   <div
                     className={`
         p-4 flex justify-center items-center flex-col 
@@ -450,6 +461,22 @@ function CourseContentList({ mappedData, loading }) {
                     className="bg-black px-4 py-1 hover:bg-[#FFD207] hover:text-black text-white cursor-pointer shadow-sm rounded-4xl transition-colors font-bold text-sm w-fit"
                   >
                     <p>Eğitmen Bilgisi</p>
+                  </div>
+                  <div
+                    onClick={() => setSelectedInstructor(item)}
+                    className="relative w-16 h-16 flex-shrink-0 bg-gray-100"
+                  >
+                    <Image
+                      src={
+                        item.instructor.photo_url || "/images/dummy-avatar.png"
+                      }
+                      alt="Eğitmen"
+                      fill
+                      className="object-cover" // ROUNDED YOK, tamamen kare.
+                      sizes="64px"
+                    />
+                    {/* Hover Efekti: Resim hafifçe parlar */}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-white/10 transition-colors"></div>
                   </div>
                 </div>
 

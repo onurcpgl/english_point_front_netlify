@@ -23,7 +23,7 @@ function InstructorDashboard() {
   const [activeSession, setActiveSession] = useState([]);
   const [awaitingSession, setAwaitingSession] = useState([]);
   const [cancelledSession, setCancelledSession] = useState([]);
-  console.log("myCourses", myCourses);
+
   useEffect(() => {
     const filterStartData = () => {
       const filtredCompletedData = myCourses?.data.course_sessions.filter(
