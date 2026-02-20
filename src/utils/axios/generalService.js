@@ -287,6 +287,13 @@ const getCouponById = async (id) => {
   const response = await axiosInstance.get(`/api/coupons/${id}`);
   return response.data;
 };
+const getTransactionHistory = async (page = 1) => {
+  // page parametresini API'ye gönderiyoruz
+  const response = await axiosInstance.get(
+    `/api/user/transaction-history?page=${page}`,
+  );
+  return response.data;
+};
 
 const verifyCoupon = async (code) => {
   // Backend { code: "..." } bekliyor
@@ -303,6 +310,7 @@ const generalService = {
   initPayment,
   getCourseSessionSingle,
   canceledCourseByUser,
+  getTransactionHistory,
   sendEmailCode,
   sendResendCode,
   updateUserProfile,
@@ -318,6 +326,7 @@ const generalService = {
   storeAdresses,
   getMyAdresses,
   updatedAdress,
+
   deleteAdresses,
   getCourseCategories,
   getUserInfo,

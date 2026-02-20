@@ -317,6 +317,7 @@ function CourseContentList({ mappedData, loading }) {
               className="w-full bg-white border border-gray-300 shadow-2xl p-4 lg:p-5 flex flex-col lg:flex-row justify-between items-center lg:items-start gap-3 lg:gap-2"
             >
               {/* SOL KISIM */}
+
               <div className="flex flex-col md:flex-row gap-6 lg:gap-10 w-full lg:w-3/6">
                 <div className="relative w-full md:w-auto flex justify-center md:block">
                   <Image

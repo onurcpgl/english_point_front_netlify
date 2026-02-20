@@ -82,18 +82,7 @@ const EducationCard = ({ data }) => {
     const now = new Date();
     const session = new Date(sessionDate);
     const diffInHours = (session - now) / (1000 * 60 * 60);
-    return diffInHours > 12;
-  };
-
-  // --- İLK TIKLAMA ---
-  const handleInitialClick = (item, isDirectCancel) => {
-    if (isDirectCancel) {
-      // Direkt iptal ise onay modalını tetikle
-      triggerConfirmModal(item, true, null);
-    } else {
-      // Talep ise inputu aç
-      setIsInputMode(true);
-    }
+    return diffInHours > 6;
   };
 
   const checkCourseCancelStatus = async (courseSessionUserId) => {
@@ -108,67 +97,43 @@ const EducationCard = ({ data }) => {
     }
   };
 
-  // --- ONAY MODALINI TETİKLEME ---
-  const triggerConfirmModal = (item, isDirectCancel, reasonText) => {
-    const title =
-      item.course_session.program?.title?.tr ||
-      item.course_session.session_title;
-
-    setModalState((prev) => ({
-      ...prev,
-      confirm: {
-        open: true,
-        message: `"${title}" eğitimi için kaydınızı iptal etmek istediğinize emin misiniz?`,
-        onConfirm: () => {
-          // Onay verilirse API isteğini at
-          closeConfirmModal();
-          executeApiRequest(item, isDirectCancel, reasonText);
-        },
-      },
-    }));
-  };
-
-  const closeConfirmModal = () => {
-    setModalState((prev) => ({
-      ...prev,
-      confirm: { ...prev.confirm, open: false },
-    }));
-  };
-
-  // --- API İSTEĞİNİ ATAN FONKSİYON ---
-  const executeApiRequest = async (item, isDirectCancel, reasonText) => {
+  // --- API İSTEĞİNİ ATAN FONKSİYON (Sadece Neden İle) ---
+  const executeApiRequest = async (item, reasonText) => {
     setcancelLoadingBtn(true);
-    const payload = isDirectCancel ? {} : { reason: reasonText };
-
     try {
       const response = await generalService.canceledCourseByUser(
         item.course_session_id,
-        payload,
+        { reason: reasonText }, // Direkt nedeni gönderiyoruz
       );
 
       if (response.status) {
         setcancelLoadingBtn(false);
-        // Başarılı Modalı Aç
         setModalState((prev) => ({
           ...prev,
-          success: {
-            open: true,
-            message: response.message,
-          },
+          success: { open: true, message: response.message },
         }));
         closeMenu();
       } else {
-        // API status false dönerse Hata Modalı Aç
         showError(response.message || "Bir hata oluştu.");
+        setcancelLoadingBtn(false);
       }
     } catch (error) {
       console.error("İptal işlemi hatası:", error);
-      const errorMessage =
-        error.response?.data?.message || "İşlem sırasında bir hata oluştu.";
-      showError(errorMessage);
+      showError(
+        error.response?.data?.message || "İşlem sırasında bir hata oluştu.",
+      );
+      setcancelLoadingBtn(false);
     }
   };
 
+  // --- BUTON AKSİYONU ---
+  const handleFinalAction = (item, reasonText) => {
+    if (!reasonText || reasonText.trim() === "") {
+      showError("Lütfen bir iptal nedeni belirtiniz.");
+      return;
+    }
+    executeApiRequest(item, reasonText);
+  };
   // --- HATAYI GÖSTER ---
   const showError = (msg) => {
     setModalState((prev) => ({
@@ -176,22 +141,11 @@ const EducationCard = ({ data }) => {
       error: { open: true, message: msg },
     }));
   };
-
-  // --- BUTON AKSİYONU (INPUTLU VEYA INPUTSUZ) ---
-  const handleFinalAction = (item, isDirectCancel, reasonText = null) => {
-    if (isDirectCancel) {
-      // Direkt iptal için onayı yukarıda handleInitialClick içinde tetikliyoruz aslında,
-      // ama burası input modundan gelmeyebilir diye yine de bağlayalım.
-      triggerConfirmModal(item, true, null);
-    } else {
-      // Talep Modu: Input kontrolü
-      if (!reasonText || reasonText.trim() === "") {
-        showError("Lütfen bir iptal nedeni belirtiniz.");
-        return;
-      }
-      // Talep için API isteği (Direkt gönderiyoruz, onay sormaya gerek yok inputtan sonra)
-      executeApiRequest(item, false, reasonText);
-    }
+  const closeConfirmModal = () => {
+    setModalState((prev) => ({
+      ...prev,
+      confirm: { ...prev.confirm, open: false },
+    }));
   };
   // Slug değerini alıp, uygun Tailwind sınıflarını döndüren fonksiyon
   const getCategoryStyle = (slug) => {
@@ -359,24 +313,37 @@ const EducationCard = ({ data }) => {
                       className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.2)] border border-gray-100 overflow-hidden origin-top-right animate-in fade-in zoom-in-95 duration-200 z-[60]"
                     >
                       {/* Bilgi / Politika Alanı */}
+                      {/* Bilgi / Politika Alanı */}
                       <div className="bg-gray-50/80 p-4 border-b border-gray-100 flex gap-3 items-start">
-                        <div className="mt-0.5 text-blue-500 bg-blue-50 p-1 rounded-full shrink-0">
-                          <FiInfo size={14} />
+                        <div
+                          className={`mt-0.5 p-1 rounded-full shrink-0 ${canDirectCancel ? "text-blue-500 bg-blue-50" : "text-red-500 bg-red-50"}`}
+                        >
+                          {canDirectCancel ? (
+                            <FiInfo size={14} />
+                          ) : (
+                            <FiAlertCircle size={14} />
+                          )}
                         </div>
                         <div className="text-sm text-gray-500 leading-relaxed">
                           <span className="font-bold text-gray-800 block mb-1">
                             İptal Politikası
                           </span>
                           {canDirectCancel
-                            ? "Eğitime 12 saatten fazla var. Koşulsuz iptal edebilirsiniz."
-                            : "Eğitime 12 saatten az kaldı. İptal için talep oluşturmanız gerekmektedir."}
+                            ? "Eğitimin başlamasına 6 saatten fazla var. İptal talebinizi nedenini yazarak oluşturabilirsiniz. İadenin kupon mu yoksa para iadesi mi olmasını istediğinizi lütfen belirtin."
+                            : "Eğitime 6 saatten az kaldığı için iptal işlemi yapılamaz."}
                         </div>
                       </div>
 
                       {/* --- İÇERİK ALANI --- */}
                       <div className="p-2">
-                        {/* DURUM 1: Talep Formu (Input Mode) */}
-                        {isInputMode ? (
+                        {!canDirectCancel ? (
+                          /* DURUM 1: 6 Saatten Az Kaldıysa (İptal Yasak) */
+                          <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg flex items-center justify-center gap-2 font-medium">
+                            <FiAlertCircle size={18} /> Süre dolduğu için iptal
+                            edilemez.
+                          </div>
+                        ) : isInputMode ? (
+                          /* DURUM 2: Talep Formu (Input Açık) */
                           <div className="flex flex-col gap-2 p-1 animate-in slide-in-from-right-5 duration-200">
                             <div className="flex items-center justify-between mb-1 px-1">
                               <span className="text-sm font-bold text-gray-600 flex items-center gap-1">
@@ -400,16 +367,14 @@ const EducationCard = ({ data }) => {
 
                             <button
                               onClick={() =>
-                                handleFinalAction(item, false, cancelReason)
+                                handleFinalAction(item, cancelReason)
                               }
-                              // Hem input boşsa HEM DE yükleme işlemi sürüyorsa butonu disable yapıyoruz
                               disabled={
                                 !cancelReason.trim() || cancelLoadingBtn
                               }
                               className="w-full mt-1 bg-black hover:bg-gray-600 disabled:bg-gray-200 disabled:text-gray-400 text-white font-semibold py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors shadow-sm"
                             >
                               {cancelLoadingBtn ? (
-                                /* Yükleme Durumu: Dönen ikon ve mesaj */
                                 <>
                                   <FiLoader
                                     className="animate-spin"
@@ -418,62 +383,38 @@ const EducationCard = ({ data }) => {
                                   <span>Gönderiliyor...</span>
                                 </>
                               ) : (
-                                /* Normal Durum: Gönder yazısı ve ikonu */
                                 <>
-                                  <span>Gönder</span>
+                                  <span>Talebi Gönder</span>
                                   <FiSend size={14} />
                                 </>
                               )}
                             </button>
                           </div>
                         ) : (
-                          /* DURUM 2: Normal Buton */
+                          /* DURUM 3: Normal Buton Görünümü */
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleInitialClick(item, canDirectCancel);
+                              setIsInputMode(true);
                             }}
-                            className={`w-full group flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 border ${
-                              canDirectCancel
-                                ? "bg-white border-transparent hover:border-red-100 hover:bg-red-50/50"
-                                : "bg-white border-transparent hover:border-gray-100 hover:bg-gray-50/50"
-                            }`}
+                            className="w-full group flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 border bg-white border-transparent hover:border-gray-100 hover:bg-gray-50/50"
                           >
-                            <div
-                              className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
-                                canDirectCancel
-                                  ? "bg-red-50 text-red-500 group-hover:bg-red-100 group-hover:text-red-600"
-                                  : "bg-gray-50 text-gray-500 group-hover:bg-gray-100 group-hover:text-gray-600"
-                              }`}
-                            >
-                              {canDirectCancel ? (
-                                <FiTrash2 size={20} />
-                              ) : (
-                                <FiAlertCircle size={20} />
-                              )}
+                            <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-colors bg-gray-50 text-gray-500 group-hover:bg-gray-100 group-hover:text-gray-600">
+                              <FiAlertCircle size={20} />
                             </div>
-
                             <div className="flex flex-col items-start text-left">
-                              <span
-                                className={`text-sm font-bold transition-colors ${
-                                  canDirectCancel
-                                    ? "text-gray-700 group-hover:text-red-700"
-                                    : "text-gray-700 group-hover:text-gray-700"
-                                }`}
-                              >
-                                {canDirectCancel
-                                  ? "Katılımı İptal Et"
-                                  : "İptal Talebi Oluştur"}
+                              <span className="text-sm font-bold transition-colors text-gray-700 group-hover:text-gray-700">
+                                İptal Talebi Oluştur
                               </span>
                               <span className="text-[10px] text-gray-400 font-medium mt-0.5 group-hover:text-gray-500 transition-colors">
-                                {canDirectCancel
-                                  ? "İşlem kalıcı olarak uygulanır"
-                                  : "Neden belirterek talep açılır"}
+                                Neden belirterek talep açılır
                               </span>
                             </div>
                           </button>
                         )}
                       </div>
+
+                      {/* --- İÇERİK ALANI --- */}
                     </div>
                   )}
                 </div>

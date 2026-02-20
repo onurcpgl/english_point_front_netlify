@@ -13,6 +13,7 @@ import {
   IoClose,
   IoPersonOutline,
   IoMapOutline,
+  IoReceiptOutline,
   IoSchoolOutline,
   IoTicketOutline,
   IoMailOutline,
@@ -53,6 +54,7 @@ export default function AccountSidebar() {
     { name: "Adreslerim", slug: "my-addresses", icon: IoMapOutline },
     { name: "Kuponlarım", slug: "my-coupons", icon: IoTicketOutline },
     { name: "Mesajlar", slug: "message", icon: IoMailOutline },
+    { name: "İşlem Geçmişi", slug: "transactions", icon: IoReceiptOutline },
     { name: "Ayarlar", slug: "settings", icon: IoSettingsOutline },
   ];
 
