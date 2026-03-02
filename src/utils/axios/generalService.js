@@ -161,6 +161,7 @@ const storeAdresses = async (addressInfo) => {
   const response = await axiosInstance.post("/api/addresses", addressInfo);
   return response.data;
 };
+
 const deleteAdresses = async (addressId) => {
   const response = await axiosInstance.delete(`/api/addresses/${addressId}`);
   return response.data;
@@ -300,8 +301,19 @@ const verifyCoupon = async (code) => {
   const response = await axiosInstance.post("/api/coupons-verify", { code });
   return response.data;
 };
+
+const setLocationInfo = async (value) => {
+  const response = await axiosInstance.post("/api/user/set-location", value);
+  return response.data;
+};
+const getLocationInfo = async () => {
+  const response = await axiosInstance.get("/api/user/check-location");
+  return response.data;
+};
 const generalService = {
   getCoupons,
+  setLocationInfo,
+  getLocationInfo,
   getCouponById,
   verifyCoupon,
   getSurveyQuestions,

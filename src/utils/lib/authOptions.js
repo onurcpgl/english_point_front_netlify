@@ -102,6 +102,8 @@ export const authOptions = {
               email: user.email,
               profile_image: user.avatar || user.profile_image,
               role: user.role || "user",
+              district_id: user.district_id || null,
+              city_id: user.city_id || null,
               token: token,
             };
           } else {
@@ -139,6 +141,8 @@ export const authOptions = {
         token.email = user.email;
         token.profile_image = user.profile_image;
         token.role = user.role;
+        token.city_id = user.city_id;
+        token.district_id = user.district_id;
         token.accessToken = user.token || user.accessToken;
       }
       return token;
@@ -150,6 +154,8 @@ export const authOptions = {
         session.user.email = token.email;
         session.user.role = token.role;
         session.user.profile_image = token.profile_image;
+        session.user.city_id = token.city_id;
+        session.user.district_id = token.district_id;
         session.user.accessToken = token.accessToken;
       }
       return session;

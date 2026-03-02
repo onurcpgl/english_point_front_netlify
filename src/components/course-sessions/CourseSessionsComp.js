@@ -29,6 +29,7 @@ function CourseSessionsComp() {
     queryKey: ["courseSessions"],
     queryFn: generalService.getCourseSession,
   });
+
   const {
     data: categories,
     error: categoriesError,

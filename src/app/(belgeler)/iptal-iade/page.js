@@ -77,12 +77,12 @@ function page() {
       <section>
         <h2 style={sectionHeaderStyle}>2. Kullanıcı Tarafından İptal</h2>
         <p style={paragraphStyle}>
-          Kullanıcı, planlanan seans saatinden en az 12 saat önce iptal
-          talebinde bulunabilir. Bu durumda, ödeme iadesi yapılır veya
-          kullanıcıya alternatif seans hakkı sunulur.
+          Kullanıcı, planlanan seans saatinden en az 6 saat önce iptal talebinde
+          bulunabilir. Bu durumda, ödeme iadesi yapılır veya kullanıcıya
+          alternatif seans hakkı sunulur.
         </p>
         <p style={paragraphStyle}>
-          12 saatten az süre kala yapılan iptallerde ücret iadesi yapılmaz.
+          6 saatten az süre kala yapılan iptallerde ücret iadesi yapılmaz.
         </p>
       </section>
 
@@ -138,7 +138,12 @@ function page() {
               destek@englishpoint.com
             </a>
           </p>
-          <p style={{ margin: "5px 0" }}>📞 Telefon: [iletişim numarası]</p>
+          <p style={{ margin: "5px 0" }}>
+            📞 Telefon:{" "}
+            <a href="tel:905454308089" rel="noopener noreferrer">
+              0545 430 80 89
+            </a>
+          </p>
         </address>
       </section>
     </div>

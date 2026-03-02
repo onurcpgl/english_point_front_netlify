@@ -127,8 +127,8 @@ function page() {
       <section>
         <h2 style={sectionHeaderStyle}>6. İptal ve İade Koşulları</h2>
         <p style={paragraphStyle}>
-          Kullanıcı, planlanan seans saatinden en az 12 saat önce iptal
-          talebinde bulunabilir.
+          Kullanıcı, planlanan seans saatinden en az 6 saat önce iptal talebinde
+          bulunabilir.
         </p>
         <p style={paragraphStyle}>
           12 saatten az süre kala yapılan iptallerde ücret iadesi yapılmaz.

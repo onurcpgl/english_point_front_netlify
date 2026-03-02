@@ -281,8 +281,8 @@ function page() {
           <p style={paragraphStyle}>
             <strong>Kullanıcı Tarafından İptal:</strong>
             <br />
-            Seans saatinden 12 saat önce iptal edilebilir; ücret iadesi yapılır
-            veya alternatif seans hakkı sunulur. 12 saatten kısa sürede
+            Seans saatinden 6 saat önce iptal edilebilir; ücret iadesi yapılır
+            veya alternatif seans hakkı sunulur. 6 saatten kısa sürede
             iptallerde ücret iadesi yapılmaz.
           </p>
         </div>

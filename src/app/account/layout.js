@@ -6,7 +6,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../utils/lib/authOptions";
 import { redirect } from "next/navigation";
 import Script from "next/script";
-
+import LocationPromptModal from "../../components/location-prompt-modal/LocationPromptModal";
 export const metadata = {
   title: "Öğrenci Paneli | English Point",
   description:
@@ -33,6 +33,7 @@ export default async function MainLayout({ children }) {
 
   return (
     <UserSessionProvider>
+      <LocationPromptModal />
       <Script
         src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY}&libraries=places`}
         strategy="beforeInteractive"

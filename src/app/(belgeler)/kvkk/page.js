@@ -97,7 +97,10 @@ function page() {
             destek@englishpoint.com.tr
           </a>
           <br />
-          Telefon: [iletişim numarası]
+          Telefon:{" "}
+          <a href="tel:905454308089" rel="noopener noreferrer">
+            0545 430 80 89
+          </a>
         </address>
       </section>
 
@@ -304,7 +307,12 @@ function page() {
               destek@englishpoint.com.tr
             </a>
           </p>
-          <p style={{ margin: "5px 0" }}>📞 Telefon: [iletişim numarası]</p>
+          <p style={{ margin: "5px 0" }}>
+            📞 Telefon:{" "}
+            <a href="tel:905454308089" rel="noopener noreferrer">
+              0545 430 80 89
+            </a>
+          </p>
           <p style={{ margin: "5px 0" }}>
             🏢 Adres: Kaptanpaşa Mah, Piyalepaşa Blv. Famas Plaza No:77 B Blok
             K:4 No:71, 34384 Şişli/İstanbul
