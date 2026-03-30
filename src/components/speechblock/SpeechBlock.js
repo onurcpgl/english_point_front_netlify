@@ -108,14 +108,12 @@ function SpeechBlock() {
               Decide when and how many hours you want to teach. No minimum time
               commitment or fixed schedule. Be your own boss!
             </p>
-            {/* <Link
-              href="instructor-register"
+            <Link
+              href="instructor-login"
               className="flex w-full md:w-max px-6 md:px-10 mt-5 font-medium items-center justify-center md:justify-start bg-black text-white p-4 rounded-3xl md:rounded-4xl hover:scale-105 transition-all cursor-pointer"
             >
-              <p className="text-sm md:text-base">
-                Create a session & start earning!
-              </p>
-            </Link> */}
+              <p className="text-sm md:text-base">Instructor Login</p>
+            </Link>
           </div>
         </div>
       </div>
