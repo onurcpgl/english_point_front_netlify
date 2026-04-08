@@ -171,7 +171,7 @@ const EducationCard = ({ data }) => {
     return "bg-white/90 text-gray-900 border-gray-200";
   };
   return (
-    <div>
+    <div className={`pb-20 ${activeMenuId ? "md:pb-64 pb-72" : ""}`}>
       <EnterCard
         open={openEnterDoc.status}
         message={"Eğitime Katılım Belgeniz"}

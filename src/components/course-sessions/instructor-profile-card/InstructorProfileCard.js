@@ -20,7 +20,7 @@ function InstructorModal({ selectedInstructor, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl p-6 relative border border-gray-200 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white shadow-2xl w-full max-w-6xl p-6 relative border border-gray-200 max-h-[90vh] overflow-y-auto">
         <div className="w-full flex flex-col-reverse md:flex-row gap-6 items-start">
           <div className="w-full md:2/4">
             <div className="w-full flex justify-center items-start gap-2">
@@ -54,7 +54,7 @@ function InstructorModal({ selectedInstructor, onClose }) {
                   </p>
                 )}
 
-                <div className="space-y-2 text-sm text-gray-700">
+                {/* <div className="space-y-2 text-sm text-gray-700">
                   <p>
                     <span className="font-semibold text-gray-800">Şehir:</span>{" "}
                     {selectedInstructor?.instructor.current_city ||
@@ -65,7 +65,7 @@ function InstructorModal({ selectedInstructor, onClose }) {
                     {selectedInstructor?.instructor.country_birth ||
                       "Belirtilmemiş"}
                   </p>
-                </div>
+                </div> */}
 
                 <div className="mt-5">
                   <h3 className="font-semibold text-gray-800 mb-2 text-base">
