@@ -92,9 +92,9 @@ function InstructorDashboard() {
                 <div className="bg-white rounded-3xl w-full p-4 md:p-5 flex flex-col gap-3">
                   {instructorProfile?.user.educations[0] ? (
                     <div className="text-sm  text-black leading-relaxed space-y-2">
-                      <div className="w-24 md:w-28 h-6">
+                      {/* <div className="w-24 md:w-28 h-6">
                         <Image src={threeflag} alt="Flags" />
-                      </div>
+                      </div> */}
                       <p>
                         <span className="font-bold">Education:</span>{" "}
                         {instructorProfile?.user.educations[0].university}{" "}
