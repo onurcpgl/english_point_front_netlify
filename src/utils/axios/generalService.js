@@ -18,6 +18,10 @@ const userResetPasswordRequest = async (email) => {
   );
   return response.data;
 };
+const sendContactMessage = async (values) => {
+  const response = await axiosInstance.post("/api/contact", values);
+  return response.data;
+};
 
 const userResetPassword = async (values) => {
   const response = await axiosInstance.post("/api/user/reset-password", values);
@@ -338,7 +342,7 @@ const generalService = {
   storeAdresses,
   getMyAdresses,
   updatedAdress,
-
+  sendContactMessage,
   deleteAdresses,
   getCourseCategories,
   getUserInfo,

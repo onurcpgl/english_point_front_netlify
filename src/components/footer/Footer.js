@@ -83,7 +83,9 @@ function Footer() {
                 Blog
               </li>
               <li className="hover:text-white transition-colors cursor-pointer">
-                Contact
+                <a href="/contact" className="">
+                  Contact
+                </a>
               </li>
             </ul>
           </div>
