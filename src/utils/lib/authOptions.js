@@ -56,12 +56,13 @@ export const authOptions = {
               rememberMe: rememberMe,
             };
           } else {
-            console.error("Login failed:", data);
-            return null;
+            throw new Error(
+              data.error || "Giriş başarısız, lütfen tekrar deneyin.",
+            );
           }
         } catch (error) {
           console.error("Fetch error during login:", error);
-          return null;
+          throw new Error(error.message || "Bir hata oluştu.");
         }
       },
     }),

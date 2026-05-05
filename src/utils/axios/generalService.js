@@ -314,8 +314,16 @@ const getLocationInfo = async () => {
   const response = await axiosInstance.get("/api/user/check-location");
   return response.data;
 };
+const resendVerification = async (data) => {
+  const response = await axiosInstance.post(
+    "/api/auth/resend-verification",
+    data,
+  );
+  return response.data;
+};
 const generalService = {
   getCoupons,
+  resendVerification,
   setLocationInfo,
   getLocationInfo,
   getCouponById,

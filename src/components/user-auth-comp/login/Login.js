@@ -2,17 +2,15 @@
 import React, { useState, useEffect } from "react";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
-import { FaFacebookF, FaApple } from "react-icons/fa";
-import { Formik, Form, Field, ErrorMessage } from "formik";
-import { signIn, getSession, useSession } from "next-auth/react";
+import { FaFacebookF } from "react-icons/fa";
+import { Formik, Form, Field } from "formik";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import SuccesMessageComp from "../../ui/SuccesModal/SuccesMessageComp";
 import generalService from "../../../utils/axios/generalService";
 import * as Yup from "yup";
-import Image from "next/image";
 import Link from "next/link";
-// import loginImage from "../../assets/login/loginBg.jpg"; // Kendi resminizi ekleyin
 
 // Yup validation schema
 const loginValidationSchema = Yup.object({
@@ -27,13 +25,18 @@ const loginValidationSchema = Yup.object({
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [forgotPassword, setForgotPassword] = useState(false); // Şifre unuttum durumu
+  const [forgotPassword, setForgotPassword] = useState(false);
+
+  // E-posta Onay İşlemleri İçin Yeni State'ler
+  const [isResending, setIsResending] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState("");
+
   // Modal State'i
   const [successOpen, setSuccessOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
   const searchParams = useSearchParams();
   const { update } = useSession();
-  //const callbackUrl = searchParams.get("callbackUrl") || "/";
+
   const targetPath =
     searchParams.get("redirect") ||
     searchParams.get("callbackUrl") ||
@@ -48,53 +51,77 @@ const Login = () => {
 
   const forgotPasswordValidationSchema = Yup.object({
     email: Yup.string()
-      .email("Please enter a valid email address")
-      .required("Email is required"),
+      .email("Lütfen geçerli bir e-posta adresi giriniz")
+      .required("E-posta zorunludur"),
   });
 
   useEffect(() => {
-    // 1. URL parametresini kontrol et
     const isVerified = searchParams.get("verified");
-
-    // 2. Eğer verified=true ise
     if (isVerified === "true") {
       setModalMessage(
         "Tebrikler! Hesabınız başarıyla doğrulandı. Şimdi giriş yapabilirsiniz.",
       );
       setSuccessOpen(true);
-
-      // 3. (Opsiyonel) URL'i temizle ki çirkin durmasın
-      // Kullanıcıya mesajı gösterdikten sonra adresi tekrar /login yapıyoruz
       router.replace("/login");
     }
 
-    // Ayrıca backend'den hata gelirse (örn: ?error=invalid_link) onu da yakalayabilirsin
     const error = searchParams.get("error");
     if (error === "invalid_link") {
-      // Burada ErrorModal açabilirsin
       console.log("Link geçersiz!");
     }
   }, [searchParams, router]);
-  // Form submit handler
+
+  // --- YENİ EKLENEN: ONAY MAİLİNİ TEKRAR GÖNDERME FONKSİYONU ---
+  const handleResendVerification = async (email) => {
+    try {
+      setIsResending(true);
+      setResendSuccess("");
+
+      // Senin belirttiğin general service fonksiyonuna istek atıyoruz
+      await generalService.resendVerification({ email: email });
+
+      setResendSuccess(
+        "Onay maili başarıyla gönderildi. Lütfen gelen kutunuzu kontrol edin.",
+      );
+    } catch (error) {
+      console.error("Resend error:", error);
+      setResendSuccess(
+        "Mail gönderilirken bir hata oluştu. Lütfen tekrar deneyin.",
+      );
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+  // Form submit handler (Güncellendi)
   const handleLoginSubmit = async (values, { setSubmitting, setStatus }) => {
     try {
       setStatus(null);
+      setResendSuccess(""); // Yeni denemede başarı mesajını temizle
 
       const res = await signIn("credentials", {
         email: values.email,
         password: values.password,
         role: "user",
-        redirect: false, // Kontrolü biz alıyoruz
+        redirect: false,
       });
 
       if (res?.ok) {
-        // Başarılıysa doğrudan anket sayfasına (targetPath) uçuruyoruz
         window.location.href = targetPath;
         return;
       }
 
       if (res?.error) {
-        setStatus("E-posta veya şifre hatalı. Lütfen tekrar deneyiniz.");
+        // Backend'den gelen özel hata metnini yakalıyoruz
+        if (res.error === "Lütfen önce e-posta adresinizi onaylayın.") {
+          setStatus(res.error);
+        } else {
+          setStatus(
+            res.error !== "CredentialsSignin"
+              ? res.error
+              : "E-posta veya şifre hatalı. Lütfen tekrar deneyiniz.",
+          );
+        }
       }
     } catch (error) {
       console.error("Login error:", error);
@@ -103,60 +130,7 @@ const Login = () => {
       setSubmitting(false);
     }
   };
-  // const handleLoginSubmit = async (values, { setSubmitting, setStatus }) => {
-  //   try {
-  //     setStatus(null);
 
-  //     const res = await signIn("credentials", {
-  //       email: values.email,
-  //       password: values.password,
-  //       role: "user",
-  //       redirect: false,
-  //       callbackUrl: callbackUrl ? callbackUrl : "/",
-  //     });
-
-  //     if (res?.ok) {
-  //       // Giriş başarılıysa
-  //       if (callbackUrl) {
-  //         //router.push(callbackUrl); // callback varsa oraya
-  //         window.location.href = callbackUrl;
-  //         return;
-  //       } else {
-  //         window.location.href = res.url;
-  //         return;
-  //       }
-  //     } else {
-  //       // Giriş başarısız
-  //       console.log("Login failed", res);
-  //     }
-  //     if (res?.error) {
-  //       let errorMessage =
-  //         "Username or password is incorrect. Please check and try again.";
-  //       if (res.error === "CredentialsSignin") {
-  //         errorMessage =
-  //           "The information you entered does not match. Please try again.";
-  //       }
-  //       setStatus(errorMessage);
-  //       return;
-  //     }
-
-  //     if (res?.ok) {
-  //       // Başarılı login → dashboard’a yönlendir
-  //       await getSession();
-  //       router.push("/");
-  //     } else {
-  //       // Hata mesajı göster
-  //       setStatus(res?.error || "Giriş yaparken bir hata oluştu");
-  //     }
-  //   } catch (error) {
-  //     console.error("Login error:", error);
-  //     setStatus(
-  //       "Giriş yaparken bir hata oluştu. Lütfen bilgilerinizi kontrol ediniz.",
-  //     );
-  //   } finally {
-  //     setSubmitting(false);
-  //   }
-  // };
   const handleForgotPasswordSubmit = async (
     values,
     { setSubmitting, setStatus },
@@ -166,33 +140,28 @@ const Login = () => {
       const result = await generalService.userResetPasswordRequest(
         values.email,
       );
-
-      // status tipini de gönderiyoruz
       setStatus({ type: result.status, message: result.message });
     } catch (error) {
       setStatus({
         type: "error",
-        message: "Something went wrong. Please try again later.",
+        message: "Bir şeyler ters gitti. Lütfen daha sonra tekrar deneyin.",
       });
     } finally {
       setSubmitting(false);
     }
   };
+
   const API_URL =
     process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
-  // Social login handlers
+
   const handleGoogleLogin = () => {
-    // Backend: /api/auth/google/redirect
     window.location.href = `${API_URL}/api/auth/google/redirect`;
   };
 
-  // Facebook Login
   const handleFacebookLogin = () => {
-    // Backend: /api/auth/facebook/redirect
     window.location.href = `${API_URL}/api/auth/facebook/redirect`;
   };
 
-  // Custom input component
   const CustomInput = ({ field, form, ...props }) => {
     const hasError = form.errors[field.name] && form.touched[field.name];
 
@@ -215,7 +184,6 @@ const Login = () => {
     <div className="min-h-screen bg-[#FFD207] flex items-center justify-center p-4">
       <div className="lg:w-1/2 flex items-center justify-center p-8 lg:p-12">
         <div className="w-full max-w-md">
-          {/* Header */}
           <SuccesMessageComp
             open={successOpen}
             message={modalMessage}
@@ -236,14 +204,13 @@ const Login = () => {
                 </h2>
               </div>
 
-              {/* Social Login Buttons */}
               {!forgotPassword && (
                 <>
                   <div className="space-y-3 mb-4">
                     <button
                       onClick={handleGoogleLogin}
                       type="button"
-                      className="w-full flex items-center justify-center gap-3 bg-white  text-gray-700 py-4 px-6  hover:border-gray-300 hover:shadow-md transition-all duration-300 font-medium group"
+                      className="w-full flex items-center justify-center gap-3 bg-white text-gray-700 py-4 px-6 hover:border-gray-300 hover:shadow-md transition-all duration-300 font-medium group"
                     >
                       <FcGoogle size={24} />
                       <span className="group-hover:translate-x-1 transition-transform duration-300">
@@ -254,7 +221,7 @@ const Login = () => {
                     <button
                       onClick={handleFacebookLogin}
                       type="button"
-                      className="flex items-center w-full justify-center gap-2 bg-white  text-gray-700 py-4 px-4  hover:border-gray-300 hover:shadow-md transition-all duration-300 font-medium group"
+                      className="flex items-center w-full justify-center gap-2 bg-white text-gray-700 py-4 px-4 hover:border-gray-300 hover:shadow-md transition-all duration-300 font-medium group"
                     >
                       <FaFacebookF color="#1877F2" size={20} />
                       <span className="group-hover:translate-x-1 transition-transform duration-300">
@@ -262,7 +229,6 @@ const Login = () => {
                       </span>
                     </button>
                   </div>
-                  {/* Divider */}
                   <div className="flex items-center mb-4">
                     <div className="flex-1 h-px bg-gray-900"></div>
                     <span className="px-4 text-black text-sm font-medium">
@@ -279,17 +245,17 @@ const Login = () => {
                   validationSchema={loginValidationSchema}
                   onSubmit={handleLoginSubmit}
                 >
-                  {({ isSubmitting, status, touched, errors }) => (
+                  {({ isSubmitting, status, touched, errors, values }) => (
                     <Form className="space-y-6">
-                      {/* Error Status */}
-                      {(status ||
-                        (touched.email && errors.email) ||
-                        (touched.password && errors.password)) && (
-                        <div className="flex items-start gap-3 bg-white border-l-4 border-red-500 text-red-700 px-4 py-3 mt-2 ">
-                          <div className="flex-shrink-0 mt-0.5">
+                      {/* --- YENİ EKLENEN TASARIM ALANI --- */}
+                      {status ===
+                      "Lütfen önce e-posta adresinizi onaylayın." ? (
+                        <div className="space-y-4">
+                          {/* 1. Görseldeki Hata Kutusu */}
+                          <div className="flex items-center gap-3 bg-white border-l-4 border-red-500 text-red-600 px-4 py-4 shadow-sm">
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
-                              className="h-5 w-5 text-red-500 mt-0.5"
+                              className="h-6 w-6 flex-shrink-0"
                               viewBox="0 0 20 20"
                               fill="currentColor"
                             >
@@ -299,20 +265,78 @@ const Login = () => {
                                 clipRule="evenodd"
                               />
                             </svg>
+                            <span className="font-medium">
+                              Lütfen önce e-posta adresinizi onaylayın.
+                            </span>
                           </div>
-                          <div className="text-sm leading-relaxed space-y-1">
-                            {status && <div>{status}</div>}
-                            {touched.email && errors.email && (
-                              <div>{errors.email}</div>
+
+                          {/* 2. Görseldeki Tekrar Gönder Butonu */}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleResendVerification(values.email)
+                            }
+                            disabled={isResending}
+                            className="w-full flex items-center justify-center gap-2 bg-white text-gray-800 py-4 px-4 shadow-sm hover:shadow-md hover:bg-gray-50 transition-all duration-300 font-semibold"
+                          >
+                            {isResending ? (
+                              <Loader2
+                                className="animate-spin text-black"
+                                size={20}
+                              />
+                            ) : (
+                              <Mail className="text-black" size={20} />
                             )}
-                            {touched.password && errors.password && (
-                              <div>{errors.password}</div>
-                            )}
-                          </div>
+                            {isResending
+                              ? "Gönderiliyor..."
+                              : "Onay Mailini Tekrar Gönder"}
+                          </button>
+
+                          {/* Başarı veya Hata Geri Dönüşü */}
+                          {resendSuccess && (
+                            <div
+                              className={`text-sm font-medium text-center ${resendSuccess.includes("hata") ? "text-red-600" : "text-green-700"}`}
+                            >
+                              {resendSuccess}
+                            </div>
+                          )}
                         </div>
+                      ) : (
+                        /* Eski Normal Hata Gösterimi */
+                        ((status &&
+                          status !==
+                            "Lütfen önce e-posta adresinizi onaylayın.") ||
+                          (touched.email && errors.email) ||
+                          (touched.password && errors.password)) && (
+                          <div className="flex items-start gap-3 bg-white border-l-4 border-red-500 text-red-700 px-4 py-3 mt-2 ">
+                            <div className="flex-shrink-0 mt-0.5">
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-5 w-5 text-red-500 mt-0.5"
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M8.257 3.099c.765-1.36 2.721-1.36 3.486 0l6.518 11.6A1.75 1.75 0 0116.518 17H3.482a1.75 1.75 0 01-1.743-2.301l6.518-11.6zM10 7a.75.75 0 00-.75.75v3.5a.75.75 0 001.5 0v-3.5A.75.75 0 0010 7zm0 6a1 1 0 100 2 1 1 0 000-2z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            </div>
+                            <div className="text-sm leading-relaxed space-y-1">
+                              {status && <div>{status}</div>}
+                              {touched.email && errors.email && (
+                                <div>{errors.email}</div>
+                              )}
+                              {touched.password && errors.password && (
+                                <div>{errors.password}</div>
+                              )}
+                            </div>
+                          </div>
+                        )
                       )}
 
-                      <div className="relative">
+                      <div className="relative mt-2">
                         <Mail
                           className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
                           size={20}
@@ -325,7 +349,6 @@ const Login = () => {
                         />
                       </div>
 
-                      {/* Password Field */}
                       <div className="relative">
                         <Lock
                           className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
@@ -350,14 +373,13 @@ const Login = () => {
                         </button>
                       </div>
 
-                      {/* Remember Me & Forgot Password */}
                       <div className="flex items-center justify-between">
                         <label className="flex items-center space-x-3 cursor-pointer">
                           <input
                             type="checkbox"
                             checked={rememberMe}
                             onChange={(e) => setRememberMe(e.target.checked)}
-                            className="w-5 h-5 text-blue-600  rounded focus:ring-blue-500 focus:ring-2"
+                            className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 focus:ring-2"
                           />
                           <span className="text-gray-700 text-sm">
                             Beni hatırla
@@ -373,7 +395,6 @@ const Login = () => {
                         </button>
                       </div>
 
-                      {/* Login Button */}
                       <button
                         type="submit"
                         disabled={isSubmitting}
@@ -405,10 +426,9 @@ const Login = () => {
                 >
                   {({ isSubmitting, status, errors, touched }) => (
                     <Form className="space-y-6">
-                      {/* Hata ve status mesajlarını tek kutuda göster */}
                       {(status || (touched.email && errors.email)) && (
                         <div
-                          className={`flex items-start gap-3 bg-white border-l-4 px-4 py-3 mt-2  ${
+                          className={`flex items-start gap-3 bg-white border-l-4 px-4 py-3 mt-2 ${
                             status?.type === "success"
                               ? "border-green-500 text-green-700"
                               : "border-red-500 text-red-700"
@@ -444,10 +464,7 @@ const Login = () => {
                             )}
                           </div>
                           <div className="text-sm leading-relaxed space-y-1">
-                            {/* Backend status mesajı */}
                             {status && <div>{status.message || status}</div>}
-
-                            {/* Yup validation hatası */}
                             {touched.email && errors.email && (
                               <div>{errors.email}</div>
                             )}
@@ -491,9 +508,7 @@ const Login = () => {
                   )}
                 </Formik>
               )}
-              {/* Login Form */}
 
-              {/* Sign Up Link */}
               <div className="text-center mt-8">
                 <p className="text-gray-900">
                   Hesabınız yok mu?{" "}
