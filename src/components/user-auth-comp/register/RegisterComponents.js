@@ -82,7 +82,7 @@ export default function RegisterPage() {
       setPendingAction(provider);
       setIsContractOpen(true);
     } else {
-      window.location.href = `${API_URL}api/auth/${provider}/redirect`;
+      window.location.href = `${API_URL}/api/auth/${provider}/redirect`;
     }
   };
 
@@ -93,9 +93,9 @@ export default function RegisterPage() {
 
     // Eğer sosyal medyadan gelmişse direkt yönlendir
     if (pendingAction === "google") {
-      window.location.href = `${API_URL}api/auth/google/redirect`;
+      window.location.href = `${API_URL}/api/auth/google/redirect`;
     } else if (pendingAction === "facebook") {
-      window.location.href = `${API_URL}api/auth/facebook/redirect`;
+      window.location.href = `${API_URL}/api/auth/facebook/redirect`;
     }
     setPendingAction(null);
   };
